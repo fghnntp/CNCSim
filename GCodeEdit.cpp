@@ -125,15 +125,7 @@ void GCodeEdit::setupEditor()
 
 bool GCodeEdit::loadFromFile(const QString &fileName)
 {
-    // QFile file(fileName);
-    // if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-    //     return false;
-    // }
-
-    // QTextStream in(&file);
-    // setPlainText(in.readAll());
-    // return true;
-     QFile file(fileName);
+    QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         return false;
     }

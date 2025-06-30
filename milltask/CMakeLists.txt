@@ -7,12 +7,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
 # 收集当前目录下的所有源文件
-file(GLOB TOOL_SOURCES
+file(GLOB MILLTASK_SOURCES
     "*.cpp"
     "*.c"
 )
 
-file(GLOB TOOL_HEADERS
+file(GLOB MILLTASK_HEADERS
     "*.h"
     "*.hpp"
 )
@@ -25,14 +25,14 @@ file(GLOB TOOL_HEADERS
 # )
 
 # 创建动态库
-add_library(tool SHARED
-    ${TOOL_SOURCES}
-    ${TOOL_HEADERS}
+add_library(milltask SHARED
+    ${MILLTASK_SOURCES}
+    ${MILLTASK_HEADERS}
 )
 
 # 设置库的输出名称（可选）
-set_target_properties(tool PROPERTIES
-    OUTPUT_NAME "tool"
+set_target_properties(milltask PROPERTIES
+    OUTPUT_NAME "milltask"
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
 )
@@ -43,12 +43,12 @@ set_target_properties(tool PROPERTIES
 # )
 
 # 设置头文件包含目录
-target_include_directories(tool PUBLIC
+target_include_directories(milltask PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 # 安装库文件
-install(TARGETS tool
+install(TARGETS milltask
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
     RUNTIME DESTINATION bin
