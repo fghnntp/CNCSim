@@ -14,6 +14,7 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
 # 添加 tool 子目录
 add_subdirectory(tool)
+add_subdirectory(milltask)
 
 set(PROJECT_SOURCES
         main.cpp
@@ -22,6 +23,8 @@ set(PROJECT_SOURCES
         mainwindow.ui
         GCodeEdit.h
         GCodeEdit.cpp
+        ToolTableDialog.h
+        ToolTableDialog.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -47,7 +50,12 @@ else()
     endif()
 endif()
 
-target_link_libraries(cnc PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_include_directories(cnc PRIVATE
+   ${CMAKE_CURRENT_SOURCE_DIR}/tool
+)
+
+target_link_libraries(cnc PRIVATE Qt${QT_VERSION_MAJOR}::Widgets tool
+)
 
 set_target_properties(cnc PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com

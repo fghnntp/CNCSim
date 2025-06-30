@@ -1,24 +1,6 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-// #include <QMainWindow>
-
-// QT_BEGIN_NAMESPACE
-// namespace Ui { class MainWindow; }
-// QT_END_NAMESPACE
-
-// class MainWindow : public QMainWindow
-// {
-//     Q_OBJECT
-
-// public:
-//     MainWindow(QWidget *parent = nullptr);
-//     ~MainWindow();
-
-// private:
-//     Ui::MainWindow *ui;
-// };
-
 #include <QMainWindow>
 #include <QMdiArea>
 #include <QMdiSubWindow>
@@ -28,6 +10,7 @@
 #include <QAction>
 #include <QActionGroup>
 #include "GCodeEdit.h"
+#include "tool_manager.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -78,6 +61,7 @@ private:
     QMenu *editMenu;
     QMenu *windowMenu;
     QMenu *helpMenu;
+    QMenu *toolMenu;
     
     // 工具栏
     QToolBar *fileToolBar;
@@ -100,8 +84,12 @@ private:
     QAction *previousAct;
     QAction *separatorAct;
     QAction *aboutQtAct;
+
+    QAction *toolTableAct;
     
     QActionGroup *windowActionGroup;
+
+    ToolManager *toolManager;
 };
 
 #endif // MAINWINDOW_H

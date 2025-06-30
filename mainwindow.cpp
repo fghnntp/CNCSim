@@ -1,18 +1,3 @@
-// #include "mainwindow.h"
-// #include "./ui_mainwindow.h"
-
-// MainWindow::MainWindow(QWidget *parent)
-//     : QMainWindow(parent)
-//     , ui(new Ui::MainWindow)
-// {
-//     ui->setupUi(this);
-// }
-
-// MainWindow::~MainWindow()
-// {
-//     delete ui;
-// }
-
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 #include <QApplication>
@@ -23,12 +8,16 @@
 #include <QSettings>
 #include <QSignalMapper>
 #include <QScreen>
+#include "ToolTableDialog.h"
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    toolManager = new ToolManager;
     
     // 创建 MDI 区域
     mdiArea = new QMdiArea;
@@ -72,33 +61,9 @@ void MainWindow::newFile()
 
 void MainWindow::openFile()
 {
-    // const QString fileName = QFileDialog::getOpenFileName(this,
-    //     tr("打开G代码文件"), "",
-    //     tr("G代码文件 (*.gcode *.nc *.cnc);;所有文件 (*)"));
-    
-    // if (!fileName.isEmpty()) {
-    //     QMdiSubWindow *existing = findMdiChild(fileName);
-    //     if (existing) {
-    //         mdiArea->setActiveSubWindow(existing);
-    //         return;
-    //     }
-        
-    //     GCodeEdit *child = new GCodeEdit;
-    //     if (child->loadFromFile(fileName)) {
-    //         statusBar()->showMessage(tr("文件已加载"), 2000);
-    //         QMdiSubWindow *subWindow = mdiArea->addSubWindow(child);
-    //         child->setWindowTitle(QFileInfo(fileName).fileName());
-    //         child->show();
-            
-    //         connect(child, &GCodeEdit::textChanged, this, &MainWindow::updateMenus);
-    //     } else {
-    //         child->deleteLater();
-    //         QMessageBox::warning(this, tr("错误"), tr("无法打开文件"));
-    //     }
-    // }
     const QString fileName = QFileDialog::getOpenFileName(this,
         tr("打开G代码文件"), "",
-        tr("G代码文件 (*.gcode *.nc *.cnc);;所有文件 (*)"));
+        tr("G代码文件 (*.gcode *.nc *.cnc, *.tbl);;所有文件 (*)"));
     
     if (!fileName.isEmpty()) {
         QMdiSubWindow *existing = findMdiChild(fileName);
@@ -125,9 +90,6 @@ void MainWindow::openFile()
 
 void MainWindow::saveFile()
 {
-    // if (activeGCodeEdit() && activeGCodeEdit()->saveToFile("")) {
-    //     statusBar()->showMessage(tr("文件已保存"), 2000);
-    // }
      GCodeEdit *child = activeGCodeEdit();
     if (!child)
         return;
@@ -148,28 +110,13 @@ void MainWindow::saveFile()
 
 void MainWindow::saveAsFile()
 {
-    // GCodeEdit *child = activeGCodeEdit();
-    // if (!child)
-    //     return;
-        
-    // const QString fileName = QFileDialog::getSaveFileName(this,
-    //     tr("保存G代码文件"), "",
-    //     tr("G代码文件 (*.gcode *.nc *.cnc);;所有文件 (*)"));
-    
-    // if (!fileName.isEmpty()) {
-    //     if (child->saveToFile(fileName)) {
-    //         statusBar()->showMessage(tr("文件已保存"), 2000);
-    //         child->setWindowTitle(QFileInfo(fileName).fileName());
-    //     }
-    // }
-
-     GCodeEdit *child = activeGCodeEdit();
+    GCodeEdit *child = activeGCodeEdit();
     if (!child)
         return;
         
     const QString fileName = QFileDialog::getSaveFileName(this,
         tr("保存G代码文件"), child->getCurrentFilePath(),
-        tr("G代码文件 (*.gcode *.nc *.cnc);;所有文件 (*)"));
+        tr("G代码文件 (*.gcode *.nc *.cnc, *.tbl);;所有文件 (*)"));
     
     if (!fileName.isEmpty()) {
         if (child->saveToFile(fileName)) {
@@ -353,6 +300,16 @@ void MainWindow::createActions()
     aboutQtAct = new QAction(tr("关于 Qt"), this);
     aboutQtAct->setStatusTip(tr("显示Qt库的About对话框"));
     connect(aboutQtAct, &QAction::triggered, this, &MainWindow::aboutQt);
+
+    toolTableAct = new QAction(tr("刀具"), this);
+    // toolTableAct->setShortcuts();
+    toolTableAct->setStatusTip(tr("管理刀具"));
+    // connect(toolTableAct, &QAction::triggered, this,);
+    connect(toolTableAct, &QAction::triggered, this, [this]() {
+        ToolTableDialog dlg(toolManager, this);
+        dlg.exec();
+    });
+
 }
 
 void MainWindow::createMenus()
@@ -373,6 +330,9 @@ void MainWindow::createMenus()
     windowMenu = menuBar()->addMenu(tr("窗口"));
     updateWindowMenu();
     connect(windowMenu, &QMenu::aboutToShow, this, &MainWindow::updateWindowMenu);
+
+    toolMenu = menuBar()->addMenu(tr("工具"));
+    toolMenu->addAction(toolTableAct);
     
     helpMenu = menuBar()->addMenu(tr("帮助"));
     helpMenu->addAction(aboutQtAct);
