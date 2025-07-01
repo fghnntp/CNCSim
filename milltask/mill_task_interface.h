@@ -11,7 +11,7 @@ public:
     virtual void shutdown() = 0;
 
     // Factory function
-    static IMillTaskInterface* create();
+    static IMillTaskInterface* create(char*emcfile = nullptr);
 };
 
 extern "C" {

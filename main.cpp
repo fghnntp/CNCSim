@@ -4,6 +4,7 @@
 #include <QScreen>
 #include <QProcess>
 #include <QDebug>
+#include "cnc_config.h"
 
 void setupLinuxCNCEnvironment() {
     QProcess envProcess;
@@ -11,7 +12,7 @@ void setupLinuxCNCEnvironment() {
     // Run the script in bash to get the environment
     envProcess.start("bash",
                      QStringList() << "-c" <<
-                     "source /home/user/srcCode/linuxcnc-master/scripts/rip-environment && env");
+                     ENV_TRIG_CMD);
 
     if (!envProcess.waitForFinished()) {
         qCritical() << "Failed to source LinuxCNC environment";
@@ -49,7 +50,7 @@ int main(int argc, char *argv[])
     QProcess linuxcncProcess;
     linuxcncProcess.start("linuxcncsvr",
                           QStringList() <<
-                          "/home/user/srcCode/linuxcnc-master/configs/sim/axis/vismach/5axis/table-rotary_spindle-rotary-nutating/xyzacb-trsrn_twp/xyzacb-trsrn.ini");
+                          EMC_INI_FILE);
 
     // Check if LinuxCNC started (but don't wait)
     if (!linuxcncProcess.waitForStarted(1000)) {  // 1s timeout

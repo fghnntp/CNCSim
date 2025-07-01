@@ -1,23 +1,23 @@
-#include "mill_task_interface.h"
-#include "milltask.h"
+#include "rtapp_interface.h"
+#include "rtapp.h"
 #include <cstring>
 #include <stdexcept>
 
 // Concrete implementation of the interface
-class MillTaskImplementation : public IMillTaskInterface {
+class RtAppImplementation : public IRtAppInterface {
 public:
-    MillTaskImplementation(char* emcfile) {
+    RtAppImplementation(char* emcfile) {
         // Initialization code
-        millTask_ = new MillTask(emcfile);
+        rtApp_ = new RTAPP(emcfile);
     }
 
-    ~MillTaskImplementation() override {
+    ~RtAppImplementation() override {
         // Cleanup code
     }
 
     void initialize() override {
         // Initialization logic
-        millTask_->doWork();
+        rtApp_->doWork();
     }
 
     void processData(const char* input, char* output, int size) override {
@@ -35,33 +35,33 @@ public:
         // Shutdown logic
     }
 private:
-    MillTask *millTask_;
+    RTAPP *rtApp_;
 };
 
 // Factory function
-IMillTaskInterface* IMillTaskInterface::create(char* emcFile) {
-    return new MillTaskImplementation(emcFile);
+IRtAppInterface* IRtAppInterface::create(char* emcFile) {
+    return new RtAppImplementation(emcFile);
 }
 
 // C interface implementation
-struct MillTaskInterface {
-    IMillTaskInterface* impl;
+struct RtAppInterface {
+    IRtAppInterface* impl;
 };
 
 extern "C" {
-    MillTaskInterface* api_interface_create() {
-        MillTaskInterface* wrapper = new MillTaskInterface;
-        wrapper->impl = IMillTaskInterface::create();
+    RtAppInterface* api_interface_create() {
+        RtAppInterface* wrapper = new RtAppInterface;
+        wrapper->impl = IRtAppInterface::create();
         return wrapper;
     }
 
-    void api_interface_initialize(MillTaskInterface* handle) {
+    void api_interface_initialize(RtAppInterface* handle) {
         if (handle && handle->impl) {
             handle->impl->initialize();
         }
     }
 
-    void api_interface_process_data(MillTaskInterface* handle, const char* input, char* output, int size) {
+    void api_interface_process_data(RtAppInterface* handle, const char* input, char* output, int size) {
         if (handle && handle->impl) {
             try {
                 handle->impl->processData(input, output, size);
@@ -72,13 +72,13 @@ extern "C" {
         }
     }
 
-    void api_interface_shutdown(MillTaskInterface* handle) {
+    void api_interface_shutdown(RtAppInterface* handle) {
         if (handle && handle->impl) {
             handle->impl->shutdown();
         }
     }
 
-    void api_interface_destroy(MillTaskInterface* handle) {
+    void api_interface_destroy(RtAppInterface* handle) {
         if (handle) {
             delete handle->impl;
             delete handle;
