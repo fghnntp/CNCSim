@@ -13,6 +13,7 @@ public:
 private slots:
     void onAddTool();
     void onEditTool();
+    void onSaveTool();
     void onRemoveTool();
     void refreshTable();
 
@@ -21,5 +22,6 @@ private:
     QTableWidget* tableWidget_;
     QPushButton* addButton_;
     QPushButton* editButton_;
+    QPushButton* saveButton_;
     QPushButton* removeButton_;
 };

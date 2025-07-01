@@ -18,11 +18,14 @@ ToolTableDialog::ToolTableDialog(ToolManager *toolManager, QWidget* parent)
 
     addButton_ = new QPushButton("新增", this);
     editButton_ = new QPushButton("编辑", this);
+    saveButton_ = new QPushButton("save", this);
     removeButton_ = new QPushButton("删除", this);
+
 
     QHBoxLayout* btnLayout = new QHBoxLayout;
     btnLayout->addWidget(addButton_);
     btnLayout->addWidget(editButton_);
+    btnLayout->addWidget(saveButton_);
     btnLayout->addWidget(removeButton_);
 
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
@@ -31,6 +34,7 @@ ToolTableDialog::ToolTableDialog(ToolManager *toolManager, QWidget* parent)
 
     connect(addButton_, &QPushButton::clicked, this, &ToolTableDialog::onAddTool);
     connect(editButton_, &QPushButton::clicked, this, &ToolTableDialog::onEditTool);
+    connect(saveButton_, &QPushButton::clicked, this, &ToolTableDialog::onSaveTool);
     connect(removeButton_, &QPushButton::clicked, this, &ToolTableDialog::onRemoveTool);
 
     refreshTable();
@@ -90,6 +94,10 @@ void ToolTableDialog::onEditTool() {
     ToolData newTool(tno, pno, z, d, desc.toStdString());
     toolManager_->update_tool(tno, newTool);
     refreshTable();
+}
+
+void ToolTableDialog::onSaveTool() {
+    toolManager_->save_tool_table();
 }
 
 void ToolTableDialog::onRemoveTool() {
