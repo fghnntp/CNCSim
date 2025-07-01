@@ -30,7 +30,7 @@ add_library(milltask SHARED
     ${LINUX_CNC_SRC}/emc/motion/emcmotglb.c
     ${LINUX_CNC_SRC}/emc/task/emctask.cc
     ${LINUX_CNC_SRC}/emc/task/emccanon.cc
-    ${LINUX_CNC_SRC}/emc/task/emctaskmain.cc
+#    ${LINUX_CNC_SRC}/emc/task/emctaskmain.cc
     ${LINUX_CNC_SRC}/emc/motion/usrmotintf.cc
     ${LINUX_CNC_SRC}/emc/motion/emcmotutil.c
     ${LINUX_CNC_SRC}/emc/task/taskintf.cc

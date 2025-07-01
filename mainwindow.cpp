@@ -436,7 +436,7 @@ void MainWindow::setDock()
 
 void MainWindow::createBckMill()
 {
-    millIf_ =IMillTaskInterface::create();
+    millIf_ =IMillTaskInterface::create(EMC_INI_FILE);
     millIf_->initialize();
 }
 

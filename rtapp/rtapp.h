@@ -1,5 +1,5 @@
-#ifndef _MILL_TASK_
-#define _MILL_TASK_
+#ifndef _RT_APP_H_
+#define _RT_APP_H_
 
 #include <thread>
 #include <atomic>
@@ -7,12 +7,11 @@
 #include <condition_variable>
 #include <string>
 #include <functional>
-#include <interp_base.hh>
 
-class MillTask {
+class RTAPP{
 public:
-    MillTask(char* emcFile=nullptr);
-    ~MillTask();
+    RTAPP(char* emcFile=nullptr);
+    ~RTAPP();
 
     // Start the worker thread
     void doWork();
@@ -43,4 +42,4 @@ private:
     std::string emcFile_;
 };
 
-#endif // _MILL_TASK_
+#endif // _RT_APP_H_

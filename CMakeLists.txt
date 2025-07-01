@@ -20,6 +20,7 @@ find_package(OpenGL REQUIRED)
 # 添加 tool 子目录
 add_subdirectory(tool)
 add_subdirectory(milltask)
+add_subdirectory(rtapp)
 
 set(PROJECT_SOURCES
         main.cpp
