@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(cnc VERSION 0.1 LANGUAGES CXX)
+project(cnc VERSION 0.1 LANGUAGES CXX C)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -9,8 +9,13 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Find Qt version (Qt5 or Qt6)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+
+# Find Qt modules with the proper variable
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
+
+find_package(OpenGL REQUIRED)
 
 # 添加 tool 子目录
 add_subdirectory(tool)
@@ -25,6 +30,9 @@ set(PROJECT_SOURCES
         GCodeEdit.cpp
         ToolTableDialog.h
         ToolTableDialog.cpp
+        cnc_config.h
+        live_plotter.cpp
+        live_plotter.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -52,9 +60,12 @@ endif()
 
 target_include_directories(cnc PRIVATE
    ${CMAKE_CURRENT_SOURCE_DIR}/tool
+   ${CMAKE_CURRENT_SOURCE_DIR}/milltask
 )
-
-target_link_libraries(cnc PRIVATE Qt${QT_VERSION_MAJOR}::Widgets tool
+#target_link_libraries(milltask PUBLIC Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(cnc PUBLIC Qt${QT_VERSION_MAJOR}::Widgets OpenGL::GL
+    tool
+    milltask
 )
 
 set_target_properties(cnc PROPERTIES

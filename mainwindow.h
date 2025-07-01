@@ -11,6 +11,9 @@
 #include <QActionGroup>
 #include "GCodeEdit.h"
 #include "tool_manager.h"
+#include "live_plotter.h"
+#include <QDockWidget>
+#include "mill_task_interface.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -49,6 +52,12 @@ private:
     void createStatusBar();
     void readSettings();
     void writeSettings();
+    void setDock();
+
+    void createBckMill();
+    IMillTaskInterface *millIf_;
+
+
     
     GCodeEdit *activeGCodeEdit();
     QMdiSubWindow *findMdiChild(const QString &fileName);
@@ -86,10 +95,15 @@ private:
     QAction *aboutQtAct;
 
     QAction *toolTableAct;
+    QAction *pathPlotAct;
     
     QActionGroup *windowActionGroup;
 
     ToolManager *toolManager;
+
+    QTimer *simTimer;
+    QDockWidget *livePlotterDock;
+    LivePlotter *livePlotter;
 };
 
 #endif // MAINWINDOW_H

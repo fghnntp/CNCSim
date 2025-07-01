@@ -9,6 +9,8 @@
 #include <QSignalMapper>
 #include <QScreen>
 #include "ToolTableDialog.h"
+#include "cnc_config.h"
+#include <cmath>
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -17,8 +19,12 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    toolManager = new ToolManager;
+    toolManager = new ToolManager(TOOL_FILE_PATH);
     
+    simTimer = nullptr;
+    livePlotter = nullptr;
+    livePlotterDock = nullptr;
+
     // 创建 MDI 区域
     mdiArea = new QMdiArea;
     mdiArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
@@ -29,6 +35,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mdiArea, &QMdiArea::subWindowActivated,
             this, &MainWindow::updateMenus);
     
+//    setDock();
+
     // 创建界面元素
     createActions();
     createMenus();
@@ -40,6 +48,9 @@ MainWindow::MainWindow(QWidget *parent)
     
     setWindowTitle(tr("CNC G-Code Editor"));
     setUnifiedTitleAndToolBarOnMac(true);
+
+    createBckMill();
+
 }
 
 MainWindow::~MainWindow()
@@ -306,8 +317,20 @@ void MainWindow::createActions()
     toolTableAct->setStatusTip(tr("管理刀具"));
     // connect(toolTableAct, &QAction::triggered, this,);
     connect(toolTableAct, &QAction::triggered, this, [this]() {
-        ToolTableDialog dlg(toolManager, this);
-        dlg.exec();
+        ToolTableDialog *dlg = new ToolTableDialog(toolManager, this); // Create on heap
+        dlg->setAttribute(Qt::WA_DeleteOnClose); // Auto-delete when closed
+        dlg->show(); // Non-modal display
+    });
+
+    pathPlotAct = new QAction(tr("tool path"), this);
+    // pathPlotAct->setShortcuts();
+    pathPlotAct->setStatusTip(tr("tool path"));
+    // connect(toolTableAct, &QAction::triggered, this,);
+    connect(pathPlotAct, &QAction::triggered, this, [this]() {
+//        LivePlotter *plotter = new LivePlotter(this); // Parent to main window
+//        plotter->setAttribute(Qt::WA_DeleteOnClose);
+//        plotter->show();
+        setDock();
     });
 
 }
@@ -333,6 +356,7 @@ void MainWindow::createMenus()
 
     toolMenu = menuBar()->addMenu(tr("工具"));
     toolMenu->addAction(toolTableAct);
+    toolMenu->addAction(pathPlotAct);
     
     helpMenu = menuBar()->addMenu(tr("帮助"));
     helpMenu->addAction(aboutQtAct);
@@ -383,6 +407,37 @@ void MainWindow::writeSettings()
 {
     QSettings settings(QCoreApplication::organizationName(), QCoreApplication::applicationName());
     settings.setValue("geometry", saveGeometry());
+}
+
+void MainWindow::setDock()
+{
+    // Only create dock and plotter if not already created (optional, but recommended)
+      if (!livePlotterDock) {
+          livePlotterDock = new QDockWidget(tr("Live Plotter"), this); // livePlotterDock is a member variable
+          livePlotter = new LivePlotter(livePlotterDock);              // livePlotter is a member variable
+          livePlotterDock->setWidget(livePlotter);
+          addDockWidget(Qt::RightDockWidgetArea, livePlotterDock);
+      }
+
+      static float t = 0;
+      // Only create simTimer if not already created
+      if (!simTimer) {
+          simTimer = new QTimer(this);
+          QObject::connect(simTimer, &QTimer::timeout, this, [this]() {
+              float r = 0.2f + 0.005f * t;
+              float x = r * std::cos(t);
+              float y = r * std::sin(t);
+              this->livePlotter->addPoint(QVector3D(x, y, 0));
+              t += 0.05f;
+          });
+          simTimer->start(20);
+      }
+}
+
+void MainWindow::createBckMill()
+{
+    millIf_ =IMillTaskInterface::create();
+    millIf_->initialize();
 }
 
 GCodeEdit *MainWindow::activeGCodeEdit()
