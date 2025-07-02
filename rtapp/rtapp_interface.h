@@ -1,5 +1,5 @@
-#ifndef MILL_TASK_INTERFACE_H
-#define MILL_TASK_INTERFACE_H
+#ifndef RTAPP_INTERFACE_H
+#define RTAPP_INTERFACE_H
 #ifdef __cplusplus
 // C++ interface
 class IRtAppInterface {
@@ -21,15 +21,15 @@ extern "C" {
 typedef struct RtAppInterface RtAppInterface;
 
 // C function pointers matching the C++ interface
-RtAppInterface* api_interface_create();
-void api_interface_initialize(RtAppInterface* handle);
-void api_interface_process_data(RtAppInterface* handle, const char* input, char* output, int size);
-void api_interface_shutdown(RtAppInterface* handle);
-void api_interface_destroy(RtAppInterface* handle);
+RtAppInterface* api_interface_create_rtapp();
+void api_interface_initialize_rtapp(RtAppInterface* handle);
+void api_interface_process_data_rtapp(RtAppInterface* handle, const char* input, char* output, int size);
+void api_interface_shutdown_rtapp(RtAppInterface* handle);
+void api_interface_destroy_rtapp(RtAppInterface* handle);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // MILL_TASK_INTERFACE_H
+#endif // RTAPP_INTERFACE_H
 

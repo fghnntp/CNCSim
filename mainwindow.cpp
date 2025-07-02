@@ -49,7 +49,7 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowTitle(tr("CNC G-Code Editor"));
     setUnifiedTitleAndToolBarOnMac(true);
 
-    createBckMill();
+    createBckThread();
 
 }
 
@@ -434,10 +434,12 @@ void MainWindow::setDock()
       }
 }
 
-void MainWindow::createBckMill()
+void MainWindow::createBckThread()
 {
-    millIf_ =IMillTaskInterface::create(EMC_INI_FILE);
+    millIf_ = IMillTaskInterface::create(EMC_INI_FILE);
     millIf_->initialize();
+//    rtAppIf_ = IRtAppInterface::create(EMC_INI_FILE);
+//    rtAppIf_->initialize();
 }
 
 GCodeEdit *MainWindow::activeGCodeEdit()

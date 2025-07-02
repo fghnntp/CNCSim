@@ -21,11 +21,11 @@ extern "C" {
 typedef struct MillTaskInterface MillTaskInterface;
 
 // C function pointers matching the C++ interface
-MillTaskInterface* api_interface_create();
-void api_interface_initialize(MillTaskInterface* handle);
-void api_interface_process_data(MillTaskInterface* handle, const char* input, char* output, int size);
-void api_interface_shutdown(MillTaskInterface* handle);
-void api_interface_destroy(MillTaskInterface* handle);
+MillTaskInterface* api_interface_create_mill();
+void api_interface_initialize_mill(MillTaskInterface* handle);
+void api_interface_process_data_mill(MillTaskInterface* handle, const char* input, char* output, int size);
+void api_interface_shutdown_mill(MillTaskInterface* handle);
+void api_interface_destroy_mill(MillTaskInterface* handle);
 
 #ifdef __cplusplus
 }

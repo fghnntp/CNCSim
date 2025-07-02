@@ -49,19 +49,19 @@ struct MillTaskInterface {
 };
 
 extern "C" {
-    MillTaskInterface* api_interface_create() {
+    MillTaskInterface* api_interface_create_mill() {
         MillTaskInterface* wrapper = new MillTaskInterface;
         wrapper->impl = IMillTaskInterface::create();
         return wrapper;
     }
 
-    void api_interface_initialize(MillTaskInterface* handle) {
+    void api_interface_initialize_mill(MillTaskInterface* handle) {
         if (handle && handle->impl) {
             handle->impl->initialize();
         }
     }
 
-    void api_interface_process_data(MillTaskInterface* handle, const char* input, char* output, int size) {
+    void api_interface_process_data_mill(MillTaskInterface* handle, const char* input, char* output, int size) {
         if (handle && handle->impl) {
             try {
                 handle->impl->processData(input, output, size);
@@ -72,13 +72,13 @@ extern "C" {
         }
     }
 
-    void api_interface_shutdown(MillTaskInterface* handle) {
+    void api_interface_shutdown_mill(MillTaskInterface* handle) {
         if (handle && handle->impl) {
             handle->impl->shutdown();
         }
     }
 
-    void api_interface_destroy(MillTaskInterface* handle) {
+    void api_interface_destroy_mill(MillTaskInterface* handle) {
         if (handle) {
             delete handle->impl;
             delete handle;
