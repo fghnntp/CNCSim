@@ -14,6 +14,7 @@
 #include "live_plotter.h"
 #include <QDockWidget>
 #include "mill_task_interface.h"
+#include "rtapp_interface.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -54,9 +55,9 @@ private:
     void writeSettings();
     void setDock();
 
-    void createBckMill();
+    void createBckThread();
     IMillTaskInterface *millIf_;
-
+    IRtAppInterface *rtAppIf_;
 
     
     GCodeEdit *activeGCodeEdit();

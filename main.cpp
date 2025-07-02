@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication a(argc, argv);
 
-    // Launch LinuxCNC (non-blocking)
+    // Launch LinuxCNCsrv (non-blocking)
     QProcess linuxcncProcess;
     linuxcncProcess.start("linuxcncsvr",
                           QStringList() <<

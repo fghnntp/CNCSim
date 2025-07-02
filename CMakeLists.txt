@@ -62,11 +62,13 @@ endif()
 target_include_directories(cnc PRIVATE
    ${CMAKE_CURRENT_SOURCE_DIR}/tool
    ${CMAKE_CURRENT_SOURCE_DIR}/milltask
+   ${CMAKE_CURRENT_SOURCE_DIR}/rtapp
 )
 #target_link_libraries(milltask PUBLIC Qt${QT_VERSION_MAJOR}::Widgets)
 target_link_libraries(cnc PUBLIC Qt${QT_VERSION_MAJOR}::Widgets OpenGL::GL
     tool
     milltask
+    rtapp
 )
 
 set_target_properties(cnc PROPERTIES

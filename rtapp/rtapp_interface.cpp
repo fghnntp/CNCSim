@@ -49,19 +49,19 @@ struct RtAppInterface {
 };
 
 extern "C" {
-    RtAppInterface* api_interface_create() {
+    RtAppInterface* api_interface_create_rtapp() {
         RtAppInterface* wrapper = new RtAppInterface;
         wrapper->impl = IRtAppInterface::create();
         return wrapper;
     }
 
-    void api_interface_initialize(RtAppInterface* handle) {
+    void api_interface_initialize_rtapp(RtAppInterface* handle) {
         if (handle && handle->impl) {
             handle->impl->initialize();
         }
     }
 
-    void api_interface_process_data(RtAppInterface* handle, const char* input, char* output, int size) {
+    void api_interface_process_data_rtapp(RtAppInterface* handle, const char* input, char* output, int size) {
         if (handle && handle->impl) {
             try {
                 handle->impl->processData(input, output, size);
@@ -72,13 +72,13 @@ extern "C" {
         }
     }
 
-    void api_interface_shutdown(RtAppInterface* handle) {
+    void api_interface_shutdown_rtapp(RtAppInterface* handle) {
         if (handle && handle->impl) {
             handle->impl->shutdown();
         }
     }
 
-    void api_interface_destroy(RtAppInterface* handle) {
+    void api_interface_destroy_rtapp(RtAppInterface* handle) {
         if (handle) {
             delete handle->impl;
             delete handle;

@@ -28,10 +28,10 @@ add_library(rtapp SHARED
     ${RTAPP_SOURCES}
     ${RTAPP_HEADERS}
 
-    ${LINUX_CNC_SRC}/rtapi/uspace_rtapi_app.cc
+#    ${LINUX_CNC_SRC}/rtapi/uspace_rtapi_app.cc
     ${LINUX_CNC_SRC}/rtapi/uspace_rtapi_parport.cc
     ${LINUX_CNC_SRC}/rtapi/uspace_rtapi_string.c
-    ${LINUX_CNC_SRC}/rtapi/rtapi_pci.cc
+#    ${LINUX_CNC_SRC}/rtapi/rtapi_pci.cc
 #    ${LINUX_CNC_SRC}/rtapi/uspace_rtai.cc
 #     ${LINUX_CNC_SRC}/emc/motion/emcmotglb.c
 #     ${LINUX_CNC_SRC}/emc/task/emctask.cc

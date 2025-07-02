@@ -27,17 +27,17 @@ file(GLOB MILLTASK_HEADERS
 add_library(milltask SHARED
     ${MILLTASK_SOURCES}
     ${MILLTASK_HEADERS}
-    ${LINUX_CNC_SRC}/emc/motion/emcmotglb.c
-    ${LINUX_CNC_SRC}/emc/task/emctask.cc
-    ${LINUX_CNC_SRC}/emc/task/emccanon.cc
+#    ${LINUX_CNC_SRC}/emc/motion/emcmotglb.c
+#    ${LINUX_CNC_SRC}/emc/task/emctask.cc
+#    ${LINUX_CNC_SRC}/emc/task/emccanon.cc
 #    ${LINUX_CNC_SRC}/emc/task/emctaskmain.cc
-    ${LINUX_CNC_SRC}/emc/motion/usrmotintf.cc
-    ${LINUX_CNC_SRC}/emc/motion/emcmotutil.c
-    ${LINUX_CNC_SRC}/emc/task/taskintf.cc
-    ${LINUX_CNC_SRC}/emc/motion/dbuf.c
-    ${LINUX_CNC_SRC}/emc/motion/stashf.c
-    ${LINUX_CNC_SRC}/emc/task/taskclass.cc
-    ${LINUX_CNC_SRC}/emc/task/backtrace.cc
+#    ${LINUX_CNC_SRC}/emc/motion/usrmotintf.cc
+#    ${LINUX_CNC_SRC}/emc/motion/emcmotutil.c
+#    ${LINUX_CNC_SRC}/emc/task/taskintf.cc
+#    ${LINUX_CNC_SRC}/emc/motion/dbuf.c
+#    ${LINUX_CNC_SRC}/emc/motion/stashf.c
+#    ${LINUX_CNC_SRC}/emc/task/taskclass.cc
+#    ${LINUX_CNC_SRC}/emc/task/backtrace.cc
 )
 
 # 设置库的输出名称（可选）
