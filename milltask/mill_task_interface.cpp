@@ -34,6 +34,15 @@ public:
     void shutdown() override {
         // Shutdown logic
     }
+
+    int loadfile(const char *filename, std::vector<ToolPath> &toolPath) override {
+        std::string name(filename);
+        int retval = 0;
+
+        retval = millTask_->taskMethods->load_file(filename, &toolPath);
+
+        return retval;
+    }
 private:
     MillTask *millTask_;
 };
