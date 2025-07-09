@@ -76,6 +76,7 @@ private:
     // 工具栏
     QToolBar *fileToolBar;
     QToolBar *editToolBar;
+    QToolBar *viewToolBar;
     
     // 动作
     QAction *newAct;
@@ -97,6 +98,7 @@ private:
 
     QAction *toolTableAct;
     QAction *pathPlotAct;
+    QAction *loadPlotFileAct;
     
     QActionGroup *windowActionGroup;
 

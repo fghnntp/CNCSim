@@ -1,17 +1,26 @@
 #ifndef MILL_TASK_INTERFACE_H
 #define MILL_TASK_INTERFACE_H
 #ifdef __cplusplus
+#include <vector>
 // C++ interface
 class IMillTaskInterface {
 public:
+    struct ToolPath {
+        double x, y, z;
+        double a, b, c;
+        double u, v, w;
+    };
     virtual ~IMillTaskInterface() = default;
 
     virtual void initialize() = 0;
     virtual void processData(const char* input, char* output, int size) = 0;
     virtual void shutdown() = 0;
 
+    virtual int loadfile(const char *filename, std::vector<ToolPath> &toolPath) = 0;
+
+
     // Factory function
-    static IMillTaskInterface* create(char*emcfile = nullptr);
+    static IMillTaskInterface* create(char* emcfile = nullptr);
 };
 
 extern "C" {

@@ -8,6 +8,9 @@
 #include <string>
 #include <functional>
 #include <interp_base.hh>
+#include "emcTask.h"
+#include "emcMsgManager.h"
+
 
 class MillTask {
 public:
@@ -26,7 +29,11 @@ public:
     // Set callback for finished signal
     void setFinishedCallback(std::function<void()> callback);
 
+    //load the file and get the previe date
+    void loadfile(std::string filename);
+
 private:
+    void init(); // Once prepaing main process function
     void process();  // Main processing function
 
     std::thread workerThread;
@@ -41,6 +48,11 @@ private:
     int counter = 0;
 
     std::string emcFile_;
+ public:
+    EMCTask *taskMethods = nullptr;
+
+
+
 };
 
 #endif // _MILL_TASK_

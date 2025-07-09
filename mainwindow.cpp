@@ -101,7 +101,7 @@ void MainWindow::openFile()
 
 void MainWindow::saveFile()
 {
-     GCodeEdit *child = activeGCodeEdit();
+    GCodeEdit *child = activeGCodeEdit();
     if (!child)
         return;
     
@@ -233,17 +233,19 @@ void MainWindow::setActiveSubWindow(QWidget *window)
 
 void MainWindow::createActions()
 {
-    newAct = new QAction(QIcon(":/images/new.png"), tr("&新建"), this);
+    // Get application style for standard icons
+
+    newAct = new QAction(QIcon::fromTheme("document-new"), tr("&新建"), this);
     newAct->setShortcuts(QKeySequence::New);
     newAct->setStatusTip(tr("创建新的G代码文件"));
     connect(newAct, &QAction::triggered, this, &MainWindow::newFile);
     
-    openAct = new QAction(QIcon(":/images/open.png"), tr("&打开..."), this);
+    openAct = new QAction(QIcon::fromTheme("document-open"), tr("&打开..."), this);
     openAct->setShortcuts(QKeySequence::Open);
     openAct->setStatusTip(tr("打开现有G代码文件"));
     connect(openAct, &QAction::triggered, this, &MainWindow::openFile);
     
-    saveAct = new QAction(QIcon(":/images/save.png"), tr("&保存"), this);
+    saveAct = new QAction(QIcon::fromTheme("document-save"), tr("&保存"), this);
     saveAct->setShortcuts(QKeySequence::Save);
     saveAct->setStatusTip(tr("保存文档到磁盘"));
     connect(saveAct, &QAction::triggered, this, &MainWindow::saveFile);
@@ -258,21 +260,21 @@ void MainWindow::createActions()
     exitAct->setStatusTip(tr("退出应用程序"));
     connect(exitAct, &QAction::triggered, qApp, &QApplication::closeAllWindows);
     
-    cutAct = new QAction(QIcon(":/images/cut.png"), tr("剪切"), this);
+    cutAct = new QAction(QIcon::fromTheme("edit-cut"), tr("剪切"), this);
     cutAct->setShortcuts(QKeySequence::Cut);
     cutAct->setStatusTip(tr("剪切当前选择的内容到剪贴板"));
     connect(cutAct, &QAction::triggered, this, [this]() {
         if (activeGCodeEdit()) activeGCodeEdit()->cut();
     });
     
-    copyAct = new QAction(QIcon(":/images/copy.png"), tr("复制"), this);
+    copyAct = new QAction(QIcon::fromTheme("edit-copy"), tr("复制"), this);
     copyAct->setShortcuts(QKeySequence::Copy);
     copyAct->setStatusTip(tr("复制当前选择的内容到剪贴板"));
     connect(copyAct, &QAction::triggered, this, [this]() {
         if (activeGCodeEdit()) activeGCodeEdit()->copy();
     });
     
-    pasteAct = new QAction(QIcon(":/images/paste.png"), tr("粘贴"), this);
+    pasteAct = new QAction(QIcon::fromTheme("edit-paste"), tr("粘贴"), this);
     pasteAct->setShortcuts(QKeySequence::Paste);
     pasteAct->setStatusTip(tr("粘贴剪贴板的内容"));
     connect(pasteAct, &QAction::triggered, this, [this]() {
@@ -312,25 +314,51 @@ void MainWindow::createActions()
     aboutQtAct->setStatusTip(tr("显示Qt库的About对话框"));
     connect(aboutQtAct, &QAction::triggered, this, &MainWindow::aboutQt);
 
-    toolTableAct = new QAction(tr("刀具"), this);
+    toolTableAct = new QAction(tr("tool"), this);
     // toolTableAct->setShortcuts();
     toolTableAct->setStatusTip(tr("管理刀具"));
-    // connect(toolTableAct, &QAction::triggered, this,);
     connect(toolTableAct, &QAction::triggered, this, [this]() {
         ToolTableDialog *dlg = new ToolTableDialog(toolManager, this); // Create on heap
         dlg->setAttribute(Qt::WA_DeleteOnClose); // Auto-delete when closed
         dlg->show(); // Non-modal display
     });
 
-    pathPlotAct = new QAction(tr("tool path"), this);
+    pathPlotAct = new QAction(tr("path"), this);
     // pathPlotAct->setShortcuts();
     pathPlotAct->setStatusTip(tr("tool path"));
-    // connect(toolTableAct, &QAction::triggered, this,);
     connect(pathPlotAct, &QAction::triggered, this, [this]() {
-//        LivePlotter *plotter = new LivePlotter(this); // Parent to main window
-//        plotter->setAttribute(Qt::WA_DeleteOnClose);
-//        plotter->show();
         setDock();
+    });
+
+    loadPlotFileAct = new QAction(tr("load"), this);
+    loadPlotFileAct->setStatusTip(tr("load the opened file in 3d-plot"));
+    connect(loadPlotFileAct, &QAction::triggered, this, [this]() {
+        GCodeEdit *child = activeGCodeEdit();
+        if (!child)
+            return;
+
+        if (!livePlotterDock)
+            return;
+        std::vector<IMillTaskInterface::ToolPath> toolPath;
+
+        QString qFileName = child->getActiveFilePath();
+        std::string filename(qFileName.toStdString());
+        millIf_->loadfile(filename.c_str(), toolPath);
+
+        QVector<QVector3D> initialPath;
+        auto firstPoint = toolPath.back();
+        for (auto &point : toolPath) {
+            initialPath.append(QVector3D(
+//                point.x - firstPoint.x,
+//                point.y - firstPoint.y,
+//                point.z - firstPoint.z
+                  point.x,
+                  point.y,
+                  point.z
+            ));
+
+        }
+        livePlotter->setPath(initialPath);
     });
 
 }
@@ -357,6 +385,7 @@ void MainWindow::createMenus()
     toolMenu = menuBar()->addMenu(tr("工具"));
     toolMenu->addAction(toolTableAct);
     toolMenu->addAction(pathPlotAct);
+    toolMenu->addAction(loadPlotFileAct);
     
     helpMenu = menuBar()->addMenu(tr("帮助"));
     helpMenu->addAction(aboutQtAct);
@@ -364,15 +393,6 @@ void MainWindow::createMenus()
 
 void MainWindow::createToolBars()
 {
-    // fileToolBar = addToolBar(tr("文件"));
-    // fileToolBar->addAction(newAct);
-    // fileToolBar->addAction(openAct);
-    // fileToolBar->addAction(saveAct);
-    
-    // editToolBar = addToolBar(tr("编辑"));
-    // editToolBar->addAction(cutAct);
-    // savtToolBar->addAction(copyAct);
-    // editToolBar->addAction(pasteAct);
     fileToolBar = addToolBar(tr("文件"));
     fileToolBar->addAction(newAct);
     fileToolBar->addAction(openAct);
@@ -382,6 +402,11 @@ void MainWindow::createToolBars()
     editToolBar->addAction(cutAct);
     editToolBar->addAction(copyAct);  // 修复：savtToolBar -> editToolBar
     editToolBar->addAction(pasteAct);
+
+    viewToolBar = addToolBar(tr("View"));
+    viewToolBar->addAction(toolTableAct);
+    viewToolBar->addAction(pathPlotAct);
+    viewToolBar->addAction(loadPlotFileAct);
 }
 
 void MainWindow::createStatusBar()
@@ -411,27 +436,39 @@ void MainWindow::writeSettings()
 
 void MainWindow::setDock()
 {
-    // Only create dock and plotter if not already created (optional, but recommended)
-      if (!livePlotterDock) {
-          livePlotterDock = new QDockWidget(tr("Live Plotter"), this); // livePlotterDock is a member variable
-          livePlotter = new LivePlotter(livePlotterDock);              // livePlotter is a member variable
-          livePlotterDock->setWidget(livePlotter);
-          addDockWidget(Qt::RightDockWidgetArea, livePlotterDock);
-      }
+    if (!livePlotterDock) {
+        livePlotterDock = new QDockWidget(tr("3D Path Viewer"), this);
+        livePlotter = new LivePlotter(livePlotterDock);
+        livePlotterDock->setWidget(livePlotter);
+        addDockWidget(Qt::RightDockWidgetArea, livePlotterDock);
 
-      static float t = 0;
-      // Only create simTimer if not already created
-      if (!simTimer) {
-          simTimer = new QTimer(this);
-          QObject::connect(simTimer, &QTimer::timeout, this, [this]() {
-              float r = 0.2f + 0.005f * t;
-              float x = r * std::cos(t);
-              float y = r * std::sin(t);
-              this->livePlotter->addPoint(QVector3D(x, y, 0));
-              t += 0.05f;
-          });
-          simTimer->start(20);
-      }
+        // Start with some sample data
+        QVector<QVector3D> initialPath;
+        for (float t = 0; t < 6.28f; t += 0.1f) {
+            float r = 0.5f + 0.1f * t;
+            initialPath.append(QVector3D(
+                r * cos(t),
+                r * sin(t),
+                t/10.0f
+            ));
+        }
+        livePlotter->setPath(initialPath);
+    }
+
+//    if (!simTimer) {
+//        simTimer = new QTimer(this);
+//        float t = 0;
+//        connect(simTimer, &QTimer::timeout, this, [this, t]() mutable {
+//            t += 0.05f;
+//            float r = 0.5f + 0.1f * t;
+//            livePlotter->addPoint(QVector3D(
+//                r * cos(t),
+//                r * sin(t),
+//                t/10.0f
+//            ));
+//        });
+//        simTimer->start(50); // Update every 50ms
+//    }
 }
 
 void MainWindow::createBckThread()

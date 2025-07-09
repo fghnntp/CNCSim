@@ -23,21 +23,35 @@ file(GLOB MILLTASK_HEADERS
     "*.hpp"
 )
 
+## disabled:	emc/task/iotaskintf.cc
+#MILLTASKSRCS := \
+#        emc/motion/emcmotglb.c \
+#        emc/task/emctask.cc \
+#        emc/task/emccanon.cc \
+#        emc/task/emctaskmain.cc \
+#        emc/motion/usrmotintf.cc \
+#        emc/motion/emcmotutil.c \
+#        emc/task/taskintf.cc \
+#        emc/motion/dbuf.c \
+#        emc/motion/stashf.c \
+#        emc/task/taskclass.cc \
+#        emc/task/backtrace.cc \
+
 # 创建动态库
 add_library(milltask SHARED
     ${MILLTASK_SOURCES}
     ${MILLTASK_HEADERS}
-#    ${LINUX_CNC_SRC}/emc/motion/emcmotglb.c
-#    ${LINUX_CNC_SRC}/emc/task/emctask.cc
-#    ${LINUX_CNC_SRC}/emc/task/emccanon.cc
-#    ${LINUX_CNC_SRC}/emc/task/emctaskmain.cc
-#    ${LINUX_CNC_SRC}/emc/motion/usrmotintf.cc
-#    ${LINUX_CNC_SRC}/emc/motion/emcmotutil.c
-#    ${LINUX_CNC_SRC}/emc/task/taskintf.cc
-#    ${LINUX_CNC_SRC}/emc/motion/dbuf.c
-#    ${LINUX_CNC_SRC}/emc/motion/stashf.c
-#    ${LINUX_CNC_SRC}/emc/task/taskclass.cc
-#    ${LINUX_CNC_SRC}/emc/task/backtrace.cc
+    ${LINUX_CNC_SRC}/emc/motion/emcmotglb.c
+    ${LINUX_CNC_SRC}/emc/task/emctask.cc
+    ${LINUX_CNC_SRC}/emc/task/emccanon.cc
+    ${LINUX_CNC_SRC}/emc/task/emctaskmain.cc
+    ${LINUX_CNC_SRC}/emc/motion/usrmotintf.cc
+    ${LINUX_CNC_SRC}/emc/motion/emcmotutil.c
+    ${LINUX_CNC_SRC}/emc/task/taskintf.cc
+    ${LINUX_CNC_SRC}/emc/motion/dbuf.c
+    ${LINUX_CNC_SRC}/emc/motion/stashf.c
+    ${LINUX_CNC_SRC}/emc/task/taskclass.cc
+    ${LINUX_CNC_SRC}/emc/task/backtrace.cc
 )
 
 # 设置库的输出名称（可选）
@@ -60,6 +74,7 @@ target_link_libraries(milltask PRIVATE
     ${LINUX_CNC_LIB}/libtooldata.so
 )
 
+
 # 设置头文件包含目录
 target_include_directories(milltask PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -70,8 +85,7 @@ target_include_directories(milltask PUBLIC
     ${LINUX_CNC_SRC}/emc/pythonplugin
     /usr/include/python3.11
     ${LINUX_CNC_SRC}/emc/rs274ngc
-#    ${LINUX_CNC_SRC}/emc/motion
-
+    ${LINUX_CNC_SRC}/emc/motion
 #    ${LINUX_CNC_SRC}/emc/nml_intf
 #    ${LINUX_CNC_SRC}/emc/motion
 #    ${LINUX_CNC_SRC}/libnml/nml

@@ -196,6 +196,11 @@ void GCodeEdit::setHighlightEnabled(bool enabled)
     }
 }
 
+QString GCodeEdit::getActiveFilePath()
+{
+    return currentFilePath;
+}
+
 int GCodeEdit::lineNumberAreaWidth()
 {
     if (!showLineNumbers) {

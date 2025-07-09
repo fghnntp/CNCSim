@@ -46,35 +46,8 @@ int main(int argc, char *argv[])
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication a(argc, argv);
 
-    // Launch LinuxCNCsrv (non-blocking)
-    QProcess linuxcncProcess;
-    linuxcncProcess.start("linuxcncsvr",
-                          QStringList() <<
-                          EMC_INI_FILE);
-
-    // Check if LinuxCNC started (but don't wait)
-    if (!linuxcncProcess.waitForStarted(1000)) {  // 1s timeout
-        qCritical() << "Failed to start LinuxCNC!";
-        return 1;
-    }
-
     MainWindow w;
     w.show();
-
-    // Optional: Monitor LinuxCNC status (e.g., if it crashes)
-    QObject::connect(&linuxcncProcess, &QProcess::errorOccurred, [&]() {
-        qWarning() << "LinuxCNC error:" << linuxcncProcess.errorString();
-    });
-
-    // Ensure LinuxCNC is killed when Qt app exits
-    QObject::connect(&a, &QApplication::aboutToQuit, [&]() {
-        if (linuxcncProcess.state() == QProcess::Running) {
-            linuxcncProcess.terminate();
-            if (!linuxcncProcess.waitForFinished(2000)) {
-                linuxcncProcess.kill();  // Force kill if needed
-            }
-        }
-    });
 
     return a.exec();
 }

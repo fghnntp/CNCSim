@@ -46,6 +46,7 @@ public:
     // 设置选项
     void setShowLineNumbers(bool show);
     void setHighlightEnabled(bool enabled);
+    QString getActiveFilePath();
 private:
     QString currentFilePath;  // 当前文件路径
 public:
