@@ -345,16 +345,18 @@ void MainWindow::createActions()
         std::string filename(qFileName.toStdString());
         millIf_->loadfile(filename.c_str(), toolPath);
 
+//        livePlotter->setFixedView(true);
+
         QVector<QVector3D> initialPath;
         auto firstPoint = toolPath.back();
         for (auto &point : toolPath) {
             initialPath.append(QVector3D(
-//                point.x - firstPoint.x,
-//                point.y - firstPoint.y,
-//                point.z - firstPoint.z
-                  point.x,
-                  point.y,
-                  point.z
+                point.x - firstPoint.x,
+                point.y - firstPoint.y,
+                point.z - firstPoint.z
+//                  point.x,
+//                  point.y,
+//                  point.z
             ));
 
         }
@@ -441,6 +443,7 @@ void MainWindow::setDock()
         livePlotter = new LivePlotter(livePlotterDock);
         livePlotterDock->setWidget(livePlotter);
         addDockWidget(Qt::RightDockWidgetArea, livePlotterDock);
+        //livePlotter->setFixedView(true);
 
         // Start with some sample data
         QVector<QVector3D> initialPath;
