@@ -5,6 +5,7 @@
 #include <QPainter>
 #include <QTextBlock>
 #include <QScrollBar>
+#include <QMessageBox>
 
 // GCodeHighlighter 实现
 GCodeHighlighter::GCodeHighlighter(QTextDocument *parent)
@@ -244,21 +245,19 @@ void GCodeEdit::resizeEvent(QResizeEvent *e)
 
 void GCodeEdit::highlightCurrentLine()
 {
-    QList<QTextEdit::ExtraSelection> extraSelections;
-
     if (!isReadOnly()) {
+        otherSelections.clear();
+
         QTextEdit::ExtraSelection selection;
-
         QColor lineColor = QColor(Qt::yellow).lighter(160);
-
         selection.format.setBackground(lineColor);
         selection.format.setProperty(QTextFormat::FullWidthSelection, true);
         selection.cursor = textCursor();
         selection.cursor.clearSelection();
-        extraSelections.append(selection);
-    }
 
-    setExtraSelections(extraSelections);
+        otherSelections.append(selection);
+        updateExtraSelections();
+    }
 }
 
 void GCodeEdit::lineNumberAreaPaintEvent(QPaintEvent *event)
@@ -287,5 +286,135 @@ void GCodeEdit::lineNumberAreaPaintEvent(QPaintEvent *event)
         top = bottom;
         bottom = top + qRound(blockBoundingRect(block).height());
         ++blockNumber;
+    }
+}
+
+// Search functionality implementation
+bool GCodeEdit::find(const QString &searchText, QTextDocument::FindFlags flags)
+{
+    if (searchText.isEmpty()) {
+        clearSearchHighlight();
+        emit searchResult(false);
+        return false;
+    }
+
+    bool found = false;
+    QTextCursor cursor = textCursor();
+
+    if (lastSearchText != searchText) {
+        // New search - start from current position
+        cursor.setPosition(cursor.selectionStart());
+        lastSearchText = searchText;
+    }
+
+    cursor = document()->find(searchText, cursor, flags);
+
+    if (!cursor.isNull()) {
+        setTextCursor(cursor);
+        found = true;
+    } else {
+        // Wrap around if not found
+        if (flags & QTextDocument::FindBackward) {
+            cursor.movePosition(QTextCursor::End);
+        } else {
+            cursor.movePosition(QTextCursor::Start);
+        }
+        cursor = document()->find(searchText, cursor, flags);
+        if (!cursor.isNull()) {
+            setTextCursor(cursor);
+            found = true;
+        }
+    }
+
+    highlightSearchResults(searchText);
+    emit searchResult(found);
+    return found;
+}
+
+bool GCodeEdit::findNext()
+{
+    if (lastSearchText.isEmpty()) return false;
+    return find(lastSearchText);
+}
+
+bool GCodeEdit::findPrevious()
+{
+    if (lastSearchText.isEmpty()) return false;
+    return find(lastSearchText, QTextDocument::FindBackward);
+}
+
+void GCodeEdit::clearSearchHighlight()
+{
+    searchSelections.clear();
+    updateExtraSelections();
+    lastSearchText.clear();
+}
+
+void GCodeEdit::updateExtraSelections()
+{
+    QList<QTextEdit::ExtraSelection> allSelections;
+    allSelections.append(otherSelections);
+    allSelections.append(searchSelections);
+    setExtraSelections(allSelections);
+}
+
+void GCodeEdit::highlightSearchResults(const QString &searchText)
+{
+    searchSelections.clear();
+
+    if (searchText.isEmpty()) {
+        updateExtraSelections();
+        return;
+    }
+
+    QTextEdit::ExtraSelection selection;
+    QColor highlightColor = QColor(Qt::yellow).lighter(160);
+    selection.format.setBackground(highlightColor);
+
+    QTextCursor cursor(document());
+    while (!cursor.isNull() && !cursor.atEnd()) {
+        cursor = document()->find(searchText, cursor);
+        if (!cursor.isNull()) {
+            selection.cursor = cursor;
+            searchSelections.append(selection);
+        }
+    }
+
+    updateExtraSelections();
+}
+
+void GCodeEdit::replace(const QString &searchText, const QString &replaceText,
+                       QTextDocument::FindFlags flags)
+{
+    QTextCursor cursor = textCursor();
+    if (cursor.hasSelection() && cursor.selectedText() == searchText) {
+        cursor.insertText(replaceText);
+    }
+    find(searchText, flags);
+}
+
+void GCodeEdit::replaceAll(const QString &searchText, const QString &replaceText,
+                         QTextDocument::FindFlags flags)
+{
+    QTextCursor cursor(document());
+    cursor.beginEditBlock();
+
+    int count = 0;
+    while (true) {
+        cursor = document()->find(searchText, cursor, flags);
+        if (cursor.isNull()) break;
+
+        cursor.insertText(replaceText);
+        count++;
+    }
+
+    cursor.endEditBlock();
+
+    if (count > 0) {
+        QMessageBox::information(this, tr("Replace All"),
+                               tr("Replaced %1 occurrences").arg(count));
+    } else {
+        QMessageBox::information(this, tr("Replace All"),
+                               tr("No occurrences found"));
     }
 }

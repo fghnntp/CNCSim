@@ -51,6 +51,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     createBckThread();
 
+    // Add search toolbar
+    createSearchToolBar();
 }
 
 MainWindow::~MainWindow()
@@ -208,6 +210,13 @@ void MainWindow::updateMenus()
     separatorAct->setVisible(hasMdiChild);
     
     updateWindowMenu();
+
+    // Update search actions
+    findAct->setEnabled(hasMdiChild);
+    findNextAct->setEnabled(hasMdiChild);
+    findPreviousAct->setEnabled(hasMdiChild);
+    replaceAct->setEnabled(hasMdiChild);
+    replaceAllAct->setEnabled(hasMdiChild);
 }
 
 void MainWindow::updateWindowMenu()
@@ -379,7 +388,44 @@ void MainWindow::createActions()
         livePlotter->setPath(initialPath);
     });
 
+    // Add search actions
+    createSearchActions();
+
 }
+
+void MainWindow::createSearchActions()
+{
+    // Find action
+    findAct = new QAction(QIcon::fromTheme("edit-find"), tr("&Find..."), this);
+    findAct->setShortcuts(QKeySequence::Find);
+    findAct->setStatusTip(tr("Find text in current document"));
+    connect(findAct, &QAction::triggered, this, &MainWindow::find);
+
+    // Find next action
+    findNextAct = new QAction(tr("Find &Next"), this);
+    findNextAct->setShortcut(QKeySequence::FindNext);
+    findNextAct->setStatusTip(tr("Find next occurrence"));
+    connect(findNextAct, &QAction::triggered, this, &MainWindow::findNext);
+
+    // Find previous action
+    findPreviousAct = new QAction(tr("Find &Previous"), this);
+    findPreviousAct->setShortcut(QKeySequence::FindPrevious);
+    findPreviousAct->setStatusTip(tr("Find previous occurrence"));
+    connect(findPreviousAct, &QAction::triggered, this, &MainWindow::findPrevious);
+
+    // Replace action
+    replaceAct = new QAction(tr("&Replace..."), this);
+    replaceAct->setShortcut(QKeySequence::Replace);
+    replaceAct->setStatusTip(tr("Replace text in current document"));
+    connect(replaceAct, &QAction::triggered, this, &MainWindow::replace);
+
+    // Replace all action
+    replaceAllAct = new QAction(tr("Replace &All"), this);
+    replaceAllAct->setStatusTip(tr("Replace all occurrences"));
+    connect(replaceAllAct, &QAction::triggered, this, &MainWindow::replaceAll);
+}
+
+
 
 void MainWindow::createMenus()
 {
@@ -407,7 +453,118 @@ void MainWindow::createMenus()
     
     helpMenu = menuBar()->addMenu(tr("帮助"));
     helpMenu->addAction(aboutQtAct);
+
+    // Add search menu
+    searchMenu = menuBar()->addMenu(tr("&Search"));
+    searchMenu->addAction(findAct);
+    searchMenu->addAction(findNextAct);
+    searchMenu->addAction(findPreviousAct);
+    searchMenu->addSeparator();
+    searchMenu->addAction(replaceAct);
+    searchMenu->addAction(replaceAllAct);
 }
+
+void MainWindow::createSearchToolBar()
+{
+    searchToolBar = addToolBar(tr("Search"));
+    searchToolBar->setObjectName("SearchToolBar");
+
+    // Search line edit
+    searchLineEdit = new QLineEdit;
+    searchLineEdit->setPlaceholderText(tr("Search..."));
+    searchLineEdit->setClearButtonEnabled(true);
+    searchLineEdit->setMaximumWidth(200);
+    connect(searchLineEdit, &QLineEdit::returnPressed, this, &MainWindow::find);
+
+    // Replace line edit
+    replaceLineEdit = new QLineEdit;
+    replaceLineEdit->setPlaceholderText(tr("Replace with..."));
+    replaceLineEdit->setClearButtonEnabled(true);
+    replaceLineEdit->setMaximumWidth(200);
+
+    // Add widgets to toolbar
+    searchToolBar->addWidget(searchLineEdit);
+    searchToolBar->addAction(findAct);
+    searchToolBar->addAction(findNextAct);
+    searchToolBar->addAction(findPreviousAct);
+    searchToolBar->addSeparator();
+    searchToolBar->addWidget(replaceLineEdit);
+    searchToolBar->addAction(replaceAct);
+    searchToolBar->addAction(replaceAllAct);
+}
+
+
+void MainWindow::find()
+{
+    GCodeEdit *editor = activeGCodeEdit();
+    if (!editor) return;
+
+    QString searchText = searchLineEdit->text();
+    if (searchText.isEmpty()) return;
+
+    bool found = editor->find(searchText);
+    if (!found) {
+        QMessageBox::information(this, tr("Find"),
+                                tr("No matches found for '%1'").arg(searchText));
+    }
+}
+
+void MainWindow::findNext()
+{
+    GCodeEdit *editor = activeGCodeEdit();
+    if (!editor) return;
+
+    QString searchText = searchLineEdit->text();
+    if (searchText.isEmpty()) return;
+
+    bool found = editor->findNext();
+    if (!found) {
+        QMessageBox::information(this, tr("Find"),
+                                tr("No more matches found for '%1'").arg(searchText));
+    }
+}
+
+void MainWindow::findPrevious()
+{
+    GCodeEdit *editor = activeGCodeEdit();
+    if (!editor) return;
+
+    QString searchText = searchLineEdit->text();
+    if (searchText.isEmpty()) return;
+
+    bool found = editor->findPrevious();
+    if (!found) {
+        QMessageBox::information(this, tr("Find"),
+                                tr("No previous matches found for '%1'").arg(searchText));
+    }
+}
+
+void MainWindow::replace()
+{
+    GCodeEdit *editor = activeGCodeEdit();
+    if (!editor) return;
+
+    QString searchText = searchLineEdit->text();
+    QString replaceText = replaceLineEdit->text();
+
+    if (searchText.isEmpty()) return;
+
+    editor->replace(searchText, replaceText);
+}
+
+void MainWindow::replaceAll()
+{
+    GCodeEdit *editor = activeGCodeEdit();
+    if (!editor) return;
+
+    QString searchText = searchLineEdit->text();
+    QString replaceText = replaceLineEdit->text();
+
+    if (searchText.isEmpty()) return;
+
+    editor->replaceAll(searchText, replaceText);
+}
+
 
 void MainWindow::createToolBars()
 {

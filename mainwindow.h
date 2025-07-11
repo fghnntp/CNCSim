@@ -16,6 +16,7 @@
 #include <QDockWidget>
 #include "mill_task_interface.h"
 #include "rtapp_interface.h"
+#include <QLineEdit>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -73,11 +74,13 @@ private:
     QMenu *windowMenu;
     QMenu *helpMenu;
     QMenu *toolMenu;
+    QMenu *searchMenu;
     
     // 工具栏
     QToolBar *fileToolBar;
     QToolBar *editToolBar;
     QToolBar *viewToolBar;
+    QToolBar *searchToolBar;
     
     // 动作
     QAction *newAct;
@@ -111,6 +114,23 @@ private:
 
     QDockWidget *livePlotterMotionDock;
     LivePlotterMotion *livePlotterMotion;
+private slots:
+    void find();
+    void findNext();
+    void findPrevious();
+    void replace();
+    void replaceAll();
+
+private:
+    void createSearchActions();
+    void createSearchToolBar();
+    QLineEdit *searchLineEdit;
+    QLineEdit *replaceLineEdit;
+    QAction *findAct;
+    QAction *findNextAct;
+    QAction *findPreviousAct;
+    QAction *replaceAct;
+    QAction *replaceAllAct;
 };
 
 #endif // MAINWINDOW_H
