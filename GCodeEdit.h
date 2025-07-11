@@ -47,6 +47,19 @@ public:
     void setShowLineNumbers(bool show);
     void setHighlightEnabled(bool enabled);
     QString getActiveFilePath();
+
+    // 搜索功能
+    bool find(const QString &searchText,
+             QTextDocument::FindFlags flags = QTextDocument::FindFlags());
+    bool findNext();
+    bool findPrevious();
+    void clearSearchHighlight();
+
+    // 替换功能
+    void replace(const QString &searchText, const QString &replaceText,
+                QTextDocument::FindFlags flags = QTextDocument::FindFlags());
+    void replaceAll(const QString &searchText, const QString &replaceText,
+                   QTextDocument::FindFlags flags = QTextDocument::FindFlags());
 private:
     QString currentFilePath;  // 当前文件路径
 public:
@@ -54,6 +67,9 @@ public:
     QString getCurrentFilePath() const { return currentFilePath; }
     void setCurrentFilePath(const QString &path) { currentFilePath = path; }
     bool hasValidFilePath() const { return !currentFilePath.isEmpty();}
+
+signals:
+    void searchResult(bool found);
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
@@ -67,11 +83,21 @@ private:
     void setupEditor();
     void lineNumberAreaPaintEvent(QPaintEvent *event);
     int lineNumberAreaWidth();
+    void highlightSearchResults(const QString &searchText);
 
     class LineNumberArea;
     LineNumberArea *lineNumberArea;
     GCodeHighlighter *highlighter;
     bool showLineNumbers;
+
+    // Search related members
+    QTextCursor lastFoundCursor;
+
+private:
+    QString lastSearchText;
+    QList<QTextEdit::ExtraSelection> searchSelections;
+    QList<QTextEdit::ExtraSelection> otherSelections; // For non-search highlights
+    void updateExtraSelections();
 };
 
 // 行号显示区域
