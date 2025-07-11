@@ -6,7 +6,7 @@
 #include <rtapi_string.h>
 
 
-MillTask::MillTask(char* emcFile) : running(false) {
+MillTask::MillTask(const char* emcFile) : running(false) {
     emcFile_ = std::string(emcFile);
     if (emcFile_ != "") {// replace it when it's a good file
         strcpy(emc_inifile, emcFile_.c_str());

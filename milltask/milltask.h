@@ -14,7 +14,7 @@
 
 class MillTask {
 public:
-    MillTask(char* emcFile=nullptr);
+    MillTask(const char* emcFile=nullptr);
     ~MillTask();
 
     // Start the worker thread

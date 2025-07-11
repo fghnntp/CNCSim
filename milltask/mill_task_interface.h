@@ -20,7 +20,7 @@ public:
 
 
     // Factory function
-    static IMillTaskInterface* create(char* emcfile = nullptr);
+    static IMillTaskInterface* create(const char* emcfile = nullptr);
 };
 
 extern "C" {

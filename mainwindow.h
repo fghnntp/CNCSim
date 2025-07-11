@@ -12,6 +12,7 @@
 #include "GCodeEdit.h"
 #include "tool_manager.h"
 #include "live_plotter.h"
+#include "live_plotter_motion.h"
 #include <QDockWidget>
 #include "mill_task_interface.h"
 #include "rtapp_interface.h"
@@ -107,6 +108,9 @@ private:
     QTimer *simTimer;
     QDockWidget *livePlotterDock;
     LivePlotter *livePlotter;
+
+    QDockWidget *livePlotterMotionDock;
+    LivePlotterMotion *livePlotterMotion;
 };
 
 #endif // MAINWINDOW_H
