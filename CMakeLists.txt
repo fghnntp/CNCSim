@@ -10,17 +10,18 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find Qt version (Qt5 or Qt6)
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Charts)
 
 # Find Qt modules with the proper variable
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED Charts)
 
 find_package(OpenGL REQUIRED)
 
 # 添加 tool 子目录
 add_subdirectory(tool)
 add_subdirectory(milltask)
-add_subdirectory(rtapp)
+# add_subdirectory(rtapp)
+add_subdirectory(motionplanner)
 
 set(PROJECT_SOURCES
         main.cpp
@@ -33,6 +34,8 @@ set(PROJECT_SOURCES
         ToolTableDialog.cpp
         cnc_config.h
         live_plotter.cpp
+        live_plotter.h
+        live_plotter_motion.cpp
         live_plotter.h
 )
 
@@ -64,11 +67,20 @@ target_include_directories(cnc PRIVATE
    ${CMAKE_CURRENT_SOURCE_DIR}/milltask
    ${CMAKE_CURRENT_SOURCE_DIR}/rtapp
 )
+
+# Link Charts if found
+if(TARGET Qt${QT_VERSION_MAJOR}::Charts)
+    target_link_libraries(${PROJECT_NAME} PRIVATE Qt${QT_VERSION_MAJOR}::Charts)
+    add_definitions(-DHAVE_QT_CHARTS)
+else()
+    message(WARNING "Qt Charts module not found - some features will be disabled")
+endif()
+
 #target_link_libraries(milltask PUBLIC Qt${QT_VERSION_MAJOR}::Widgets)
 target_link_libraries(cnc PUBLIC Qt${QT_VERSION_MAJOR}::Widgets OpenGL::GL
     tool
     milltask
-    rtapp
+    motionplanner
 )
 
 set_target_properties(cnc PROPERTIES

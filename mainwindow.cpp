@@ -24,6 +24,8 @@ MainWindow::MainWindow(QWidget *parent)
     simTimer = nullptr;
     livePlotter = nullptr;
     livePlotterDock = nullptr;
+    livePlotterMotion = nullptr;
+    livePlotterMotionDock = nullptr;
 
     // 创建 MDI 区域
     mdiArea = new QMdiArea;
@@ -34,8 +36,6 @@ MainWindow::MainWindow(QWidget *parent)
     // 连接 MDI 区域信号
     connect(mdiArea, &QMdiArea::subWindowActivated,
             this, &MainWindow::updateMenus);
-    
-//    setDock();
 
     // 创建界面元素
     createActions();
@@ -64,6 +64,14 @@ void MainWindow::newFile()
     QMdiSubWindow *subWindow = mdiArea->addSubWindow(child);
     
     child->setWindowTitle(tr("未命名%1").arg(mdiArea->subWindowList().size()));
+
+    // Make the editor fill the subwindow
+    child->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    // Make the subwindow fill the MDI area
+    subWindow->setWindowState(Qt::WindowMaximized);
+
+
     child->show();
     
     // 连接子窗口信号
@@ -87,10 +95,23 @@ void MainWindow::openFile()
         if (child->loadFromFile(fileName)) {
             statusBar()->showMessage(tr("文件已加载"), 2000);
             QMdiSubWindow *subWindow = mdiArea->addSubWindow(child);
-            child->setWindowTitle(QFileInfo(fileName).fileName());
-            subWindow->setWindowTitle(QFileInfo(fileName).fileName());
+
+            // Set window title
+            QString title = QFileInfo(fileName).fileName();
+            child->setWindowTitle(title);
+            subWindow->setWindowTitle(title);
+
+            // Make the editor fill the subwindow
+            child->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+            // Make the subwindow fill the MDI area
+            subWindow->setWindowState(Qt::WindowMaximized);
+
+            // Alternatively, if you want to manually set the size:
+            // subWindow->resize(mdiArea->size());
+
             child->show();
-            
+
             connect(child, &GCodeEdit::textChanged, this, &MainWindow::updateMenus);
         } else {
             child->deleteLater();
@@ -345,8 +366,6 @@ void MainWindow::createActions()
         std::string filename(qFileName.toStdString());
         millIf_->loadfile(filename.c_str(), toolPath);
 
-//        livePlotter->setFixedView(true);
-
         QVector<QVector3D> initialPath;
         auto firstPoint = toolPath.back();
         for (auto &point : toolPath) {
@@ -354,9 +373,6 @@ void MainWindow::createActions()
                 point.x - firstPoint.x,
                 point.y - firstPoint.y,
                 point.z - firstPoint.z
-//                  point.x,
-//                  point.y,
-//                  point.z
             ));
 
         }
@@ -443,7 +459,12 @@ void MainWindow::setDock()
         livePlotter = new LivePlotter(livePlotterDock);
         livePlotterDock->setWidget(livePlotter);
         addDockWidget(Qt::RightDockWidgetArea, livePlotterDock);
-        //livePlotter->setFixedView(true);
+        QScreen *screen = QGuiApplication::primaryScreen();
+        QRect screenGeometry = screen->availableGeometry();
+        int oneThirdWidth = screenGeometry.width() / 3;
+
+        // Resize the dock widget
+        livePlotterDock->setMinimumWidth(oneThirdWidth);
 
         // Start with some sample data
         QVector<QVector3D> initialPath;
@@ -458,28 +479,47 @@ void MainWindow::setDock()
         livePlotter->setPath(initialPath);
     }
 
-//    if (!simTimer) {
-//        simTimer = new QTimer(this);
-//        float t = 0;
-//        connect(simTimer, &QTimer::timeout, this, [this, t]() mutable {
-//            t += 0.05f;
-//            float r = 0.5f + 0.1f * t;
-//            livePlotter->addPoint(QVector3D(
-//                r * cos(t),
-//                r * sin(t),
-//                t/10.0f
-//            ));
-//        });
-//        simTimer->start(50); // Update every 50ms
-//    }
+    if (!livePlotterMotionDock) {
+        livePlotterMotionDock = new QDockWidget(tr("Motion Analysis Viewer"), this);
+        livePlotterMotion = new LivePlotterMotion(livePlotterMotionDock);
+        livePlotterMotionDock->setWidget(livePlotterMotion);
+        addDockWidget(Qt::LeftDockWidgetArea, livePlotterMotionDock);
+
+        // Calculate 1/3 of screen width
+        QScreen *screen = QGuiApplication::primaryScreen();
+        QRect screenGeometry = screen->availableGeometry();
+        int oneThirdWidth = screenGeometry.width() / 3;
+
+        // Resize the dock widget
+        livePlotterMotionDock->setMinimumWidth(oneThirdWidth);
+
+        // Start with some sample data
+        QVector<QVector<float>> initialPath;
+        QVector<float> tVec;
+        QVector<float> xVec;
+        QVector<float> yVec;
+        QVector<float> zVec;
+        for (float t = 0; t < 6.28f; t += 0.1f) {
+            float r = 0.5f + 0.1f * t;
+            tVec.append(t);
+            xVec.append(r * cos(t));
+            yVec.append(r * sin(t));
+            zVec.append(t / 10.0f);
+
+        }
+        initialPath.append(tVec);
+        initialPath.append(xVec);
+        initialPath.append(yVec);
+        initialPath.append(zVec);
+
+        livePlotterMotion->setPath(initialPath);
+    }
 }
 
 void MainWindow::createBckThread()
 {
     millIf_ = IMillTaskInterface::create(EMC_INI_FILE);
     millIf_->initialize();
-//    rtAppIf_ = IRtAppInterface::create(EMC_INI_FILE);
-//    rtAppIf_->initialize();
 }
 
 GCodeEdit *MainWindow::activeGCodeEdit()

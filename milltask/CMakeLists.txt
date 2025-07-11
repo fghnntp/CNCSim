@@ -20,22 +20,7 @@ file(GLOB MILLTASK_SOURCES
 
 file(GLOB MILLTASK_HEADERS
     "*.h"
-    "*.hpp"
 )
-
-## disabled:	emc/task/iotaskintf.cc
-#MILLTASKSRCS := \
-#        emc/motion/emcmotglb.c \
-#        emc/task/emctask.cc \
-#        emc/task/emccanon.cc \
-#        emc/task/emctaskmain.cc \
-#        emc/motion/usrmotintf.cc \
-#        emc/motion/emcmotutil.c \
-#        emc/task/taskintf.cc \
-#        emc/motion/dbuf.c \
-#        emc/motion/stashf.c \
-#        emc/task/taskclass.cc \
-#        emc/task/backtrace.cc \
 
 # 创建动态库
 add_library(milltask SHARED

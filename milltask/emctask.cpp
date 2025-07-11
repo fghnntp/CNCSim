@@ -228,6 +228,7 @@ void EMCTask::init_all()
     EMC_AXIS_STAT state;
     int axis_num_ = 0;
 
+    // This is motion simulation init and task simulation init
     initSimulationUserMotionIF();
     init_simulate_taskinft();
 }

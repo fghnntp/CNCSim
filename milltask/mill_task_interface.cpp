@@ -6,7 +6,7 @@
 // Concrete implementation of the interface
 class MillTaskImplementation : public IMillTaskInterface {
 public:
-    MillTaskImplementation(char* emcfile) {
+    MillTaskImplementation(const char* emcfile) {
         // Initialization code
         millTask_ = new MillTask(emcfile);
     }
@@ -48,7 +48,7 @@ private:
 };
 
 // Factory function
-IMillTaskInterface* IMillTaskInterface::create(char* emcFile) {
+IMillTaskInterface* IMillTaskInterface::create(const char* emcFile) {
     return new MillTaskImplementation(emcFile);
 }
 
