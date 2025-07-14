@@ -292,8 +292,13 @@ EMCTask::generateG02G03(EmcPose startPose, EmcPose endPos,
         return points;
     }
 
-    if (turn > 0) {
-        return points;
+    if ( (plane == G_17 && fabs(normal.z) > 0.001 )
+         || (plane == G_18 && fabs(normal.y) > 0.001 )
+         || (plane == G_19 && fabs(normal.x) > 0.001 ) ) {
+        points = generateHelix(startPose, endPos, center, normal, type, turn, plane, motion);
+        for (auto &elemnt : points) {
+            std::cout << "X " << elemnt.x << " Y" << elemnt.y << " Z" << elemnt.z << std::endl;
+        }
     }
     else {
         points = generateArc(startPose, endPos, center, normal, type, plane, motion);
@@ -422,6 +427,146 @@ EMCTask::generateArc(EmcPose startPose, EmcPose endPose, PM_CARTESIAN center, PM
             points.push_back(IMillTaskInterface::ToolPath{center.x + cos(angle),
                                                           center.y + sin(angle),
                                                           startPoint.z});
+
+            if (motion == G_2) {
+                angle -= stepAngle;
+            }
+            else if (motion == G_3) {
+                angle += stepAngle;
+            }
+            cnt += 1;
+        }
+    }
+
+    return points;
+}
+
+std::deque<IMillTaskInterface::ToolPath>
+EMCTask::generateHelix(EmcPose startPose, EmcPose endPose, PM_CARTESIAN center, PM_CARTESIAN normal, int type, int turn, int plane, int motion,
+                       int segement)
+{
+    std::deque<IMillTaskInterface::ToolPath> points;
+
+    IMillTaskInterface::ToolPath startPoint;
+    IMillTaskInterface::ToolPath endPoint;
+    IMillTaskInterface::ToolPath centerPoint;
+
+    startPoint.x = startPose.tran.x;
+    startPoint.y = startPose.tran.y;
+    startPoint.z = startPose.tran.z;
+
+    endPoint.x = endPose.tran.x;
+    endPoint.y = endPose.tran.y;
+    endPoint.z = endPose.tran.z;
+
+    centerPoint.x = center.x;
+    centerPoint.y = center.y;
+    centerPoint.z = center.z;
+
+    IMillTaskInterface::ToolPath startVec;
+    IMillTaskInterface::ToolPath endVec;
+
+    startVec.x = startPoint.x - centerPoint.x;
+    startVec.y = startPoint.y - centerPoint.y;
+    startVec.z = startPoint.z - centerPoint.z;
+
+    endVec.x = endPoint.x - centerPoint.x;
+    endVec.y = endPoint.y - centerPoint.y;
+    endVec.z = endPoint.z - centerPoint.z;
+
+    if (turn == 0)
+        turn = 1;
+
+    if (plane == G_19) {
+        //YZ plane select
+
+        float radius = sqrt(startVec.y * startVec.y
+                            + startVec.z * startVec.z);
+
+        if (fabs(radius) < 0.001)//This is not move traject
+            return points;
+
+        double stepAngle = 2.0 * M_PI / segement;
+        int cnt = 0;
+        double angle = 0.0;
+        double pitch = 0.0;
+        double endP = startPoint.x;
+
+        segement = segement * turn;
+        pitch = (endPoint.x - startPoint.x) / segement;
+
+        while (cnt <= segement) {
+            points.push_back(IMillTaskInterface::ToolPath{endP,
+                                                          center.y + cos(angle),
+                                                          center.z + sin(angle)});
+            endP += pitch;
+
+            if (motion == G_2) {
+                angle -= stepAngle;
+            }
+            else if (motion == G_3) {
+                angle += stepAngle;
+            }
+            cnt += 1;
+        }
+
+    }
+    else if (plane == G_18) {
+        //XZ plane select
+        float radius = sqrt(startVec.x * startVec.x
+                            + startVec.z * startVec.z);
+
+        if (fabs(radius) < 0.001)//This is not move traject
+            return points;
+
+        double stepAngle = 2.0 * M_PI / segement;
+        int cnt = 0;
+        double angle = 0.0;
+        double pitch = 0.0;
+        double endP = startPoint.y;
+
+        segement = segement * turn;
+        pitch = (endPoint.y - startPoint.y) / segement;
+
+        while (cnt <= segement) {
+            points.push_back(IMillTaskInterface::ToolPath{center.x + cos(angle),
+                                                          endP,
+                                                          center.z + sin(angle)});
+            endP += pitch;
+
+            if (motion == G_2) {
+                angle -= stepAngle;
+            }
+            else if (motion == G_3) {
+                angle += stepAngle;
+            }
+            cnt += 1;
+        }
+    }
+    else if (plane == G_17) {
+        //XY plane select
+        float radius = sqrt(startVec.x * startVec.x
+                            + startVec.y * startVec.y);
+
+        if (fabs(radius) < 0.001)//This is not move traject
+            return points;
+
+        double stepAngle = 2.0 * M_PI / segement;
+        int cnt = 0;
+        double angle = 0.0;
+        double pitch = 0.0;
+        double endP = startPoint.z;
+
+        segement = segement * turn;
+        pitch = (endPoint.z - startPoint.z) / segement;
+
+
+        while (cnt <= segement) {
+            points.push_back(IMillTaskInterface::ToolPath{center.x + cos(angle),
+                                                          center.y + sin(angle),
+                                                          endP});
+
+            endP += pitch;
 
             if (motion == G_2) {
                 angle -= stepAngle;

@@ -89,8 +89,8 @@ private:
     std::deque<IMillTaskInterface::ToolPath> generateArc(EmcPose startPose, EmcPose endPos,
                                              PM_CARTESIAN center, PM_CARTESIAN normal,int type, int plane, int motion, int segement = 360);
 
-    std::deque<IMillTaskInterface::ToolPath> generateHelix(EmcPose startPose, EmcPose endPos,
-                                             PM_CARTESIAN center, PM_CARTESIAN normal);
+    std::deque<IMillTaskInterface::ToolPath> generateHelix(EmcPose startPose, EmcPose endPose,
+                                             PM_CARTESIAN center, PM_CARTESIAN normal,int type, int tune, int plane, int motion, int segement = 360);
 
 };
 
