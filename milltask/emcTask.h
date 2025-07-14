@@ -37,6 +37,7 @@ struct iocontrol_str {
 
 #include "motion.h"
 #include "motion_struct.h"      /* emcmot_struct_t */
+#include <deque>
 
 class EMCTask {
 public:
@@ -56,7 +57,7 @@ public:
     tooldb_t db_mode {tooldb_t::DB_NOTUSED};
     int tool_status;
 
-    int load_file(std::string filename, std::vector<IMillTaskInterface::ToolPath>* toolPath);
+    int load_file(std::string filename, std::vector<IMillTaskInterface::ToolPath>* toolPath, std::string &err);
 
     void init_all(void);
 private:
@@ -79,6 +80,18 @@ private:
     emcmot_internal_t *emcmotInternal;
     emcmot_error_t *emcmotError;
     emcmot_struct_t *emcmotStruct;
+
+    // Arch Helix Generator
+    std::deque<IMillTaskInterface::ToolPath> generateG02G03(EmcPose startPose, EmcPose endPos,
+                                             PM_CARTESIAN center, PM_CARTESIAN normal,
+                                              int type, int turn, int plane, int motion, int segement = 36);
+
+    std::deque<IMillTaskInterface::ToolPath> generateArc(EmcPose startPose, EmcPose endPos,
+                                             PM_CARTESIAN center, PM_CARTESIAN normal,int type, int plane, int motion, int segement = 360);
+
+    std::deque<IMillTaskInterface::ToolPath> generateHelix(EmcPose startPose, EmcPose endPos,
+                                             PM_CARTESIAN center, PM_CARTESIAN normal);
+
 };
 
 

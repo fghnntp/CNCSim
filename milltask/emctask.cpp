@@ -12,6 +12,8 @@
 #include "interpl.hh"
 
 #include "emc.hh"
+#include <sstream>
+#include <iomanip>
 
 
 
@@ -61,39 +63,44 @@ EMCTask::EMCTask(std::string iniFileName)
 
 }
 
-int EMCTask::load_file(std::string filename, std::vector<IMillTaskInterface::ToolPath>* toolPath)
+
+
+int EMCTask::load_file(std::string filename, std::vector<IMillTaskInterface::ToolPath>* toolPath, std::string &err)
 {
     if (!pinterp)//Wrong
         return 1;
 
     if (interp_list.len() > 0) {
         //Clear the useless msg first
-        interp_list.get();
+        interp_list.clear();
+        return 2;
     }
 
     if (pinterp->open(filename.c_str())) {
-        printf("Wrong filename");
-        return 2;
+        std::cout << filename << " Wrong file" << std::endl;
+        return 3;
     }
 
     int code = 0;
     char errText[256];
-    int retval = 0;
     memset(errText, 0, 256);
     while (!pinterp->read()) {
         code = pinterp->execute();
-        if (code >= INTERP_ENDFILE) {
-            retval = 3;
-            pinterp->reset();
-            printf("%s \n", pinterp->error_text(code, errText, 256));
-            break;
+        if (code > INTERP_ENDFILE) {
+            std::ostringstream oss;
+            oss << std::fixed << std::setprecision(6); // 保证6位小数且非科学计数法
+            oss << "file:" << pinterp->file_name(errText, 256);
+            oss << " line:" << pinterp->line() << " " << pinterp->line_text(errText, 256);
+            oss << " err:" << pinterp->error_text(code, errText, 256);
+            err = oss.str();
+            std::cout << err << std::endl;
+            pinterp->reset();//This should reset the interp
+            pinterp->close();
+            return 4;
         }
     }
 
     pinterp->close();
-
-    if (retval)
-        return retval;
 
     while (interp_list.len() > 0) {
         auto msg = interp_list.get();
@@ -107,10 +114,50 @@ int EMCTask::load_file(std::string filename, std::vector<IMillTaskInterface::Too
             path.z = pose.tran.z;
             toolPath->push_back(path);
         }
+        else if (msg->_type == EMC_TRAJ_CIRCULAR_MOVE_TYPE) {
+            auto msgRel = msg.get();
+            auto lmmsg = (EMC_TRAJ_CIRCULAR_MOVE*)msgRel;
+            EmcPose startPos;
+            EmcPose endPos;
+            PM_CARTESIAN center;
+            PM_CARTESIAN normal;
+            int turn;
+            int type;
+
+            startPos.tran.x = 0.0;
+            startPos.tran.y = 0.0;
+            startPos.tran.z = 0.0;
+            if (toolPath->size() > 0) {
+                IMillTaskInterface::ToolPath lastPath = toolPath->back();
+                startPos.tran.x = lastPath.x;
+                startPos.tran.y = lastPath.y;
+                startPos.tran.z = lastPath.z;
+            }
+
+            endPos = lmmsg->end;
+            center = lmmsg->center;
+            normal = lmmsg->normal;
+            turn = lmmsg->turn;
+            type = lmmsg->type;
+            int plane = lmmsg->tag.get_state_tag().fields[GM_FIELD_PLANE];
+            int motion = lmmsg->tag.get_state_tag().fields[GM_FIELD_MOTION_MODE];
+
+            auto G0203Path = generateG02G03(startPos, endPos, center, normal, type, turn, plane, motion);
+            while (!G0203Path.empty()) {
+                auto elemnt = G0203Path.front();
+                toolPath->push_back(elemnt);
+                G0203Path.pop_front();
+            }
+        }
     }
+
+    if (toolPath->size() == 0)
+        return 5;
 
     return 0;
 }
+
+
 
 //#include "task.hh"
 void EMCTask::init_all()
@@ -231,6 +278,162 @@ void EMCTask::init_all()
     // This is motion simulation init and task simulation init
     initSimulationUserMotionIF();
     init_simulate_taskinft();
+}
+
+std::deque <IMillTaskInterface::ToolPath>
+EMCTask::generateG02G03(EmcPose startPose, EmcPose endPos,
+                      PM_CARTESIAN center, PM_CARTESIAN normal,
+                      int type, int turn, int plane, int motion, int segement)
+{
+    std::deque<IMillTaskInterface::ToolPath> points;
+
+    if (sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z) < 0.001
+            || (motion != G_2 && motion != G_3)) {
+        return points;
+    }
+
+    if (turn > 0) {
+        return points;
+    }
+    else {
+        points = generateArc(startPose, endPos, center, normal, type, plane, motion);
+    }
+
+    return points;
+}
+
+std::deque<IMillTaskInterface::ToolPath>
+EMCTask::generateArc(EmcPose startPose, EmcPose endPose, PM_CARTESIAN center, PM_CARTESIAN normal, int type, int plane, int motion,
+                     int segement)
+{
+    std::deque<IMillTaskInterface::ToolPath> points;
+
+    IMillTaskInterface::ToolPath startPoint;
+    IMillTaskInterface::ToolPath endPoint;
+    IMillTaskInterface::ToolPath centerPoint;
+
+    startPoint.x = startPose.tran.x;
+    startPoint.y = startPose.tran.y;
+    startPoint.z = startPose.tran.z;
+
+    endPoint.x = endPose.tran.x;
+    endPoint.y = endPose.tran.y;
+    endPoint.z = endPose.tran.z;
+
+    centerPoint.x = center.x;
+    centerPoint.y = center.y;
+    centerPoint.z = center.z;
+
+    IMillTaskInterface::ToolPath startVec;
+    IMillTaskInterface::ToolPath endVec;
+
+    startVec.x = startPoint.x - centerPoint.x;
+    startVec.y = startPoint.y - centerPoint.y;
+    startVec.z = startPoint.z - centerPoint.z;
+
+    endVec.x = endPoint.x - centerPoint.x;
+    endVec.y = endPoint.y - centerPoint.y;
+    endVec.z = endPoint.z - centerPoint.z;
+
+    float radius = sqrt(startVec.x * startVec.x
+                        + startVec.y * startVec.y
+                        + startVec.z * startVec.z);
+
+    if (fabs(radius) < 0.001)//This is not move traject
+        return points;
+
+    if (plane == G_19) {
+        //YZ plane select
+        double startAngle = atan2(startVec.z, startVec.y);
+        double endAngle = atan2(endVec.z, endVec.y);
+
+        double stepAngle = 2.0 * M_PI / segement;
+        int cnt = 0;
+        double angle = 0.0;
+
+        if (fabs(startAngle - endAngle) < 0.001) {
+
+        }
+        else {
+            segement = (fabs(endAngle - startAngle) / (2.0 * M_PI)) * segement;
+        }
+
+        while (cnt <= segement) {
+            points.push_back(IMillTaskInterface::ToolPath{startPoint.x,
+                                                          center.y + cos(angle),
+                                                          center.z + sin(angle)});
+
+            if (motion == G_2) {
+                angle -= stepAngle;
+            }
+            else if (motion == G_3) {
+                angle += stepAngle;
+            }
+            cnt += 1;
+        }
+
+    }
+    else if (plane == G_18) {
+        //XZ plane select
+        double startAngle = atan2(startVec.z, startVec.x);
+        double endAngle = atan2(endVec.z, endVec.x);
+
+        double stepAngle = 2.0 * M_PI / segement;
+        int cnt = 0;
+        double angle = 0.0;
+
+        if (fabs(startAngle - endAngle) < 0.001) {
+
+        }
+        else {
+            segement = (fabs(endAngle - startAngle) / (2.0 * M_PI)) * segement;
+        }
+
+        while (cnt <= segement) {
+            points.push_back(IMillTaskInterface::ToolPath{center.y + cos(angle),
+                                                          0.0,
+                                                          center.z + sin(angle)});
+
+            if (motion == G_2) {
+                angle -= stepAngle;
+            }
+            else if (motion == G_3) {
+                angle += stepAngle;
+            }
+            cnt += 1;
+        }
+    }
+    else if (plane == G_17) {
+        //XY plane select
+        double startAngle = atan2(startVec.y, startVec.x);
+        double endAngle = atan2(endVec.y, endVec.x);
+        double stepAngle = 2.0 * M_PI / segement;
+        int cnt = 0;
+        double angle = 0.0;
+
+        if (fabs(startAngle - endAngle) < 0.001) {
+
+        }
+        else {
+            segement = (fabs(endAngle - startAngle) / (2.0 * M_PI)) * segement;
+        }
+
+        while (cnt <= segement) {
+            points.push_back(IMillTaskInterface::ToolPath{center.x + cos(angle),
+                                                          center.y + sin(angle),
+                                                          startPoint.z});
+
+            if (motion == G_2) {
+                angle -= stepAngle;
+            }
+            else if (motion == G_3) {
+                angle += stepAngle;
+            }
+            cnt += 1;
+        }
+    }
+
+    return points;
 }
 
 EMCTask::~EMCTask() {}

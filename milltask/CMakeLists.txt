@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 # 设置 C++ 标准
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
@@ -23,6 +23,10 @@ file(GLOB MILLTASK_HEADERS
 )
 
 # 创建动态库
+# All real milltask should be compiler
+# And Attention milltask usrmotintf and taskintf
+# should add simulation mode, this allaw this project
+# can use linuxcnc srccode as more as possiabley
 add_library(milltask SHARED
     ${MILLTASK_SOURCES}
     ${MILLTASK_HEADERS}
@@ -47,7 +51,7 @@ set_target_properties(milltask PROPERTIES
 )
 
 #link_directories(${LINUX_CNC_LIB})
-
+#We should link all libs real milltask willbe link
 target_link_libraries(milltask PRIVATE
     ${LINUX_CNC_LIB}/librs274.so
     ${LINUX_CNC_LIB}/liblinuxcnc.a

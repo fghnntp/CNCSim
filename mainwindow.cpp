@@ -373,19 +373,25 @@ void MainWindow::createActions()
 
         QString qFileName = child->getActiveFilePath();
         std::string filename(qFileName.toStdString());
-        millIf_->loadfile(filename.c_str(), toolPath);
+        std::string err;
 
-        QVector<QVector3D> initialPath;
-        auto firstPoint = toolPath.back();
-        for (auto &point : toolPath) {
-            initialPath.append(QVector3D(
-                point.x - firstPoint.x,
-                point.y - firstPoint.y,
-                point.z - firstPoint.z
-            ));
+        if (millIf_->loadfile(filename.c_str(), toolPath, err) == 0) {
+            QVector<QVector3D> initialPath;
+            auto firstPoint = toolPath.back();
+            for (auto &point : toolPath) {
+                initialPath.append(QVector3D(
+                    point.x - firstPoint.x,
+                    point.y - firstPoint.y,
+                    point.z - firstPoint.z
+                ));
 
+            }
+            livePlotter->setPath(initialPath);
+            statusBar()->showMessage(tr("load path finished"), 2000);
         }
-        livePlotter->setPath(initialPath);
+        else {
+            statusBar()->showMessage(tr(err.c_str()), 10000);
+        }
     });
 
     // Add search actions

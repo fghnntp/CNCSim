@@ -35,11 +35,11 @@ public:
         // Shutdown logic
     }
 
-    int loadfile(const char *filename, std::vector<ToolPath> &toolPath) override {
+    int loadfile(const char *filename, std::vector<ToolPath> &toolPath, std::string &err) override {
         std::string name(filename);
         int retval = 0;
 
-        retval = millTask_->taskMethods->load_file(filename, &toolPath);
+        retval = millTask_->taskMethods->load_file(filename, &toolPath, err);
 
         return retval;
     }

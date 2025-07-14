@@ -2,6 +2,7 @@
 #define MILL_TASK_INTERFACE_H
 #ifdef __cplusplus
 #include <vector>
+#include <string>
 // C++ interface
 class IMillTaskInterface {
 public:
@@ -16,7 +17,7 @@ public:
     virtual void processData(const char* input, char* output, int size) = 0;
     virtual void shutdown() = 0;
 
-    virtual int loadfile(const char *filename, std::vector<ToolPath> &toolPath) = 0;
+    virtual int loadfile(const char *filename, std::vector<ToolPath> &toolPath, std::string &err) = 0;
 
 
     // Factory function
