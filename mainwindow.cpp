@@ -51,8 +51,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     createBckThread();
 
-    // Add search toolbar
-    createSearchToolBar();
+
 }
 
 MainWindow::~MainWindow()
@@ -579,10 +578,13 @@ void MainWindow::createToolBars()
     fileToolBar->addAction(openAct);
     fileToolBar->addAction(saveAct);
     
-    editToolBar = addToolBar(tr("编辑"));
-    editToolBar->addAction(cutAct);
-    editToolBar->addAction(copyAct);  // 修复：savtToolBar -> editToolBar
-    editToolBar->addAction(pasteAct);
+//    editToolBar = addToolBar(tr("编辑"));
+//    editToolBar->addAction(cutAct);
+//    editToolBar->addAction(copyAct);  // 修复：savtToolBar -> editToolBar
+//    editToolBar->addAction(pasteAct);
+
+    // Add search toolbar
+    createSearchToolBar();
 
     viewToolBar = addToolBar(tr("View"));
     viewToolBar->addAction(toolTableAct);

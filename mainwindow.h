@@ -78,7 +78,7 @@ private:
     
     // 工具栏
     QToolBar *fileToolBar;
-    QToolBar *editToolBar;
+//    QToolBar *editToolBar;
     QToolBar *viewToolBar;
     QToolBar *searchToolBar;
     
