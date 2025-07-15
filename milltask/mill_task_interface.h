@@ -17,8 +17,10 @@ public:
     virtual void processData(const char* input, char* output, int size) = 0;
     virtual void shutdown() = 0;
 
+    // load the file and get the tool path with nc, one line nc
     virtual int loadfile(const char *filename, std::vector<ToolPath> &toolPath, std::string &err) = 0;
-
+    // generator motion profile for configured tool machine
+    virtual int simulate(const char *filename, std::string &res, std::string &err) = 0;
 
     // Factory function
     static IMillTaskInterface* create(const char* emcfile = nullptr);

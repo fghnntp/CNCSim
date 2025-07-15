@@ -9,9 +9,8 @@
 #include <functional>
 #include <interp_base.hh>
 #include "emcTask.h"
-#include "emcMsgManager.h"
 
-
+//This should be asis worker, and can manage the simultion task
 class MillTask {
 public:
     MillTask(const char* emcFile=nullptr);

@@ -1,5 +1,5 @@
-#ifndef _EMC_MSG_MANAGER_H_
-#define _EMC_MSG_MANAGER_H_
+#ifndef _EMC_MSG_Queue_H_
+#define _EMC_MSG_Queue_H_
 #include <queue>
 #include <mutex>
 #include <condition_variable>

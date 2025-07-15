@@ -43,6 +43,13 @@ public:
 
         return retval;
     }
+
+
+    int simulate(const char *filename, std::string &res, std::string &err) override {
+
+        return 0;
+    }
+
 private:
     MillTask *millTask_;
 };
