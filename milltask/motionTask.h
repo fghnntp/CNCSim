@@ -28,7 +28,8 @@ public:
     /* allocate array for joint data */
     static emcmot_joint_t joints[EMCMOT_MAX_JOINTS];
 
-    void CmdHandler();
+    static void InitMotion();
+    static void CmdHandler();
 
 
     MotionTask() = delete;

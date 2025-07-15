@@ -19,9 +19,6 @@ void EMCParas::init_emc_paras()
     emcStatus->motion.traj.axis_mask=~0;
     InitonUserMotionIF();
     InitTaskinft();
-    std::cout << GetTrajConfig()->Inited << std::endl;
-    GetTrajConfig()->Inited = 0;
-    std::cout << GetTrajConfig()->Inited << std::endl;
 }
 
 void EMCParas::set_traj_maxvel(double vel)

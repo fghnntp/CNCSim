@@ -152,6 +152,7 @@ int EMCTask::load_file(std::string filename, std::vector<IMillTaskInterface::Too
     return 0;
 }
 
+#include "motionTask.h"
 void EMCTask::init_all()
 {
     emcStatus = new EMC_STAT;
@@ -241,6 +242,9 @@ void EMCTask::init_all()
             }
         }
     }
+
+    MotionTask::InitMotion();
+
 }
 
 std::deque <IMillTaskInterface::ToolPath>
@@ -259,9 +263,6 @@ EMCTask::generateG02G03(EmcPose startPose, EmcPose endPos,
          || (plane == G_18 && fabs(normal.y) > 0.001 )
          || (plane == G_19 && fabs(normal.x) > 0.001 ) ) {
         points = generateHelix(startPose, endPos, center, normal, type, turn, plane, motion);
-        for (auto &elemnt : points) {
-            std::cout << "X " << elemnt.x << " Y" << elemnt.y << " Z" << elemnt.z << std::endl;
-        }
     }
     else {
         points = generateArc(startPose, endPos, center, normal, type, plane, motion);

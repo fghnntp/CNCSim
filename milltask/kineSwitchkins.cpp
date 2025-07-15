@@ -241,7 +241,7 @@ static char *sparm;
 
 static int    comp_id;
 //*********************************************************************
-int rtapi_app_main(void)
+int rtapi_app_main_kines(void)
 {
     int i,res;
     char* emsg="other";
@@ -298,26 +298,37 @@ int rtapi_app_main(void)
         emsg =  "Missing inv function"; goto error;
     }
 
-    comp_id = hal_init(kp.kinsname);
-    if(comp_id < 0) goto error;
+//    comp_id = hal_init(kp.kinsname);
+//    if(comp_id < 0) goto error;
 
 //    swdata = hal_malloc(sizeof(struct swdata));
     swdata = new Swdata;
     if (!swdata) goto error;
 
-    res += hal_pin_bit_new("kinstype.is-0", HAL_OUT, &(swdata->kinstype_is_0), comp_id);
-    res += hal_pin_bit_new("kinstype.is-1", HAL_OUT, &(swdata->kinstype_is_1), comp_id);
-    res += hal_pin_bit_new("kinstype.is-2", HAL_OUT, &(swdata->kinstype_is_2), comp_id);
+    swdata->kinstype_is_0 = new hal_bit_t;
+    swdata->kinstype_is_1 = new hal_bit_t;
+    swdata->kinstype_is_2 = new hal_bit_t;
 
-    if (kp.gui_kinstype >=0) {
-        res += hal_pin_float_newf(HAL_IN, &swdata->gui_x, comp_id, "skgui.x");
-        res += hal_pin_float_newf(HAL_IN, &swdata->gui_y, comp_id, "skgui.y");
-        res += hal_pin_float_newf(HAL_IN, &swdata->gui_z, comp_id, "skgui.z");
-        res += hal_pin_float_newf(HAL_IN, &swdata->gui_a, comp_id, "skgui.a");
-        res += hal_pin_float_newf(HAL_IN, &swdata->gui_b, comp_id, "skgui.b");
-        res += hal_pin_float_newf(HAL_IN, &swdata->gui_c, comp_id, "skgui.c");
-        if (res) {emsg = "hal pin create fail";goto error;}
-    }
+    swdata->gui_x = new hal_float_t;
+    swdata->gui_y = new hal_float_t;
+    swdata->gui_z = new hal_float_t;
+    swdata->gui_a = new hal_float_t;
+    swdata->gui_b = new hal_float_t;
+    swdata->gui_c = new hal_float_t;
+
+//    res += hal_pin_bit_new("kinstype.is-0", HAL_OUT, &(swdata->kinstype_is_0), comp_id);
+//    res += hal_pin_bit_new("kinstype.is-1", HAL_OUT, &(swdata->kinstype_is_1), comp_id);
+//    res += hal_pin_bit_new("kinstype.is-2", HAL_OUT, &(swdata->kinstype_is_2), comp_id);
+
+//    if (kp.gui_kinstype >=0) {
+//        res += hal_pin_float_newf(HAL_IN, &swdata->gui_x, comp_id, "skgui.x");
+//        res += hal_pin_float_newf(HAL_IN, &swdata->gui_y, comp_id, "skgui.y");
+//        res += hal_pin_float_newf(HAL_IN, &swdata->gui_z, comp_id, "skgui.z");
+//        res += hal_pin_float_newf(HAL_IN, &swdata->gui_a, comp_id, "skgui.a");
+//        res += hal_pin_float_newf(HAL_IN, &swdata->gui_b, comp_id, "skgui.b");
+//        res += hal_pin_float_newf(HAL_IN, &swdata->gui_c, comp_id, "skgui.c");
+//        if (res) {emsg = "hal pin create fail";goto error;}
+//    }
 
     switchkins_type = 0; // startup with default type
     kinematicsSwitch(switchkins_type);
@@ -328,13 +339,13 @@ int rtapi_app_main(void)
     ksetup1(comp_id,coordinates,&kp);
     ksetup2(comp_id,coordinates,&kp);
 
-    hal_ready(comp_id);
+//    hal_ready(comp_id);
     return 0;
 
 error:
     rtapi_print_msg(RTAPI_MSG_ERR,
         "\nSwitchkins FAIL %s:<%s>\n",kp.kinsname,emsg);
-    hal_exit(comp_id);
+//    hal_exit(comp_id);
     return -1;
 } // rtapi_app_main()
 

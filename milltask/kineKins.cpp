@@ -63,7 +63,7 @@
 #include "posemath.h"
 #include "switchkins.h"
 
-struct haldata {
+struct Haldata {
     hal_float_t *pivot_length;
 } *haldata;
 static int fiveaxis_max_joints;
@@ -212,8 +212,11 @@ int fiveaxis_KinematicsSetup(const  int   comp_id,
 
 //    haldata = hal_malloc(sizeof(struct haldata));
 
-    result = hal_pin_float_newf(HAL_IN,&(haldata->pivot_length),comp_id,
-                                "%s.pivot-length",kp->halprefix);
+//    result = hal_pin_float_newf(HAL_IN,&(haldata->pivot_length),comp_id,
+//                                "%s.pivot-length",kp->halprefix);
+
+    haldata = new Haldata;
+    haldata->pivot_length = new hal_float_t;
     if(result < 0) goto error;
 
     *haldata->pivot_length = DEFAULT_PIVOT_LENGTH;
