@@ -244,7 +244,7 @@ void EMCTask::init_all()
     }
 
     MotionTask::InitMotion();
-
+    MotionTask::CmdHandler();
 }
 
 std::deque <IMillTaskInterface::ToolPath>

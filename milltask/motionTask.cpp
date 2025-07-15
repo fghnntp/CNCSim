@@ -1629,7 +1629,10 @@ void MotionTask::InitMotion()
     rtapi_app_main_motion();
 }
 
+static long servo_period = 1000000;
+extern void emcmotCommandHandler(void *arg, long servo_period);
 void MotionTask::CmdHandler()
 {
+    emcmotCommandHandler(NULL, servo_period);
 //    rtapi_app_main_kines();
 }
