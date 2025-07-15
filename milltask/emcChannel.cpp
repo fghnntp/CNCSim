@@ -70,3 +70,11 @@ void EMCChannel::push()
     cmdMsg.push(emcmotCommand);
 }
 
+int EMCChannel::pop(emcmot_command_t &cmd)
+{
+    if (cmdMsg.empty())
+        return 1;
+
+    cmd = cmdMsg.pop();
+    return 0;
+}

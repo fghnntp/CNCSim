@@ -27,13 +27,15 @@ public:
     static int emcTrajSetScale(double scale);
     static int emcTrajSetRapidScale(double scale);
     static int emcTrajSetMaxVelocity(double vel);
+    static void push();
+    static int pop(emcmot_command_t &cmd);
 
 
 private:
     static emcmot_command_t emcmotCommand;
     static int commandNum;
     static MessageQueue<emcmot_command_t> cmdMsg;
-    static void push();
+
 
     EMCChannel() = delete;
 };

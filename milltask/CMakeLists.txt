@@ -75,6 +75,7 @@ target_include_directories(milltask PUBLIC
     /usr/include/python3.11
     ${LINUX_CNC_SRC}/emc/rs274ngc
     ${LINUX_CNC_SRC}/emc/motion
+    ${LINUX_CNC_SRC}/emc/tp
 #    ${LINUX_CNC_SRC}/emc/nml_intf
 #    ${LINUX_CNC_SRC}/emc/motion
 #    ${LINUX_CNC_SRC}/libnml/nml
