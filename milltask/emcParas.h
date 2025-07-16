@@ -97,6 +97,20 @@ public:
     static int emcJointSetMaxAcceleration_(int joint, double acc);
     static int emcJointActivate_(int joint);
 
+    static int iniAxis(int axis, const char *filename);
+    static int loadAxis(int axis, EmcIniFile *axisIniFile);
+    static int emcAxisSetMinPositionLimit_(int axis, double limit);
+    static int emcAxisSetMaxPositionLimit_(int axis, double limit);
+    static int emcAxisSetMaxVelocity_(int axis, double vel,double ext_offset_vel);
+    static int emcAxisSetMaxAcceleration_(int axis, double acc,double ext_offset_acc);
+    static int emcAxisSetLockingJoint_(int axis, int joint);
+
+    static int iniSpindle(int spindle, const char *filename);
+    static int loadSpindle(int spindle, EmcIniFile *spindleIniFile);
+
+    static int emcSpindleSetParams_(int spindle, double max_pos, double min_pos, double max_neg,
+                   double min_neg, double search_vel, double home_angle, int sequence, double increment);
+
     EMCParas() = delete;
 };
 

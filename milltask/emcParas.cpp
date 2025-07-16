@@ -6,11 +6,11 @@
 //#include "interpl.hh"
 #include <iostream>
 #include "emcIniFile.hh"
-#include "mot_priv.h"
+//#include "mot_priv.h"
 #include "motion.h"
 #include "emcChannel.h"
 #include "emccfg.h"
-#include "usrmotintf.h"
+//#include "usrmotintf.h"
 #include "homing.h"
 
 /* define this to catch isnan errors, for rtlinux FPU register
@@ -58,6 +58,18 @@ void EMCParas::init_emc_paras()
         iniTraj(inifileName.c_str());
         for (int joint = 0; joint < GetTrajConfig()->Joints; joint++) {
             iniJoint(joint, inifileName.c_str());
+        }
+        for (int axis = 0; axis < EMCMOT_MAX_AXIS; axis++) {
+              if (GetTrajConfig()->AxisMask & (1<<axis)) {
+              if (0 != iniAxis(axis, inifileName.c_str())) {
+                    printf("%s: emcAxisInit(%d) failed\n", __FUNCTION__, axis);
+              }
+            }
+        }
+        for (int spindle = 0; spindle < GetTrajConfig()->Spindles; spindle++) {
+               if (0 != iniSpindle(spindle, inifileName.c_str())) {
+                    printf("%s: emcSpindleInit(%d) failed\n", __FUNCTION__, spindle);
+               }
         }
     }
 }
@@ -397,6 +409,8 @@ int EMCParas::iniTraj(const char *filename)
     return -1;
     }
 
+    GetTrajConfig()->Inited = 1;
+
     return 0;
 }
 
@@ -609,6 +623,8 @@ int EMCParas::iniJoint(int joint, const char *filename)
     if (0 != loadJoint(joint, &jointIniFile)) {
         return -1;
     }
+
+    GetJointConfig(joint)->Inited = 1;
 
     return 0;
 }
@@ -1102,5 +1118,385 @@ int EMCParas::emcJointActivate_(int joint)
 
     EMCChannel::push();
 
+    return 0;
+}
+
+/*
+  iniAxis(int axis, const char *filename)
+
+  Loads INI file parameters for specified axis, [0 .. AXES - 1]
+
+ */
+int EMCParas::iniAxis(int axis, const char *filename)
+{
+    EmcIniFile axisIniFile(EmcIniFile::ERR_TAG_NOT_FOUND |
+                           EmcIniFile::ERR_SECTION_NOT_FOUND |
+                           EmcIniFile::ERR_CONVERSION);
+
+    if (axisIniFile.Open(filename) == false) {
+    return -1;
+    }
+
+    // load its values
+    if (0 != loadAxis(axis, &axisIniFile)) {
+        return -1;
+    }
+
+    GetAxisConfig(axis)->Inited = 1;
+
+    return 0;
+}
+
+
+extern double ext_offset_a_or_v_ratio[EMCMOT_MAX_AXIS]; // all zero
+
+// default ratio or external offset velocity,acceleration
+#define DEFAULT_A_OR_V_RATIO 0
+
+/*
+  loadAxis(int axis)
+
+  Loads INI file params for axis, axis = X, Y, Z, A, B, C, U, V, W
+
+  TYPE <LINEAR ANGULAR>        type of axis (hardcoded: X,Y,Z,U,V,W: LINEAR, A,B,C: ANGULAR)
+  MAX_VELOCITY <float>         max vel for axis
+  MAX_ACCELERATION <float>     max accel for axis
+  MIN_LIMIT <float>            minimum soft position limit
+  MAX_LIMIT <float>            maximum soft position limit
+
+  calls:
+
+  emcAxisSetMinPositionLimit(int axis, double limit);
+  emcAxisSetMaxPositionLimit(int axis, double limit);
+  emcAxisSetMaxVelocity(int axis, double vel, double ext_offset_vel);
+  emcAxisSetMaxAcceleration(int axis, double acc, double ext_offset_acc);
+  */
+
+int EMCParas::loadAxis(int axis, EmcIniFile *axisIniFile)
+{
+    char axisString[16];
+    double limit;
+    double maxVelocity;
+    double maxAcceleration;
+    int    lockingjnum = -1; // -1 ==> locking joint not used
+
+    // compose string to match, axis = 0 -> AXIS_X etc.
+    switch (axis) {
+    case 0: snprintf(axisString, sizeof(axisString), "AXIS_X"); break;
+    case 1: snprintf(axisString, sizeof(axisString), "AXIS_Y"); break;
+    case 2: snprintf(axisString, sizeof(axisString), "AXIS_Z"); break;
+    case 3: snprintf(axisString, sizeof(axisString), "AXIS_A"); break;
+    case 4: snprintf(axisString, sizeof(axisString), "AXIS_B"); break;
+    case 5: snprintf(axisString, sizeof(axisString), "AXIS_C"); break;
+    case 6: snprintf(axisString, sizeof(axisString), "AXIS_U"); break;
+    case 7: snprintf(axisString, sizeof(axisString), "AXIS_V"); break;
+    case 8: snprintf(axisString, sizeof(axisString), "AXIS_W"); break;
+    }
+
+    axisIniFile->EnableExceptions(EmcIniFile::ERR_CONVERSION);
+
+    try {
+        // set min position limit
+        limit = -1e99;	                // default
+        axisIniFile->Find(&limit, "MIN_LIMIT", axisString);
+        if (0 != emcAxisSetMinPositionLimit_(axis, limit)) {
+            if (emc_debug & EMC_DEBUG_CONFIG) {
+                printf("bad return from emcAxisSetMinPositionLimit\n");
+            }
+            return -1;
+        }
+        axisconfig[axis].axis_min_limit = limit;
+
+        // set max position limit
+        limit = 1e99;	                // default
+        axisIniFile->Find(&limit, "MAX_LIMIT", axisString);
+        if (0 != emcAxisSetMaxPositionLimit_(axis, limit)) {
+            if (emc_debug & EMC_DEBUG_CONFIG) {
+                printf("bad return from emcAxisSetMaxPositionLimit\n");
+            }
+            return -1;
+        }
+        axisconfig[axis].axis_max_limit = limit;
+
+        ext_offset_a_or_v_ratio[axis] = DEFAULT_A_OR_V_RATIO;
+        axisIniFile->Find(&ext_offset_a_or_v_ratio[axis], "OFFSET_AV_RATIO", axisString);
+
+#define REPLACE_AV_RATIO 0.1
+#define MAX_AV_RATIO     0.9
+        if (   (ext_offset_a_or_v_ratio[axis] < 0)
+            || (ext_offset_a_or_v_ratio[axis] > MAX_AV_RATIO)
+           ) {
+           printf("\n   Invalid:[%s]OFFSET_AV_RATIO= %8.5f\n"
+                             "   Using:  [%s]OFFSET_AV_RATIO= %8.5f\n",
+                           axisString,ext_offset_a_or_v_ratio[axis],
+                           axisString,REPLACE_AV_RATIO);
+           ext_offset_a_or_v_ratio[axis] = REPLACE_AV_RATIO;
+        }
+
+        // set maximum velocities for axis: vel,ext_offset_vel
+        maxVelocity = DEFAULT_AXIS_MAX_VELOCITY;
+        axisIniFile->Find(&maxVelocity, "MAX_VELOCITY", axisString);
+        if (0 != emcAxisSetMaxVelocity_(axis,
+                   (1 - ext_offset_a_or_v_ratio[axis]) * maxVelocity,
+                   (    ext_offset_a_or_v_ratio[axis]) * maxVelocity)) {
+            if (emc_debug & EMC_DEBUG_CONFIG) {
+                printf("bad return from emcAxisSetMaxVelocity\n");
+            }
+            return -1;
+        }
+        axisconfig[axis].axis_max_velocity = maxVelocity;
+
+        // set maximum accels for axis: acc,ext_offset_acc
+        maxAcceleration = DEFAULT_AXIS_MAX_ACCELERATION;
+        axisIniFile->Find(&maxAcceleration, "MAX_ACCELERATION", axisString);
+        if (0 != emcAxisSetMaxAcceleration_(axis,
+                    (1 - ext_offset_a_or_v_ratio[axis]) * maxAcceleration,
+                    (    ext_offset_a_or_v_ratio[axis]) * maxAcceleration)) {
+            if (emc_debug & EMC_DEBUG_CONFIG) {
+                printf("bad return from emcAxisSetMaxAcceleration\n");
+            }
+            return -1;
+        }
+        axisconfig[axis].axis_max_acceleration = maxAcceleration;
+
+        axisIniFile->Find(&lockingjnum, "LOCKING_INDEXER_JOINT", axisString);
+        if (0 != emcAxisSetLockingJoint_(axis, lockingjnum)) {
+            if (emc_debug & EMC_DEBUG_CONFIG) {
+                printf("bad return from emcAxisSetLockingJoint\n");
+            }
+            return -1;
+        }
+    }
+
+
+    catch(EmcIniFile::Exception &e){
+        e.Print();
+        return -1;
+    }
+
+    return 0;
+}
+
+/*! functions involving cartesian Axes (X,Y,Z,A,B,C,U,V,W) */
+
+int EMCParas::emcAxisSetMinPositionLimit_(int axis, double limit)
+{
+    CATCH_NAN(std::isnan(limit));
+
+    if (axis < 0 || axis >= EMCMOT_MAX_AXIS || !(GetTrajConfig()->AxisMask & (1 << axis))) {
+    return 0;
+    }
+
+    GetAxisConfig(axis)->MinLimit = limit;
+
+    EMCChannel::emcmotCommand.command = EMCMOT_SET_AXIS_POSITION_LIMITS;
+    EMCChannel::emcmotCommand.axis = axis;
+    EMCChannel::emcmotCommand.minLimit = GetAxisConfig(axis)->MinLimit;
+    EMCChannel::emcmotCommand.maxLimit = GetAxisConfig(axis)->MaxLimit;
+
+    EMCChannel::push();
+
+    return 0;
+}
+
+int EMCParas::emcAxisSetMaxPositionLimit_(int axis, double limit)
+{
+    CATCH_NAN(std::isnan(limit));
+
+    if (axis < 0 || axis >= EMCMOT_MAX_AXIS || !(GetTrajConfig()->AxisMask & (1 << axis))) {
+    return 0;
+    }
+
+    GetAxisConfig(axis)->MaxLimit = limit;
+
+    EMCChannel::emcmotCommand.command = EMCMOT_SET_AXIS_POSITION_LIMITS;
+    EMCChannel::emcmotCommand.axis = axis;
+    EMCChannel::emcmotCommand.minLimit = GetAxisConfig(axis)->MinLimit;
+    EMCChannel::emcmotCommand.maxLimit = GetAxisConfig(axis)->MaxLimit;
+
+    EMCChannel::push();
+
+    return 0;
+}
+
+int EMCParas::emcAxisSetMaxVelocity_(int axis, double vel,double ext_offset_vel)
+{
+    CATCH_NAN(std::isnan(vel));
+
+    if (axis < 0 || axis >= EMCMOT_MAX_AXIS || !(GetTrajConfig()->AxisMask & (1 << axis))) {
+    return 0;
+    }
+
+    if (vel < 0.0) {
+    vel = 0.0;
+    }
+
+    GetAxisConfig(axis)->MaxVel = vel;
+
+    EMCChannel::emcmotCommand.command = EMCMOT_SET_AXIS_VEL_LIMIT;
+    EMCChannel::emcmotCommand.axis = axis;
+    EMCChannel::emcmotCommand.vel = vel;
+    EMCChannel::emcmotCommand.ext_offset_vel = ext_offset_vel;
+
+    EMCChannel::push();
+
+    return 0;
+}
+
+int EMCParas::emcAxisSetMaxAcceleration_(int axis, double acc,double ext_offset_acc)
+{
+    CATCH_NAN(std::isnan(acc));
+
+    if (axis < 0 || axis >= EMCMOT_MAX_AXIS || !(GetTrajConfig()->AxisMask & (1 << axis))) {
+    return 0;
+    }
+
+    if (acc < 0.0) {
+    acc = 0.0;
+    }
+
+    GetAxisConfig(axis)->MaxAccel = acc;
+
+    EMCChannel::emcmotCommand.command = EMCMOT_SET_AXIS_ACC_LIMIT;
+    EMCChannel::emcmotCommand.axis = axis;
+    EMCChannel::emcmotCommand.acc = acc;
+    EMCChannel::emcmotCommand.ext_offset_acc = ext_offset_acc;
+
+    EMCChannel::push();
+
+    return 0;
+}
+
+int EMCParas::emcAxisSetLockingJoint_(int axis, int joint)
+{
+
+    if (axis < 0 || axis >= EMCMOT_MAX_AXIS || !(GetTrajConfig()->AxisMask & (1 << axis))) {
+    return 0;
+    }
+
+    if (joint < 0) {
+    joint = -1;
+    }
+
+    EMCChannel::emcmotCommand.command = EMCMOT_SET_AXIS_LOCKING_JOINT;
+    EMCChannel::emcmotCommand.axis    = axis;
+    EMCChannel::emcmotCommand.joint   = joint;
+
+    EMCChannel::push();
+
+    return 0;
+}
+
+/*
+  iniAxis(int axis, const char *filename)
+
+  Loads INI file parameters for specified axis, [0 .. AXES - 1]
+
+ */
+int EMCParas::iniSpindle(int spindle, const char *filename)
+{
+    EmcIniFile spindleIniFile(EmcIniFile::ERR_TAG_NOT_FOUND |
+                           EmcIniFile::ERR_SECTION_NOT_FOUND |
+                           EmcIniFile::ERR_CONVERSION);
+
+    if (spindleIniFile.Open(filename) == false) {
+    return -1;
+    }
+
+    // load its values
+    if (0 != loadSpindle(spindle, &spindleIniFile)) {
+        return -1;
+    }
+
+    GetSpindleConfig(spindle)->Inited = 1;
+
+    return 0;
+}
+
+int EMCParas::loadSpindle(int spindle, EmcIniFile *spindleIniFile)
+{
+    int num_spindles = 1;
+    char spindleString[11];
+    double fastest_pos = 1e99;
+    double slowest_neg = 0;
+    double slowest_pos = 0;
+    double fastest_neg = -1e99;
+    int home_sequence = 0;
+    double search_vel = 0;
+    double home_angle = 0;
+    double increment = 100;
+    double limit;
+
+    spindleIniFile->EnableExceptions(EmcIniFile::ERR_CONVERSION);
+
+    if (spindleIniFile->Find(&num_spindles, "SPINDLES", "TRAJ") < 0){
+        num_spindles = 1; }
+    if (spindle > num_spindles) return -1;
+
+    snprintf(spindleString, sizeof(spindleString), "SPINDLE_%i", spindle);
+
+    // set max positive speed limit
+    if (spindleIniFile->Find(&limit, "MAX_FORWARD_VELOCITY", spindleString) == 0){
+        fastest_pos = limit;
+        fastest_neg = -1.0 * limit;
+    }
+    // set min positive speed limit
+    if (spindleIniFile->Find(&limit, "MIN_FORWARD_VELOCITY", spindleString) == 0){
+        slowest_pos = limit;
+        slowest_neg = -1.0 * limit;
+    }
+    // set min negative speed limit
+    if (spindleIniFile->Find(&limit, "MIN_REVERSE_VELOCITY", spindleString) == 0){
+        slowest_neg = -1.0 * fabs(limit);
+    }
+    // set max negative speed limit
+    if (spindleIniFile->Find(&limit, "MAX_REVERSE_VELOCITY", spindleString) == 0){
+        fastest_neg = -1.0 * fabs(limit);
+    }
+    // set home sequence
+    if (spindleIniFile->Find(&limit, "HOME_SEQUENCE", spindleString) == 0){
+        home_sequence = (int)limit;
+    }
+    // set home velocity
+    if (spindleIniFile->Find(&limit, "HOME_SEARCH_VELOCITY", spindleString) == 0){
+        search_vel = (int)limit;
+    }
+    /* set home angle - I believe this is a bad idea - andypugh 30/12/21
+    if (spindleIniFile->Find(&limit, "HOME", spindleString) >= 0){
+        home_angle = (int)limit;
+    }*/
+    home_angle = 0;
+    // set spindle increment
+    if (spindleIniFile->Find(&limit, "INCREMENT", spindleString) == 0){
+        increment = limit;
+    }
+
+    if (0 != emcSpindleSetParams_(spindle, fastest_pos, slowest_pos, slowest_neg,
+        fastest_neg, search_vel, home_angle, home_sequence, increment)) {
+        return -1;
+    }
+    return 0;
+}
+
+int EMCParas::emcSpindleSetParams_(int spindle, double max_pos, double min_pos, double max_neg,
+               double min_neg, double search_vel, double home_angle, int sequence, double increment)
+{
+
+    if (spindle < 0 || spindle >= EMCMOT_MAX_SPINDLES) {
+    return 0;
+    }
+
+    EMCChannel::emcmotCommand.command = EMCMOT_SET_SPINDLE_PARAMS;
+    EMCChannel::emcmotCommand.spindle = spindle;
+    EMCChannel::emcmotCommand.maxLimit = max_pos;
+    EMCChannel::emcmotCommand.minLimit = min_neg;
+    EMCChannel::emcmotCommand.min_pos_speed = min_pos;
+    EMCChannel::emcmotCommand.max_neg_speed = max_neg;
+    EMCChannel::emcmotCommand.home = home_angle;
+    EMCChannel::emcmotCommand.search_vel = search_vel;
+    EMCChannel::emcmotCommand.home_sequence = sequence;
+    EMCChannel::emcmotCommand.offset = increment;
+
+    EMCChannel::push();
     return 0;
 }
