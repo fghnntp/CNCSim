@@ -53,8 +53,8 @@ public:
     static void set_traj_maxvel(double vel);
 
     static MotTrajConfig trajconfig;
-    static MotJointConfig jointconfig;
-    static MotAxisConfig axisconfig;
+    static MotJointConfig jointconfig[EMCMOT_MAX_JOINTS];
+    static MotAxisConfig axisconfig[EMCMOT_MAX_AXIS];
 
     static int iniTraj(const char *filename);
     static int loadTraj(EmcIniFile *trajInifile);
@@ -78,8 +78,26 @@ public:
     static int emcSetProbeErrorInhibit_(int j_inhibit, int h_inhibit);
     static int emcTrajSetHome(const EmcPose& home);
 
-    EMCParas() = delete;
+    static int iniJoint(int joint, const char *filename);
+    static int loadJoint(int joint, EmcIniFile *jointIniFile);
 
+    static int emcJointSetType_(int joint, unsigned char jointType);
+    static int emcJointSetUnits_(int joint, double units);
+    static int emcJointSetBacklash_(int joint, double backlash);
+    static int emcJointSetMinPositionLimit_(int joint, double limit);
+    static int emcJointSetMaxPositionLimit_(int joint, double limit);
+    static int emcJointSetFerror_(int joint, double ferror);
+    static int emcJointSetMinFerror_(int joint, double ferror);
+    static int emcJointSetHomingParams_(int joint, double home, double offset, double home_final_vel,
+                   double search_vel, double latch_vel,
+                   int use_index, int encoder_does_not_reset,
+                   int ignore_limits, int is_shared,
+                   int sequence,int volatile_home, int locking_indexer,int absolute_encoder);
+    static int emcJointSetMaxVelocity_(int joint, double vel);
+    static int emcJointSetMaxAcceleration_(int joint, double acc);
+    static int emcJointActivate_(int joint);
+
+    EMCParas() = delete;
 };
 
 #endif

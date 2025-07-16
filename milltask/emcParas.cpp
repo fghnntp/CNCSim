@@ -6,8 +6,27 @@
 //#include "interpl.hh"
 #include <iostream>
 #include "emcIniFile.hh"
+#include "mot_priv.h"
 #include "motion.h"
 #include "emcChannel.h"
+#include "emccfg.h"
+#include "usrmotintf.h"
+#include "homing.h"
+
+/* define this to catch isnan errors, for rtlinux FPU register
+   problem testing */
+#define ISNAN_TRAP
+
+#ifdef ISNAN_TRAP
+#define CATCH_NAN(cond) do {                           \
+    if (cond) {                                        \
+        printf("isnan error in %s()\n", __FUNCTION__); \
+        return -1;                                     \
+    }                                                  \
+} while(0)
+#else
+#define CATCH_NAN(cond) do {} while(0)
+#endif
 
 extern void InitonUserMotionIF(void);
 extern void InitTaskinft(void);
@@ -18,8 +37,8 @@ extern SpindleConfig_t *GetSpindleConfig(int spindle);
 
 std::string EMCParas::inifileName;
 EMCParas::MotTrajConfig EMCParas::trajconfig;
-EMCParas::MotJointConfig EMCParas::jointconfig;
-EMCParas::MotAxisConfig EMCParas::axisconfig;
+EMCParas::MotJointConfig EMCParas::jointconfig[EMCMOT_MAX_JOINTS];
+EMCParas::MotAxisConfig EMCParas::axisconfig[EMCMOT_MAX_AXIS];
 
 void EMCParas::init_emc_paras()
 {
@@ -37,6 +56,9 @@ void EMCParas::init_emc_paras()
             return;
         }
         iniTraj(inifileName.c_str());
+        for (int joint = 0; joint < GetTrajConfig()->Joints; joint++) {
+            iniJoint(joint, inifileName.c_str());
+        }
     }
 }
 
@@ -561,6 +583,523 @@ int EMCParas::emcTrajSetHome(const EmcPose& home)
 
     EMCChannel::emcmotCommand.command = EMCMOT_SET_WORLD_HOME;
     EMCChannel::emcmotCommand.pos = home;
+    EMCChannel::push();
+
+    return 0;
+}
+
+/*
+  iniJoint(int joint, const char *filename)
+
+  Loads INI file parameters for specified joint
+
+  Looks for [KINS]JOINTS for how many to do, up to EMC_JOINT_MAX.
+ */
+int EMCParas::iniJoint(int joint, const char *filename)
+{
+    EmcIniFile jointIniFile(EmcIniFile::ERR_TAG_NOT_FOUND |
+                           EmcIniFile::ERR_SECTION_NOT_FOUND |
+                           EmcIniFile::ERR_CONVERSION);
+
+    if (jointIniFile.Open(filename) == false) {
+    return -1;
+    }
+
+    // load its values
+    if (0 != loadJoint(joint, &jointIniFile)) {
+        return -1;
+    }
+
+    return 0;
+}
+
+/*
+  loadJoint(int joint)
+
+  Loads INI file params for joint, joint = 0, ...
+
+  TYPE <LINEAR ANGULAR>        type of joint
+  MAX_VELOCITY <float>         max vel for joint
+  MAX_ACCELERATION <float>     max accel for joint
+  BACKLASH <float>             backlash
+  MIN_LIMIT <float>            minimum soft position limit
+  MAX_LIMIT <float>            maximum soft position limit
+  FERROR <float>               maximum following error, scaled to max vel
+  MIN_FERROR <float>           minimum following error
+  HOME <float>                 home position (where to go after home)
+  HOME_FINAL_VEL <float>       speed to move from HOME_OFFSET to HOME location (at the end of homing)
+  HOME_OFFSET <float>          home switch/index pulse location
+  HOME_SEARCH_VEL <float>      homing speed, search phase
+  HOME_LATCH_VEL <float>       homing speed, latch phase
+  HOME_USE_INDEX <bool>        use index pulse when homing
+  HOME_IGNORE_LIMITS <bool>    ignore limit switches when homing
+  COMP_FILE <filename>         file of joint compensation points
+
+  calls:
+
+  emcJointSetType(int joint, unsigned char jointType);
+  emcJointSetUnits(int joint, double units);
+  emcJointSetBacklash(int joint, double backlash);
+  emcJointSetMinPositionLimit(int joint, double limit);
+  emcJointSetMaxPositionLimit(int joint, double limit);
+  emcJointSetFerror(int joint, double ferror);
+  emcJointSetMinFerror(int joint, double ferror);
+  emcJointSetHomingParams(int joint, double home, double offset, double home_vel,
+                          double search_vel, double latch_vel,
+                          int use_index, int encoder_does_not_reset,
+                          int ignore_limits, int is_shared, int sequence, int volatile_home));
+  emcJointActivate(int joint);
+  emcJointSetMaxVelocity(int joint, double vel);
+  emcJointSetMaxAcceleration(int joint, double acc);
+  emcJointLoadComp(int joint, const char * file, int comp_file_type);
+  */
+
+int EMCParas::loadJoint(int joint, EmcIniFile *jointIniFile)
+{
+    char jointString[16];
+    const char *inistring;
+    EmcJointType jointType;
+    double units;
+    double backlash;
+    double offset;
+    double limit;
+    double home;
+    double search_vel;
+    double latch_vel;
+    double final_vel; // moving from OFFSET to HOME
+    bool use_index;
+    bool encoder_does_not_reset;
+    bool ignore_limits;
+    bool is_shared;
+    int sequence;
+    int volatile_home;
+    int locking_indexer;
+    int absolute_encoder;
+    int comp_file_type; //type for the compensation file. type==0 means nom, forw, rev.
+    double maxVelocity;
+    double maxAcceleration;
+    double ferror;
+
+    // compose string to match, joint = 0 -> JOINT_0, etc.
+    snprintf(jointString, sizeof(jointString), "JOINT_%d", joint);
+
+    jointIniFile->EnableExceptions(EmcIniFile::ERR_CONVERSION);
+
+    try {
+        // set joint type
+        jointType = EMC_LINEAR;	// default
+        jointIniFile->Find(&jointType, "TYPE", jointString);
+        if (0 != emcJointSetType_(joint, jointType)) {
+            return -1;
+        }
+
+        // set units
+        if(jointType == EMC_LINEAR){
+            units = emcTrajGetLinearUnits();
+        }else{
+            units = emcTrajGetAngularUnits();
+        }
+        if (0 != emcJointSetUnits_(joint, units)) {
+            return -1;
+        }
+
+        // set backlash
+        backlash = 0;	                // default
+        jointIniFile->Find(&backlash, "BACKLASH", jointString);
+        if (0 != emcJointSetBacklash_(joint, backlash)) {
+            return -1;
+        }
+        jointconfig[joint].joint_backlash = backlash;
+
+        // set min position limit
+        limit = -1e99;	                // default
+        jointIniFile->Find(&limit, "MIN_LIMIT", jointString);
+        if (0 != emcJointSetMinPositionLimit_(joint, limit)) {
+             return -1;
+        }
+        jointconfig[joint].joint_min_limit = limit;
+
+        // set max position limit
+        limit = 1e99;	                // default
+        jointIniFile->Find(&limit, "MAX_LIMIT", jointString);
+        if (0 != emcJointSetMaxPositionLimit_(joint, limit)) {
+            return -1;
+        }
+        jointconfig[joint].joint_max_limit = limit;
+
+        // set following error limit (at max speed)
+        ferror = 1;	                // default
+        jointIniFile->Find(&ferror, "FERROR", jointString);
+        if (0 != emcJointSetFerror_(joint, ferror)) {
+             return -1;
+        }
+        jointconfig[joint].joint_ferror = ferror;
+
+        // do MIN_FERROR, if it's there. If not, use value of maxFerror above
+        jointIniFile->Find(&ferror, "MIN_FERROR", jointString);
+        if (0 != emcJointSetMinFerror_(joint, ferror)) {
+            return -1;
+        }
+        jointconfig[joint].joint_min_ferror = ferror;
+
+        // set homing paramsters
+        home = 0;	                // default
+        jointIniFile->Find(&home, "HOME", jointString);
+        jointconfig[joint].joint_home = home;
+
+        offset = 0;	                // default
+        jointIniFile->Find(&offset, "HOME_OFFSET", jointString);
+        jointconfig[joint].joint_home_offset = offset;
+
+        search_vel = 0;	                // default
+        jointIniFile->Find(&search_vel, "HOME_SEARCH_VEL", jointString);
+        latch_vel = 0;	                // default
+        jointIniFile->Find(&latch_vel, "HOME_LATCH_VEL", jointString);
+        final_vel = -1;	                // default (rapid)
+        jointIniFile->Find(&final_vel, "HOME_FINAL_VEL", jointString);
+        is_shared = false;	        // default
+        jointIniFile->Find(&is_shared, "HOME_IS_SHARED", jointString);
+        use_index = false;	        // default
+        jointIniFile->Find(&use_index, "HOME_USE_INDEX", jointString);
+        encoder_does_not_reset = false;	// default
+        jointIniFile->Find(&encoder_does_not_reset, "HOME_INDEX_NO_ENCODER_RESET", jointString);
+        ignore_limits = false;	        // default
+        jointIniFile->Find(&ignore_limits, "HOME_IGNORE_LIMITS", jointString);
+
+        sequence = 999;// default: use unrealizable and positive sequence no.
+                       // so that joints with unspecified HOME_SEQUENCE=
+                       // will not be homed in home-all
+        jointIniFile->Find(&sequence, "HOME_SEQUENCE", jointString);
+        jointconfig[joint].joint_home_sequence = sequence;
+
+        volatile_home = 0;	        // default
+        jointIniFile->Find(&volatile_home, "VOLATILE_HOME", jointString);
+        locking_indexer = false;
+        jointIniFile->Find(&locking_indexer, "LOCKING_INDEXER", jointString);
+        absolute_encoder = false;
+        jointIniFile->Find(&absolute_encoder, "HOME_ABSOLUTE_ENCODER", jointString);
+        // issue NML message to set all params
+        if (0 != emcJointSetHomingParams_(joint, home, offset
+                                        ,final_vel, search_vel, latch_vel
+                                        ,(int)use_index
+                                        ,(int)encoder_does_not_reset
+                                        ,(int)ignore_limits
+                                        ,(int)is_shared
+                                        ,sequence
+                                        ,volatile_home
+                                        ,locking_indexer
+                                        ,absolute_encoder
+                                        )) {
+            return -1;
+        }
+
+        // set maximum velocity
+        maxVelocity = DEFAULT_JOINT_MAX_VELOCITY;
+        jointIniFile->Find(&maxVelocity, "MAX_VELOCITY", jointString);
+        if (0 != emcJointSetMaxVelocity_(joint, maxVelocity)) {
+            return -1;
+        }
+        jointconfig[joint].joint_max_velocity = maxVelocity;
+
+        maxAcceleration = DEFAULT_JOINT_MAX_ACCELERATION;
+        jointIniFile->Find(&maxAcceleration, "MAX_ACCELERATION", jointString);
+        if (0 != emcJointSetMaxAcceleration_(joint, maxAcceleration)) {
+            return -1;
+        }
+        jointconfig[joint].joint_max_acceleration = maxAcceleration;
+
+        comp_file_type = 0;             // default
+        jointIniFile->Find(&comp_file_type, "COMP_FILE_TYPE", jointString);
+        if (NULL != (inistring = jointIniFile->Find("COMP_FILE", jointString))) {
+            if (0 != emcJointLoadComp(joint, inistring, comp_file_type)) {
+                return -1;
+            }
+        }
+    }
+
+    catch (EmcIniFile::Exception &e) {
+        e.Print();
+        return -1;
+    }
+
+    // lastly, activate joint. Do this last so that the motion controller
+    // won't flag errors midway during configuration
+    if (0 != emcJointActivate_(joint)) {
+        return -1;
+    }
+
+    return 0;
+}
+
+// axes and joints are numbered 0..NUM-1
+
+/*
+  In emcmot, we need to set the cycle time for traj, and the interpolation
+  rate, in any order, but both need to be done.
+ */
+
+/*! functions involving joints */
+
+int EMCParas::emcJointSetType_(int joint, unsigned char jointType)
+{
+    if (joint < 0 || joint >= EMCMOT_MAX_JOINTS) {
+    return 0;
+    }
+
+    GetJointConfig(joint)->Type = jointType;
+
+    if (emc_debug & EMC_DEBUG_CONFIG) {
+        printf("%s(%d, %d)\n", __FUNCTION__, joint, jointType);
+    }
+    return 0;
+}
+
+int EMCParas::emcJointSetUnits_(int joint, double units)
+{
+    if (joint < 0 || joint >= EMCMOT_MAX_JOINTS) {
+    return 0;
+    }
+
+    GetJointConfig(joint)->Units = units;
+
+    if (emc_debug & EMC_DEBUG_CONFIG) {
+        printf("%s(%d, %.4f)\n", __FUNCTION__, joint, units);
+    }
+    return 0;
+}
+
+int EMCParas::emcJointSetBacklash_(int joint, double backlash)
+{
+#ifdef ISNAN_TRAP
+    if (std::isnan(backlash)) {
+    printf("std::isnan error in emcJointSetBacklash()\n");
+    return -1;
+    }
+#endif
+
+    if (joint < 0 || joint >= EMCMOT_MAX_JOINTS) {
+    return 0;
+    }
+
+    EMCChannel::emcmotCommand.command = EMCMOT_SET_JOINT_BACKLASH;
+    EMCChannel::emcmotCommand.joint = joint;
+    EMCChannel::emcmotCommand.backlash = backlash;
+
+    EMCChannel::push();
+
+    return 0;
+}
+
+int EMCParas::emcJointSetMinPositionLimit_(int joint, double limit)
+{
+#ifdef ISNAN_TRAP
+    if (std::isnan(limit)) {
+    printf("isnan error in emcJointSetMinPosition()\n");
+    return -1;
+    }
+#endif
+
+    if (joint < 0 || joint >= EMCMOT_MAX_JOINTS) {
+    return 0;
+    }
+
+    GetJointConfig(joint)->MinLimit = limit;
+
+    EMCChannel::emcmotCommand.command = EMCMOT_SET_JOINT_POSITION_LIMITS;
+    EMCChannel::emcmotCommand.joint = joint;
+    EMCChannel::emcmotCommand.minLimit = GetJointConfig(joint)->MinLimit;
+    EMCChannel::emcmotCommand.maxLimit = GetJointConfig(joint)->MaxLimit;
+
+    EMCChannel::push();
+
+    return 0;
+}
+
+int EMCParas::emcJointSetMaxPositionLimit_(int joint, double limit)
+{
+#ifdef ISNAN_TRAP
+    if (std::isnan(limit)) {
+    printf("std::isnan error in emcJointSetMaxPosition()\n");
+    return -1;
+    }
+#endif
+
+    if (joint < 0 || joint >= EMCMOT_MAX_JOINTS) {
+    return 0;
+    }
+
+    GetJointConfig(joint)->MaxLimit = limit;
+
+    EMCChannel::emcmotCommand.command = EMCMOT_SET_JOINT_POSITION_LIMITS;
+    EMCChannel::emcmotCommand.joint = joint;
+    EMCChannel::emcmotCommand.minLimit = GetJointConfig(joint)->MinLimit;
+    EMCChannel::emcmotCommand.maxLimit = GetJointConfig(joint)->MaxLimit;
+
+    EMCChannel::push();
+
+    return 0;
+}
+
+int EMCParas::emcJointSetFerror_(int joint, double ferror)
+{
+#ifdef ISNAN_TRAP
+    if (std::isnan(ferror)) {
+    printf("isnan error in emcJointSetFerror()\n");
+    return -1;
+    }
+#endif
+
+    if (joint < 0 || joint >= EMCMOT_MAX_JOINTS) {
+    return 0;
+    }
+
+    EMCChannel::emcmotCommand.command = EMCMOT_SET_JOINT_MAX_FERROR;
+    EMCChannel::emcmotCommand.joint = joint;
+    EMCChannel::emcmotCommand.maxFerror = ferror;
+
+    EMCChannel::push();
+
+    return 0;
+}
+
+int EMCParas::emcJointSetMinFerror_(int joint, double ferror)
+{
+#ifdef ISNAN_TRAP
+    if (std::isnan(ferror)) {
+    printf("isnan error in emcJointSetMinFerror()\n");
+    return -1;
+    }
+#endif
+
+    if (joint < 0 || joint >= EMCMOT_MAX_JOINTS) {
+    return 0;
+    }
+    EMCChannel::emcmotCommand.command = EMCMOT_SET_JOINT_MIN_FERROR;
+    EMCChannel::emcmotCommand.joint = joint;
+    EMCChannel::emcmotCommand.minFerror = ferror;
+
+    EMCChannel::push();
+
+    return 0;
+}
+
+int EMCParas::emcJointSetHomingParams_(int joint, double home, double offset, double home_final_vel,
+               double search_vel, double latch_vel,
+               int use_index, int encoder_does_not_reset,
+               int ignore_limits, int is_shared,
+               int sequence,int volatile_home, int locking_indexer,int absolute_encoder)
+{
+#ifdef ISNAN_TRAP
+    if (std::isnan(home) || std::isnan(offset) || std::isnan(home_final_vel) ||
+    std::isnan(search_vel) || std::isnan(latch_vel)) {
+    printf("isnan error in emcJointSetHomingParams()\n");
+    return -1;
+    }
+#endif
+
+    if (joint < 0 || joint >= EMCMOT_MAX_JOINTS) {
+    return 0;
+    }
+
+    EMCChannel::emcmotCommand.command = EMCMOT_SET_JOINT_HOMING_PARAMS;
+    EMCChannel::emcmotCommand.joint = joint;
+    EMCChannel::emcmotCommand.home = home;
+    EMCChannel::emcmotCommand.offset = offset;
+    EMCChannel::emcmotCommand.home_final_vel = home_final_vel;
+    EMCChannel::emcmotCommand.search_vel = search_vel;
+    EMCChannel::emcmotCommand.latch_vel = latch_vel;
+    EMCChannel::emcmotCommand.flags = 0;
+    EMCChannel::emcmotCommand.home_sequence = sequence;
+    EMCChannel::emcmotCommand.volatile_home = volatile_home;
+    if (use_index) {
+    EMCChannel::emcmotCommand.flags |= HOME_USE_INDEX;
+    }
+    if (encoder_does_not_reset) {
+    EMCChannel::emcmotCommand.flags |= HOME_INDEX_NO_ENCODER_RESET;
+    }
+    if (ignore_limits) {
+    EMCChannel::emcmotCommand.flags |= HOME_IGNORE_LIMITS;
+    }
+    if (is_shared) {
+    EMCChannel::emcmotCommand.flags |= HOME_IS_SHARED;
+    }
+    if (locking_indexer) {
+        EMCChannel::emcmotCommand.flags |= HOME_UNLOCK_FIRST;
+    }
+    if (absolute_encoder) {
+        switch (absolute_encoder) {
+          case 0: break;
+          case 1: EMCChannel::emcmotCommand.flags |= HOME_ABSOLUTE_ENCODER;
+                  EMCChannel::emcmotCommand.flags |= HOME_NO_REHOME;
+                  break;
+          case 2: EMCChannel::emcmotCommand.flags |= HOME_ABSOLUTE_ENCODER;
+                  EMCChannel::emcmotCommand.flags |= HOME_NO_REHOME;
+                  EMCChannel::emcmotCommand.flags |= HOME_NO_FINAL_MOVE;
+                  break;
+          default: fprintf(stderr,
+                   "Unknown option for absolute_encoder <%d>",absolute_encoder);
+                  break;
+        }
+    }
+
+    EMCChannel::push();
+
+    return 0;
+}
+
+int EMCParas::emcJointSetMaxVelocity_(int joint, double vel)
+{
+    CATCH_NAN(std::isnan(vel));
+
+    if (joint < 0 || joint >= EMCMOT_MAX_JOINTS) {
+    return 0;
+    }
+
+    if (vel < 0.0) {
+    vel = 0.0;
+    }
+
+    GetJointConfig(joint)->MaxVel = vel;
+
+    EMCChannel::emcmotCommand.command = EMCMOT_SET_JOINT_VEL_LIMIT;
+    EMCChannel::emcmotCommand.joint = joint;
+    EMCChannel::emcmotCommand.vel = vel;
+
+    EMCChannel::push();
+
+    return 0;
+}
+
+int EMCParas::emcJointSetMaxAcceleration_(int joint, double acc)
+{
+    CATCH_NAN(std::isnan(acc));
+
+    if (joint < 0 || joint >= EMCMOT_MAX_JOINTS) {
+    return 0;
+    }
+    if (acc < 0.0) {
+    acc = 0.0;
+    }
+    GetJointConfig(joint)->MaxAccel = acc;
+    //FIXME-AJ: need functions for setting the AXIS_MAX_ACCEL (either from the INI, or from kins..)
+    EMCChannel::emcmotCommand.command = EMCMOT_SET_JOINT_ACC_LIMIT;
+    EMCChannel::emcmotCommand.joint = joint;
+    EMCChannel::emcmotCommand.acc = acc;
+
+    EMCChannel::push();
+
+    return 0;
+}
+
+int EMCParas::emcJointActivate_(int joint)
+{
+    if (joint < 0 || joint >= EMCMOT_MAX_JOINTS) {
+    return 0;
+    }
+
+    EMCChannel::emcmotCommand.command = EMCMOT_JOINT_ACTIVATE;
+    EMCChannel::emcmotCommand.joint = joint;
+
     EMCChannel::push();
 
     return 0;
