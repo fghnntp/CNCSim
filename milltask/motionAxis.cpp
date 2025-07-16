@@ -91,13 +91,20 @@ void axis_initialize_external_offsets(void)
         if (_retval) return _retval;    \
     } while (0);
 
-//static int export_axis(int mot_comp_id, char c, axis_hal_t * addr)
-//{
-//    int msg;
+static int export_axis(int mot_comp_id, char c, axis_hal_t * addr)
+{
+    int msg;
 
-//    msg = rtapi_get_msg_level();
-//    rtapi_set_msg_level(RTAPI_MSG_WARN);
+    msg = rtapi_get_msg_level();
+    rtapi_set_msg_level(RTAPI_MSG_WARN);
 
+    addr->ajog_enable = new int;
+    addr->ajog_scale = new double;
+    addr->ajog_counts = new int;
+    addr->ajog_vel_mode = new int;
+    addr->kb_ajog_active = new int;
+    addr->wheel_ajog_active = new int;
+    addr->ajog_accel_fraction = new double;
 //    CALL_CHECK(hal_pin_bit_newf(HAL_IN, &(addr->ajog_enable), mot_comp_id,"axis.%c.jog-enable", c));
 //    CALL_CHECK(hal_pin_float_newf(HAL_IN, &(addr->ajog_scale), mot_comp_id,"axis.%c.jog-scale", c));
 //    CALL_CHECK(hal_pin_s32_newf(HAL_IN, &(addr->ajog_counts), mot_comp_id,"axis.%c.jog-counts", c));
@@ -106,26 +113,41 @@ void axis_initialize_external_offsets(void)
 //    CALL_CHECK(hal_pin_bit_newf(HAL_OUT, &(addr->wheel_ajog_active), mot_comp_id,"axis.%c.wheel-jog-active", c));
 
 //    CALL_CHECK(hal_pin_float_newf(HAL_IN,&(addr->ajog_accel_fraction), mot_comp_id,"axis.%c.jog-accel-fraction", c));
-//    *addr->ajog_accel_fraction = 1.0; // fraction of accel for wheel ajogs
+    *addr->ajog_accel_fraction = 1.0; // fraction of accel for wheel ajogs
 
-//    rtapi_set_msg_level(msg);
-//    return 0;
-//}
+    rtapi_set_msg_level(msg);
+    return 0;
+}
 
-//int axis_init_hal_io(int mot_comp_id)
-//{
-//    int n, retval;
+int axis_init_hal_io(int mot_comp_id)
+{
+    int n, retval;
 
-//    hal_data = hal_malloc(sizeof(axis_hal_data_t));
-//    if (!hal_data) {
-//        rtapi_print_msg(RTAPI_MSG_ERR, _("MOTION: axis_hal_data hal_malloc() failed\n"));
-//        return -1;
-//    }
+//    hal_data = hal_malloc(sizeof(axis_hal_datas_t));
+    hal_data = new axis_hal_data_t;
+    if (!hal_data) {
+        rtapi_print_msg(RTAPI_MSG_ERR, _("MOTION: axis_hal_data hal_malloc() failed\n"));
+        return -1;
+    }
 
-//    // export axis pins and parameters
-//    for (n = 0; n < EMCMOT_MAX_AXIS; n++) {
-//        char c = "xyzabcuvw"[n];
-//        axis_hal_t *axis_data = &(hal_data->axis[n]);
+
+
+    // export axis pins and parameters
+    for (n = 0; n < EMCMOT_MAX_AXIS; n++) {
+        char c = "xyzabcuvw"[n];
+        axis_hal_t *axis_data = &(hal_data->axis[n]);
+        axis_data->pos_cmd = new double;
+        axis_data->teleop_vel_cmd = new double;
+        axis_data->teleop_pos_cmd = new double;
+        axis_data->teleop_vel_lim = new double;
+        axis_data->teleop_tp_enable = new int;
+        axis_data->eoffset_enable = new int;
+        axis_data->eoffset_clear = new int;
+        axis_data->eoffset_counts = new int;
+        axis_data->eoffset_scale = new double;
+        axis_data->external_offset = new double;
+        axis_data->external_offset_requested = new double;
+
 //        CALL_CHECK(hal_pin_float_newf(HAL_OUT, &axis_data->pos_cmd, mot_comp_id, "axis.%c.pos-cmd", c));
 //        CALL_CHECK(hal_pin_float_newf(HAL_OUT, &axis_data->teleop_vel_cmd, mot_comp_id, "axis.%c.teleop-vel-cmd", c));
 //        CALL_CHECK(hal_pin_float_newf(HAL_OUT, &axis_data->teleop_pos_cmd, mot_comp_id, "axis.%c.teleop-pos-cmd", c));
@@ -139,15 +161,15 @@ void axis_initialize_external_offsets(void)
 //        CALL_CHECK(hal_pin_float_newf(HAL_OUT, &axis_data->external_offset_requested,
 //           mot_comp_id, "axis.%c.eoffset-request", c));
 
-//        retval = export_axis(mot_comp_id, c, axis_data);
-//        if (retval) {
-//            rtapi_print_msg(RTAPI_MSG_ERR, _("MOTION: axis %c pin/param export failed\n"), c);
-//            return -1;
-//        }
-//    }
+        retval = export_axis(mot_comp_id, c, axis_data);
+        if (retval) {
+            rtapi_print_msg(RTAPI_MSG_ERR, _("MOTION: axis %c pin/param export failed\n"), c);
+            return -1;
+        }
+    }
 
-//    return 0;
-//}
+    return 0;
+}
 
 void axis_output_to_hal(double *pcmd_p[])
 {

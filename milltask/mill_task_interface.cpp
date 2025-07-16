@@ -1,5 +1,6 @@
 #include "mill_task_interface.h"
 #include "milltask.h"
+#include "mottask.h"
 #include <cstring>
 #include <stdexcept>
 
@@ -9,6 +10,7 @@ public:
     MillTaskImplementation(const char* emcfile) {
         // Initialization code
         millTask_ = new MillTask(emcfile);
+        motTask_ = new MotTask;
     }
 
     ~MillTaskImplementation() override {
@@ -18,6 +20,7 @@ public:
     void initialize() override {
         // Initialization logic
         millTask_->doWork();
+        motTask_->doWork();
     }
 
     void processData(const char* input, char* output, int size) override {
@@ -52,6 +55,7 @@ public:
 
 private:
     MillTask *millTask_;
+    MotTask *motTask_;
 };
 
 // Factory function

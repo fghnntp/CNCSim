@@ -8,16 +8,14 @@
 
 MillTask::MillTask(const char* emcFile) : running(false) {
     emcFile_ = std::string(emcFile);
-    if (emcFile_ != "") {// replace it when it's a good file
-        strcpy(emc_inifile, emcFile_.c_str());
-    }
+    init();
 }
 
 MillTask::~MillTask() {
     stopWork(); // Ensure thread is stopped on destruction
 }
 
-extern int main_load(int argc, char *argv[]);
+//extern int main_load(int argc, char *argv[]);
 
 void MillTask::doWork() {
     if (running) return; // Already running
@@ -25,7 +23,7 @@ void MillTask::doWork() {
     running = true;
 
     workerThread = std::thread([this]() {
-        init();
+
         while (running) {
             // Process work
             process();
@@ -51,6 +49,9 @@ void MillTask::stopWork() {
         workerThread.join();
     }
 }
+
+#include "motionTask.h"
+#include "emcChannel.h"
 
 void MillTask::process() {
     // Simulate work by incrementing counter

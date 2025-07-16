@@ -1,5 +1,5 @@
-#ifndef _MILL_TASK_
-#define _MILL_TASK_
+#ifndef _MOT_TASK_
+#define _MOT_TASK_
 
 #include <thread>
 #include <atomic>
@@ -11,10 +11,10 @@
 #include "emcTask.h"
 
 //This should be asis worker, and can manage the simultion task
-class MillTask {
+class MotTask {
 public:
-    MillTask(const char* emcFile=nullptr);
-    ~MillTask();
+    MotTask();
+    ~MotTask();
 
     // Start the worker thread
     void doWork();
@@ -52,4 +52,4 @@ private:
 
 };
 
-#endif // _MILL_TASK_
+#endif // _MOT_TASK_

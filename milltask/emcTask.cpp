@@ -21,6 +21,7 @@
 EMCTask::EMCTask(std::string iniFileName)
     :emcFileName_(iniFileName)
 {
+    EMCParas::inifileName = emcFileName_;
     init_all();
 //Here Let's start to test interp
     int code = 0;
@@ -155,8 +156,12 @@ int EMCTask::load_file(std::string filename, std::vector<IMillTaskInterface::Too
 #include "motionTask.h"
 void EMCTask::init_all()
 {
+    //init milltask moudle
+    //rs274ngc_parser python_interpter(inited by canon and parser) tool
     emcStatus = new EMC_STAT;
-    strncpy(emc_inifile, emcFileName_.c_str(), LINELEN);
+
+    if (emcFileName_ != "")
+        strncpy(emc_inifile, emcFileName_.c_str(), LINELEN);
 
     IniFile inifile;
 
@@ -244,7 +249,10 @@ void EMCTask::init_all()
     }
 
     MotionTask::InitMotion();
-    MotionTask::CmdHandler();
+
+    EMC_TRAJ_SET_SCALE testmsg;
+    testmsg.scale = 0.8;
+    emcTaskIssueTrajCmd(&testmsg);
 }
 
 std::deque <IMillTaskInterface::ToolPath>

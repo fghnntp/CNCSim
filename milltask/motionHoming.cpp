@@ -225,21 +225,22 @@ static void update_home_is_synchronized(void) {
     }
 }
 
-//static int base_make_joint_home_pins(int id,int njoints)
-//{
-////NOTE: motmod supplies the component id
-//    int jno,retval;
-//    one_joint_home_data_t *addr;
+static int base_make_joint_home_pins(int id,int njoints)
+{
+//NOTE: motmod supplies the component id
+    int jno,retval;
+    one_joint_home_data_t *addr;
 
 //    joint_home_data = hal_malloc(sizeof(all_joints_home_data_t));
-//    if (joint_home_data == 0) {
-//        rtapi_print_msg(RTAPI_MSG_ERR, _("HOMING: all_joints_home_data_t malloc failed\n"));
-//        return -1;
-//    }
+    joint_home_data = new all_joints_home_data_t;
+    if (joint_home_data == 0) {
+        rtapi_print_msg(RTAPI_MSG_ERR, _("HOMING: all_joints_home_data_t malloc failed\n"));
+        return -1;
+    }
 
-//    retval = 0;
-//    for (jno = 0; jno < njoints; jno++) {
-//        addr = &(joint_home_data->jhd[jno]);
+    retval = 0;
+    for (jno = 0; jno < njoints; jno++) {
+        addr = &(joint_home_data->jhd[jno]);
 
 //        retval += hal_pin_bit_newf(HAL_IN, &(addr->home_sw), id,
 //                                  "joint.%d.home-sw-in", jno);
@@ -251,9 +252,14 @@ static void update_home_is_synchronized(void) {
 //                                  "joint.%d.home-state", jno);
 //        retval += hal_pin_bit_newf(HAL_IO, &(addr->index_enable), id,
 //                                  "joint.%d.index-enable", jno);
-//    }
-//    return retval;
-//} // base_make_joint_home_pins()
+        addr->home_sw = new hal_bit_t;
+        addr->homing = new hal_bit_t;
+        addr->homed = new hal_bit_t;
+        addr->home_state = new hal_s32_t;
+        addr->index_enable = new hal_bit_t;
+    }
+    return retval;
+} // base_make_joint_home_pins()
 
 static void do_home_all(void)
 {
@@ -503,11 +509,11 @@ static int base_homing_init(int id,
 //                        servo_period);
 //        return -1;
 //    }
-//    if (base_make_joint_home_pins(id,all_joints)) {
-//        rtapi_print_msg(RTAPI_MSG_ERR,"%s: base_make_joint_home_pins fail\n",
-//                        __FUNCTION__);
-//        return -1;
-//    }
+    if (base_make_joint_home_pins(id,all_joints)) {
+        rtapi_print_msg(RTAPI_MSG_ERR,"%s: base_make_joint_home_pins fail\n",
+                        __FUNCTION__);
+        return -1;
+    }
 
     servo_freq = 1/servo_period;
     homing_active = 0;

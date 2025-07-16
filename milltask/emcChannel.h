@@ -30,13 +30,11 @@ public:
     static void push();
     static int pop(emcmot_command_t &cmd);
 
+    static emcmot_command_t emcmotCommand;
 
 private:
-    static emcmot_command_t emcmotCommand;
     static int commandNum;
     static MessageQueue<emcmot_command_t> cmdMsg;
-
-
     EMCChannel() = delete;
 };
 

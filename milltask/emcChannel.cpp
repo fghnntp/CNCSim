@@ -63,9 +63,6 @@ int EMCChannel::emcTrajSetMaxVelocity(double vel)
 
 void EMCChannel::push()
 {
-    emcmot_status_t s;
-    double end;
-
     emcmotCommand.commandNum = ++commandNum;
     cmdMsg.push(emcmotCommand);
 }

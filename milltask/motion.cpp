@@ -524,6 +524,7 @@ static int init_hal_io(void)
     emcmot_hal_data->tooloffset_z = new hal_float_t;
     emcmot_hal_data->tooloffset_a = new hal_float_t;
     emcmot_hal_data->tooloffset_b = new hal_float_t;
+    emcmot_hal_data->tooloffset_c = new hal_float_t;
     emcmot_hal_data->tooloffset_v = new hal_float_t;
     emcmot_hal_data->tooloffset_u = new hal_float_t;
     emcmot_hal_data->tooloffset_v = new hal_float_t;
@@ -745,7 +746,7 @@ static int init_hal_io(void)
         }
     }
 
-//    CALL_CHECK(axis_init_hal_io(mot_comp_id));
+    CALL_CHECK(axis_init_hal_io(mot_comp_id));
 
 //    CALL_CHECK(hal_pin_bit_newf(HAL_OUT, &(emcmot_hal_data->eoffset_limited), mot_comp_id, "motion.eoffset-limited"));
 //    CALL_CHECK(hal_pin_bit_newf(HAL_OUT, &(emcmot_hal_data->eoffset_active), mot_comp_id, "motion.eoffset-active"));
@@ -853,6 +854,7 @@ static int export_joint(int num, joint_hal_t * addr)
     addr->backlash_vel = new hal_float_t;
     addr->f_error = new hal_float_t;
     addr->f_error_lim = new hal_float_t;
+    addr->free_pos_cmd = new hal_float_t;
     addr->free_vel_lim = new hal_float_t;
     addr->free_tp_enable = new hal_bit_t;
     addr->kb_jjog_active = new hal_bit_t;
@@ -947,18 +949,22 @@ static int init_comm_buffers(void)
     emcmotConfig = 0;
 
     /* allocate and initialize the shared memory structure */
-    emc_shmem_id = rtapi_shmem_new(key, mot_comp_id, sizeof(emcmot_struct_t));
-    if (emc_shmem_id < 0) {
-    rtapi_print_msg(RTAPI_MSG_ERR,
-        "MOTION: rtapi_shmem_new failed, returned %d\n", emc_shmem_id);
-    return -1;
-    }
-    retval = rtapi_shmem_getptr(emc_shmem_id, (void **) &emcmotStruct);
-    if (retval < 0) {
-    rtapi_print_msg(RTAPI_MSG_ERR,
-        "MOTION: rtapi_shmem_getptr failed, returned %d\n", retval);
-    return -1;
-    }
+//    emc_shmem_id = rtapi_shmem_new(key, mot_comp_id, sizeof(emcmot_struct_t));
+
+//    if (emc_shmem_id < 0) {
+//    rtapi_print_msg(RTAPI_MSG_ERR,
+//        "MOTION: rtapi_shmem_new failed, returned %d\n", emc_shmem_id);
+//    return -1;
+//    }
+//    retval = rtapi_shmem_getptr(emc_shmem_id, (void **) &emcmotStruct);
+
+    emcmotStruct = new emcmot_struct_t;
+
+//    if (retval < 0) {
+//    rtapi_print_msg(RTAPI_MSG_ERR,
+//        "MOTION: rtapi_shmem_getptr failed, returned %d\n", retval);
+//    return -1;
+//    }
 
     /* we'll reference emcmotStruct directly */
     emcmotCommand = &emcmotStruct->command;

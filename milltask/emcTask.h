@@ -31,7 +31,10 @@ public:
     int simulate(std::string filename, std::string &res, std::string &err);
     void init_all(void);
 private:
+    //This name is used to quickly init EMCTask
+    //And it will pass name to emcPars for global using
     std::string emcFileName_;
+
 
     // used to milltask evaluate
     int taskPlanError = 0;
@@ -39,14 +42,7 @@ private:
 
     InterpBase *pinterp=0;
 
-
-    emcmot_command_t *emcmotCommand;
-    emcmot_status_t *emcmotStatus;
-    emcmot_config_t *emcmotConfig;
-    emcmot_internal_t *emcmotInternal;
-    emcmot_error_t *emcmotError;
-    emcmot_struct_t *emcmotStruct;
-
+    //G01 is too simple to generate so just do it
     // Arch Helix Generator
     std::deque<IMillTaskInterface::ToolPath> generateG02G03(EmcPose startPose, EmcPose endPos,
                                              PM_CARTESIAN center, PM_CARTESIAN normal,
