@@ -46,8 +46,8 @@ add_library(milltask SHARED
 # 设置库的输出名称（可选）
 set_target_properties(milltask PROPERTIES
     OUTPUT_NAME "milltask"
-    VERSION ${PROJECT_VERSION}
-    SOVERSION ${PROJECT_VERSION_MAJOR}
+    VERSION ${MILL_VERSION}
+    SOVERSION ${MILL_VERSION_MAJOR}.${MILL_VERSION_MINOR}
 )
 
 #link_directories(${LINUX_CNC_LIB})
@@ -96,7 +96,23 @@ install(TARGETS milltask
     ARCHIVE DESTINATION lib
 )
 
+file(GLOB LINUXCNC_LIBS "${LINUX_CNC_LIB}/*.so*")  # Matches .so, .so.1, .so.1.0, etc.
+install(FILES ${LINUXCNC_LIBS} DESTINATION lib)
+
+# install(FILES
+#     ${LINUX_CNC_LIB}/librs274.so
+#     ${LINUX_CNC_LIB}/liblinuxcnc.a
+#     ${LINUX_CNC_LIB}/libnml.so
+#     ${LINUX_CNC_LIB}/liblinuxcncini.so
+#     ${LINUX_CNC_LIB}/libposemath.so
+#     ${LINUX_CNC_LIB}/libpyplugin.so
+#     ${LINUX_CNC_LIB}/liblinuxcnchal.so
+#     ${LINUX_CNC_LIB}/libtooldata.so
+#     DESTINATION lib
+# )
+
+set(MILL_FILE_IF "${CMAKE_CURRENT_SOURCE_DIR}/mill_task_interface.h")
 # 安装头文件
-install(FILES ${TOOL_HEADERS}
+install(FILES ${MILL_FILE_IF}
     DESTINATION include/milltask
 )

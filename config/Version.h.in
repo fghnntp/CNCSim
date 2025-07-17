@@ -1,0 +1,68 @@
+// Inc/Version.h.in
+#pragma once
+
+// Auto-generated version header - DO NOT EDIT
+// 主程序版本信息
+#define CNCSIMU_VERSION_MAJOR @CNCSIMU_VERSION_MAJOR@
+#define CNCSIMU_VERSION_MINOR @CNCSIMU_VERSION_MINOR@
+#define CNCSIMU_VERSION_PATCH @CNCSIMU_VERSION_PATCH@
+#define CNCSIMU_VERSION_STR "@CNCSIMU_VERSION_MAJOR@.@CNCSIMU_VERSION_MINOR@.@CNCSIMU_VERSION_PATCH@"
+
+// MILL库版本信息
+#define MILL_VERSION_MAJOR @MILL_VERSION_MAJOR@
+#define MILL_VERSION_MINOR @MILL_VERSION_MINOR@
+#define MILL_VERSION_PATCH @MILL_VERSION_PATCH@
+#define MILL_VERSION_STR "@MILL_VERSION_MAJOR@.@MILL_VERSION_MINOR@.@MILL_VERSION_PATCH@"
+
+// TOOL库版本信息
+#define TOOL_VERSION_MAJOR @TOOL_VERSION_MAJOR@
+#define TOOL_VERSION_MINOR @TOOL_VERSION_MINOR@
+#define TOOL_VERSION_PATCH @TOOL_VERSION_PATCH@
+#define TOOL_VERSION_STR "@TOOL_VERSION_MAJOR@.@TOOL_VERSION_MINOR@.@TOOL_VERSION_PATCH@"
+
+// git提交哈希（如果可用）
+#define GIT_COMMIT_HASH "@GIT_COMMIT_HASH@"
+
+// linuxcnc版本（如果相关）
+#define LINUXCNC_VERSION "@LINUXCNC_VERSION@"
+
+// 构建信息
+#define BUILD_DATE "@BUILD_DATE@"       // 格式: YYYY-MM-DD
+#define BUILD_TIME "@BUILD_TIME@"       // 格式: HH:MM:SS
+#define BUILD_TYPE "@CMAKE_BUILD_TYPE@" // Debug/Release等
+
+#ifdef __cplusplus
+namespace CNCSIMU {
+    // 主程序版本
+    constexpr int version_major = @CNCSIMU_VERSION_MAJOR@;
+    constexpr int version_minor = @CNCSIMU_VERSION_MINOR@;
+    constexpr int version_patch = @CNCSIMU_VERSION_PATCH@;
+    constexpr const char* version_str = "@CNCSIMU_VERSION_MAJOR@.@CNCSIMU_VERSION_MINOR@.@CNCSIMU_VERSION_PATCH@";
+    
+    // MILL库版本
+    struct MILLVersion {
+        static constexpr int major = @MILL_VERSION_MAJOR@;
+        static constexpr int minor = @MILL_VERSION_MINOR@;
+        static constexpr int patch = @MILL_VERSION_PATCH@;
+        static constexpr const char* str = "@MILL_VERSION_MAJOR@.@MILL_VERSION_MINOR@.@MILL_VERSION_PATCH@";
+    };
+
+    // TOOL库版本
+    struct TOOLVersion {
+        static constexpr int major = @TOOL_VERSION_MAJOR@;
+        static constexpr int minor = @TOOL_VERSION_MINOR@;
+        static constexpr int patch = @TOOL_VERSION_PATCH@;
+        static constexpr const char* str = "@TOOL_VERSION_MAJOR@.@TOOL_VERSION_MINOR@.@TOOL_VERSION_PATCH@";
+    };
+    
+    // 构建信息
+    constexpr const char* build_date = "@BUILD_DATE@";
+    constexpr const char* build_time = "@BUILD_TIME@";
+
+    // git提交哈希
+    constexpr const char* git_commit_hash = "@GIT_COMMIT_HASH@";
+
+    // linuxcnc版本
+    constexpr const char* linuxcnc_version = "@LINUXCNC_VERSION@";
+}
+#endif

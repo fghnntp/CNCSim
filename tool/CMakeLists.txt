@@ -33,8 +33,8 @@ add_library(tool SHARED
 # 设置库的输出名称（可选）
 set_target_properties(tool PROPERTIES
     OUTPUT_NAME "tool"
-    VERSION ${PROJECT_VERSION}
-    SOVERSION ${PROJECT_VERSION_MAJOR}
+    VERSION ${TOOL_VERSION}
+    SOVERSION ${TOOL_VERSION_MAJOR}.${TOOL_VERSION_MINOR}
 )
 
 # 如果需要链接其他库，在这里添加

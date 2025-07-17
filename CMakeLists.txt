@@ -1,6 +1,51 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(CNCSimu VERSION 0.1 LANGUAGES CXX C)
+include(version_info.cmake)
+
+project(CNCSimu
+        VERSION ${CNCSIMU_VERSION}
+        DESCRIPTION "CNC Simulation Software base linuxcnc${CNCSIMU_VERSION}${BUILD_VERSION_SUFFIX}"
+        LANGUAGES CXX C)
+
+# Cpackge configuration
+set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
+set(CPACK_PACKAGE_VENDOR "jdzb")
+set(CPACK_PACKAGE_CONTACT "fghnntp@hotmail.com")
+set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/ReadMe.md")
+
+set(CPACK_PACKAGE_VERSION_MAJOR ${CNCSIMU_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${CNCSIMU_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${CNCSIMU_VERSION_PATCH})
+set(CPACK_PACKAGE_VERSION "${CNCSIMU_VERSION}")
+# Store defualt version
+set(CPACK_PACKAGE_VERSION "${CNCSIMU_VERSION}")
+if(DEFINED GIT_COMMIT_HASH)
+    set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}.${GIT_COMMIT_HASH}")
+endif()
+
+set(CPACK_PACKAGE_FILE_NAME 
+    "${PROJECT_NAME}-${CNCSIMU_VERSION}_${BUILD_TIMESTAMP}")
+
+if(DEFINED GIT_COMMIT_HASH)
+    set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.${GIT_COMMIT_HASH}")
+endif()
+
+set(CPACK_COMPONENT_MAIN_DEV_DISPLAY_NAME "CNCSIMU Development Files")
+set(CPACK_COMPONENT_MAIN_DEV_DESCRIPTION "Headers and development files for CNCSIMU")
+
+include(CPack)
+
+# 设置生成头文件输出目录
+set(VERSION_HEADER_DIR ${CMAKE_BINARY_DIR}/generated)
+file(MAKE_DIRECTORY ${VERSION_HEADER_DIR})
+
+# 配置版本头文件
+configure_file(
+    ${CMAKE_SOURCE_DIR}/config/Version.h.in
+    ${VERSION_HEADER_DIR}/Version.h
+    @ONLY
+)
+
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -64,8 +109,9 @@ else()
 endif()
 
 target_include_directories(CNCSimu PRIVATE
-   ${CMAKE_CURRENT_SOURCE_DIR}/tool
-   ${CMAKE_CURRENT_SOURCE_DIR}/milltask
+    ${VERSION_HEADER_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tool
+    ${CMAKE_CURRENT_SOURCE_DIR}/milltask
 )
 
 # Link Charts if found
@@ -90,9 +136,21 @@ set_target_properties(CNCSimu PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
+set(README_FILE "${CMAKE_SOURCE_DIR}/ReadMe.md")
+
+# 验证文件存在
+if(NOT EXISTS "${README_FILE}")
+    message(FATAL_ERROR "ReadMe.txt not found at ${README_FILE}")
+endif()
+
 install(TARGETS CNCSimu
-    BUNDLE DESTINATION .
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+install(FILES ${README_FILE} DESTINATION .
+)
+
+install(FILES ${VERSION_HEADER_DIR}/Version.h DESTINATION .)
 
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(CNCSimu)
