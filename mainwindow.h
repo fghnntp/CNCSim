@@ -15,12 +15,8 @@
 #include "live_plotter_motion.h"
 #include <QDockWidget>
 #include "mill_task_interface.h"
-#include "rtapp_interface.h"
 #include <QLineEdit>
 
-QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
-QT_END_NAMESPACE
 
 class MainWindow : public QMainWindow
 {
@@ -55,17 +51,15 @@ private:
     void createStatusBar();
     void readSettings();
     void writeSettings();
-    void setDock();
+    void setPathDock();
 
     void createBckThread();
     IMillTaskInterface *millIf_;
-    IRtAppInterface *rtAppIf_;
 
     
     GCodeEdit *activeGCodeEdit();
     QMdiSubWindow *findMdiChild(const QString &fileName);
     
-    Ui::MainWindow *ui;
     QMdiArea *mdiArea;
     
     // 菜单

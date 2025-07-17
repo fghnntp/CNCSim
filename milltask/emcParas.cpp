@@ -28,24 +28,87 @@
 #define CATCH_NAN(cond) do {} while(0)
 #endif
 
-extern void InitonUserMotionIF(void);
-extern void InitTaskinft(void);
-extern TrajConfig_t *GetTrajConfig();
-extern JointConfig_t *GetJointConfig(int joint);
-extern AxisConfig_t *GetAxisConfig(int axis);
-extern SpindleConfig_t *GetSpindleConfig(int spindle);
+//extern void InitonUserMotionIF(void);
+//extern void InitTaskinft(void);
+//extern TrajConfig_t *GetTrajConfig();
+//extern JointConfig_t *GetJointConfig(int joint);
+//extern AxisConfig_t *GetAxisConfig(int axis);
+//extern SpindleConfig_t *GetSpindleConfig(int spindle);
 
 std::string EMCParas::inifileName;
 EMCParas::MotTrajConfig EMCParas::trajconfig;
 EMCParas::MotJointConfig EMCParas::jointconfig[EMCMOT_MAX_JOINTS];
 EMCParas::MotAxisConfig EMCParas::axisconfig[EMCMOT_MAX_AXIS];
 
+//These function is used to integrate in linuxcnc master branch
+//These design is expected for least change for the code running
+//In taskintf these code is static, it should cahnge to global
+//struct TrajConfig_t TrajConfig;
+//struct JointConfig_t JointConfig[EMCMOT_MAX_JOINTS];
+//struct AxisConfig_t AxisConfig[EMCMOT_MAX_AXIS];
+//struct SpindleConfig_t SpindleConfig[EMCMOT_MAX_SPINDLES];
+extern struct TrajConfig_t TrajConfig;
+extern struct JointConfig_t JointConfig[EMCMOT_MAX_JOINTS];
+extern struct AxisConfig_t AxisConfig[EMCMOT_MAX_AXIS];
+extern struct SpindleConfig_t SpindleConfig[EMCMOT_MAX_SPINDLES];
+
+TrajConfig_t *GetTrajConfig()
+{
+    return &TrajConfig;
+}
+
+JointConfig_t *GetJointConfig(int joint)
+{
+    if (joint < 0 || joint >= EMCMOT_MAX_JOINTS)
+        return nullptr;
+    return &JointConfig[joint];
+}
+
+AxisConfig_t *GetAxisConfig(int axis)
+{
+    if (axis < 0 || axis >= EMCMOT_MAX_AXIS)
+        return nullptr;
+    return &AxisConfig[axis];
+}
+
+SpindleConfig_t *GetSpindleConfig(int spindle)
+{
+    if (spindle < 0 || spindle > EMCMOT_MAX_SPINDLES)
+        return nullptr;
+    return &SpindleConfig[spindle];
+}
+
+void InitTaskinft(void)
+{
+    TrajConfig.Inited = 1;
+    TrajConfig.Joints = 5;
+    TrajConfig.Spindles = 1;
+    TrajConfig.MaxAccel = 10;
+    TrajConfig.MaxVel = 100;
+    TrajConfig.AxisMask = ~0;
+    for (int i = 0 ; i < EMCMOT_MAX_JOINTS; i++) {
+        JointConfig[i].MinLimit = -1000;
+        JointConfig[i].MaxLimit = 1000;
+        JointConfig[i].MaxVel = 100;
+        JointConfig[i].MaxAccel = 10;
+        JointConfig[i].Inited = 1;
+    }
+
+    for (int i = 0 ; i < EMCMOT_MAX_AXIS; i++) {
+        AxisConfig[i].MinLimit = -1000;
+        AxisConfig[i].MaxLimit = 1000;
+        AxisConfig[i].MaxVel = 100;
+        AxisConfig[i].MaxAccel = 10;
+        AxisConfig[i].Inited = 1;
+    }
+
+}
+
+
+
 void EMCParas::init_emc_paras()
 {
-    // This is motion simulation init and task simulation init
-    // Just malloc memory, not finally used
     emcStatus->motion.traj.axis_mask=~0;
-    InitonUserMotionIF();
     InitTaskinft();
 
     // Paras need to load for init moduels
@@ -212,7 +275,7 @@ int EMCParas::loadTraj(EmcIniFile *trajInifile)
         trajconfig.traj_default_velocity = vel;
 
         // and set dynamic value
-        if (0 != emcTrajSetVelocity_(0, vel)) { //default velocity on startup 0
+        if (0 != emcTrajSetVelocity_(vel, vel)) { //default velocity on startup 0
             if (emc_debug & EMC_DEBUG_CONFIG) {
                 printf("bad return value from emcTrajSetVelocity\n");
             }

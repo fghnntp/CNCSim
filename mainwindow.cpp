@@ -1,5 +1,5 @@
 #include "mainwindow.h"
-#include "./ui_mainwindow.h"
+//#include "./ui_mainwindow.h"
 #include <QApplication>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -15,10 +15,7 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
 {
-    ui->setupUi(this);
-
     toolManager = new ToolManager(TOOL_FILE_PATH);
     
     simTimer = nullptr;
@@ -56,7 +53,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    delete ui;
 }
 
 void MainWindow::newFile()
@@ -356,7 +352,7 @@ void MainWindow::createActions()
     // pathPlotAct->setShortcuts();
     pathPlotAct->setStatusTip(tr("tool path"));
     connect(pathPlotAct, &QAction::triggered, this, [this]() {
-        setDock();
+        setPathDock();
     });
 
     loadPlotFileAct = new QAction(tr("load"), this);
@@ -456,9 +452,6 @@ void MainWindow::createMenus()
     toolMenu->addAction(pathPlotAct);
     toolMenu->addAction(loadPlotFileAct);
     
-    helpMenu = menuBar()->addMenu(tr("帮助"));
-    helpMenu->addAction(aboutQtAct);
-
     // Add search menu
     searchMenu = menuBar()->addMenu(tr("&Search"));
     searchMenu->addAction(findAct);
@@ -467,6 +460,9 @@ void MainWindow::createMenus()
     searchMenu->addSeparator();
     searchMenu->addAction(replaceAct);
     searchMenu->addAction(replaceAllAct);
+
+    helpMenu = menuBar()->addMenu(tr("帮助"));
+    helpMenu->addAction(aboutQtAct);
 }
 
 void MainWindow::createSearchToolBar()
@@ -617,7 +613,7 @@ void MainWindow::writeSettings()
     settings.setValue("geometry", saveGeometry());
 }
 
-void MainWindow::setDock()
+void MainWindow::setPathDock()
 {
     if (!livePlotterDock) {
         livePlotterDock = new QDockWidget(tr("3D Path Viewer"), this);
@@ -642,6 +638,16 @@ void MainWindow::setDock()
             ));
         }
         livePlotter->setPath(initialPath);
+    }
+    else {
+        if (livePlotterDock->isHidden()) {
+            //Reset the dock for the clear postion when reshow
+            removeDockWidget(livePlotterDock);
+            addDockWidget(Qt::RightDockWidgetArea, livePlotterDock);
+            if (livePlotterDock->isFloating())
+                livePlotterDock->setFloating(false);
+            livePlotterDock->show();
+        }
     }
 
     if (!livePlotterMotionDock) {
@@ -670,7 +676,6 @@ void MainWindow::setDock()
             xVec.append(r * cos(t));
             yVec.append(r * sin(t));
             zVec.append(t / 10.0f);
-
         }
         initialPath.append(tVec);
         initialPath.append(xVec);
@@ -678,6 +683,16 @@ void MainWindow::setDock()
         initialPath.append(zVec);
 
         livePlotterMotion->setPath(initialPath);
+    }
+    else {
+        if (livePlotterMotionDock->isHidden()) {
+            //Reset the dock for the clear postion when reshow
+            removeDockWidget(livePlotterMotionDock);
+            addDockWidget(Qt::LeftDockWidgetArea, livePlotterMotionDock);
+            if (livePlotterMotionDock->isFloating())
+                livePlotterMotionDock->setFloating(false);
+            livePlotterMotionDock->show();
+        }
     }
 }
 

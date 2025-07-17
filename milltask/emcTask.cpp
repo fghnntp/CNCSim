@@ -582,21 +582,21 @@ int EMCTask::emcTaskIssueTrajCmd(NMLmsg *cmd)
     break;
 
     case EMC_TRAJ_SET_SPINDLE_SCALE_TYPE:
-//    emcTrajSetSpindleScaleMsg = (EMC_TRAJ_SET_SPINDLE_SCALE *) cmd;
-//    retval = emcTrajSetSpindleScale(emcTrajSetSpindleScaleMsg->spindle,
-//                                    emcTrajSetSpindleScaleMsg->scale);
+//        EMCChannel::emcTrajSetSpindleScaleMsg = (EMC_TRAJ_SET_SPINDLE_SCALE *) cmd;
+//        retval = EMCChannel::emcTrajSetSpindleScale(EMCChannel::emcTrajSetSpindleScaleMsg->spindle,
+//                                         EMCChannel::emcTrajSetSpindleScaleMsg->scale);
     break;
 
     case EMC_TRAJ_SET_FO_ENABLE_TYPE:
-//    retval = emcTrajSetFOEnable(((EMC_TRAJ_SET_FO_ENABLE *) cmd)->mode);  // feed override enable/disable
+        retval = emcTrajSetFOEnable(((EMC_TRAJ_SET_FO_ENABLE *) cmd)->mode);  // feed override enable/disable
     break;
 
     case EMC_TRAJ_SET_FH_ENABLE_TYPE:
-//    retval = emcTrajSetFHEnable(((EMC_TRAJ_SET_FH_ENABLE *) cmd)->mode); //feed hold enable/disable
+        retval = emcTrajSetFHEnable(((EMC_TRAJ_SET_FH_ENABLE *) cmd)->mode); //feed hold enable/disable
     break;
 
     case EMC_TRAJ_SET_SO_ENABLE_TYPE:
-//    retval = emcTrajSetSOEnable(((EMC_TRAJ_SET_SO_ENABLE *) cmd)->mode); //spindle speed override enable/disable
+        retval = emcTrajSetSOEnable(((EMC_TRAJ_SET_SO_ENABLE *) cmd)->mode); //spindle speed override enable/disable
     break;
 
     case EMC_TRAJ_SET_VELOCITY_TYPE:
