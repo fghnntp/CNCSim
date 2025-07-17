@@ -36,6 +36,8 @@ set(PROJECT_SOURCES
         live_plotter.h
         CmdTextEdit.cpp
         CmdTextEdit.h
+        LogDisplayWidget.cpp
+        LogDisplayWidget.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

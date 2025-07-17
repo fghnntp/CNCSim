@@ -4,9 +4,11 @@
 #include <libintl.h>
 #include "emcglb.h"
 #include <rtapi_string.h>
+#include "emcLog.h"
 
 MotTask::MotTask() : running(false) {
     emcFile_ = emc_inifile;
+    EMCLog::SetLog("MotTask init finshed");
 }
 
 MotTask::~MotTask() {
@@ -20,6 +22,8 @@ void MotTask::doWork() {
 
     workerThread = std::thread([this]() {
         init();
+
+        EMCLog::SetLog("MotTask start work");
         while (running) {
             // Process work
             process();

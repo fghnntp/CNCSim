@@ -32,7 +32,7 @@ EMCTask::EMCTask(std::string iniFileName)
     printf("code = %d\n", code);
     if (code >= INTERP_ENDFILE)
         printf("%s \n", pinterp->error_text(code, errText, 256));
-    interp_list.print();
+//    interp_list.print();
 
 
     code = pinterp->execute("G01X100Y100Z100F100");
@@ -41,11 +41,11 @@ EMCTask::EMCTask(std::string iniFileName)
     printf("code = %d\n", code);
     interp_list.print();
 
-    code = pinterp->execute("G01X200Y200Z0F100");
-    if (code >= INTERP_ENDFILE)
-        printf("%s \n", pinterp->error_text(code, errText, 256));
-    printf("code = %d\n", code);
-    interp_list.print();
+//    code = pinterp->execute("G01X200Y200Z0F100");
+//    if (code >= INTERP_ENDFILE)
+//        printf("%s \n", pinterp->error_text(code, errText, 256));
+//    printf("code = %d\n", code);
+//    interp_list.print();
 
     while (interp_list.len() > 0) {
         auto msg = interp_list.get();

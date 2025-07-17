@@ -22,6 +22,8 @@ public:
     // generator motion profile for configured tool machine
     virtual int simulate(const char *filename, std::string &res, std::string &err) = 0;
 
+    virtual int getlog(std::string &log, int &level) = 0;
+
     // Factory function
     static IMillTaskInterface* create(const char* emcfile = nullptr);
 };

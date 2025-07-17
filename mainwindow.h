@@ -16,7 +16,8 @@
 #include <QDockWidget>
 #include "mill_task_interface.h"
 #include <QLineEdit>
-
+#include "CmdTextEdit.h"
+#include "LogDisplayWidget.h"
 
 class MainWindow : public QMainWindow
 {
@@ -97,17 +98,18 @@ private:
     QAction *toolTableAct;
     QAction *pathPlotAct;
     QAction *loadPlotFileAct;
+
+    QAction *cncCmdAct;
     
     QActionGroup *windowActionGroup;
 
-    ToolManager *toolManager;
+    ToolManager *toolManager = nullptr;
 
-    QTimer *simTimer;
-    QDockWidget *livePlotterDock;
-    LivePlotter *livePlotter;
+    QDockWidget *livePlotterDock = nullptr;
+    LivePlotter *livePlotter = nullptr;
 
-    QDockWidget *livePlotterMotionDock;
-    LivePlotterMotion *livePlotterMotion;
+    QDockWidget *livePlotterMotionDock = nullptr;
+    LivePlotterMotion *livePlotterMotion = nullptr;
 private slots:
     void find();
     void findNext();
@@ -125,6 +127,16 @@ private:
     QAction *findPreviousAct;
     QAction *replaceAct;
     QAction *replaceAllAct;
+private:
+    CommandTextEdit *cmdTextEdit = nullptr;
+    QDockWidget *cmdTextDock = nullptr;
+    LogDisplayWidget *logDisplayWidget = nullptr;
+    QDockWidget *logDisplayDock = nullptr;
+
+    QTimer *logTimer = nullptr;
+
+    void setCmdLogDock();
+
 };
 
 #endif // MAINWINDOW_H

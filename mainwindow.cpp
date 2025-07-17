@@ -1,5 +1,4 @@
 #include "mainwindow.h"
-//#include "./ui_mainwindow.h"
 #include <QApplication>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -11,18 +10,13 @@
 #include "ToolTableDialog.h"
 #include "cnc_config.h"
 #include <cmath>
+#include <QDateTime>
 
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     toolManager = new ToolManager(TOOL_FILE_PATH);
-    
-    simTimer = nullptr;
-    livePlotter = nullptr;
-    livePlotterDock = nullptr;
-    livePlotterMotion = nullptr;
-    livePlotterMotionDock = nullptr;
 
     // 创建 MDI 区域
     mdiArea = new QMdiArea;
@@ -47,8 +41,6 @@ MainWindow::MainWindow(QWidget *parent)
     setUnifiedTitleAndToolBarOnMac(true);
 
     createBckThread();
-
-
 }
 
 MainWindow::~MainWindow()
@@ -389,6 +381,12 @@ void MainWindow::createActions()
         }
     });
 
+    cncCmdAct = new QAction(tr("cmdline"), this);
+    cncCmdAct->setStatusTip(tr("open cmdline for comnunication with cnc"));
+    connect(cncCmdAct, &QAction::triggered, this, [this]() {
+        setCmdLogDock();
+    });
+
     // Add search actions
     createSearchActions();
 
@@ -451,6 +449,7 @@ void MainWindow::createMenus()
     toolMenu->addAction(toolTableAct);
     toolMenu->addAction(pathPlotAct);
     toolMenu->addAction(loadPlotFileAct);
+    toolMenu->addAction(cncCmdAct);
     
     // Add search menu
     searchMenu = menuBar()->addMenu(tr("&Search"));
@@ -586,6 +585,7 @@ void MainWindow::createToolBars()
     viewToolBar->addAction(toolTableAct);
     viewToolBar->addAction(pathPlotAct);
     viewToolBar->addAction(loadPlotFileAct);
+    viewToolBar->addAction(cncCmdAct);
 }
 
 void MainWindow::createStatusBar()
@@ -619,7 +619,7 @@ void MainWindow::setPathDock()
         livePlotterDock = new QDockWidget(tr("3D Path Viewer"), this);
         livePlotter = new LivePlotter(livePlotterDock);
         livePlotterDock->setWidget(livePlotter);
-        addDockWidget(Qt::RightDockWidgetArea, livePlotterDock);
+        addDockWidget(Qt::LeftDockWidgetArea, livePlotterDock);
         QScreen *screen = QGuiApplication::primaryScreen();
         QRect screenGeometry = screen->availableGeometry();
         int oneThirdWidth = screenGeometry.width() / 3;
@@ -643,7 +643,7 @@ void MainWindow::setPathDock()
         if (livePlotterDock->isHidden()) {
             //Reset the dock for the clear postion when reshow
             removeDockWidget(livePlotterDock);
-            addDockWidget(Qt::RightDockWidgetArea, livePlotterDock);
+            addDockWidget(Qt::LeftDockWidgetArea, livePlotterDock);
             if (livePlotterDock->isFloating())
                 livePlotterDock->setFloating(false);
             livePlotterDock->show();
@@ -692,6 +692,71 @@ void MainWindow::setPathDock()
             if (livePlotterMotionDock->isFloating())
                 livePlotterMotionDock->setFloating(false);
             livePlotterMotionDock->show();
+        }
+    }
+}
+
+void MainWindow::setCmdLogDock()
+{
+    if (!cmdTextDock) {
+        cmdTextDock = new QDockWidget(tr("CmdLine"), this);
+        cmdTextEdit = new CommandTextEdit(cmdTextDock);
+        cmdTextDock->setWidget(cmdTextEdit);
+        addDockWidget(Qt::RightDockWidgetArea, cmdTextDock);
+        QScreen *screen = QGuiApplication::primaryScreen();
+        QRect screenGeometry = screen->availableGeometry();
+        int oneThirdWidth = screenGeometry.width() / 3;
+
+        // Resize the dock widget
+        cmdTextDock->setMinimumWidth(oneThirdWidth);
+    }
+    else {
+        if (cmdTextDock->isHidden()) {
+            //Reset the dock for the clear postion when reshow
+            removeDockWidget(cmdTextDock);
+            addDockWidget(Qt::RightDockWidgetArea, cmdTextDock);
+            if (cmdTextDock->isFloating())
+                cmdTextDock->setFloating(false);
+            cmdTextDock->show();
+        }
+    }
+
+    if (!logDisplayDock) {
+        logTimer = new QTimer(this);
+        logDisplayDock = new QDockWidget(tr("LogDisplay"), this);
+        logDisplayWidget = new LogDisplayWidget(logDisplayDock);
+        logDisplayDock->setWidget(logDisplayWidget);
+        addDockWidget(Qt::RightDockWidgetArea, logDisplayDock);
+        QScreen *screen = QGuiApplication::primaryScreen();
+        QRect screenGeometry = screen->availableGeometry();
+        int oneThirdWidth = screenGeometry.width() / 3;
+
+        logTimer->start(100);
+        connect (logTimer, &QTimer::timeout, this, [this] {
+            std::string log;
+            QString timeStr = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss ");
+            int level = 0;
+            while (millIf_->getlog(log, level) == 0) {
+                if (level == 0)
+                    logDisplayWidget->appendLog(timeStr + QString::fromStdString(log));
+                else if (level == 1)
+                    logDisplayWidget->appendWarning(timeStr + QString::fromStdString(log));
+                else if (level == 2)
+                    logDisplayWidget->appendError(timeStr + QString::fromStdString(log));
+            }
+        });
+
+        // Resize the dock widget
+        logDisplayDock->setMinimumWidth(oneThirdWidth);
+    }
+    else {
+        if (logDisplayDock->isHidden()) {
+            //Reset the dock for the clear postion when reshow
+            removeDockWidget(logDisplayDock);
+            addDockWidget(Qt::RightDockWidgetArea, logDisplayDock);
+            if (logDisplayDock->isFloating())
+                logDisplayDock->setFloating(false);
+            logDisplayDock->show();
         }
     }
 }

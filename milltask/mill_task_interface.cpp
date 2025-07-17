@@ -3,6 +3,7 @@
 #include "mottask.h"
 #include <cstring>
 #include <stdexcept>
+#include "emcLog.h"
 
 // Concrete implementation of the interface
 class MillTaskImplementation : public IMillTaskInterface {
@@ -51,6 +52,10 @@ public:
     int simulate(const char *filename, std::string &res, std::string &err) override {
 
         return 0;
+    }
+
+    int getlog(std::string &log, int &level) override {
+        return EMCLog::GetLog(log, level);
     }
 
 private:

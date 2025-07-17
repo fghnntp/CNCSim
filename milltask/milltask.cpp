@@ -4,11 +4,13 @@
 #include <libintl.h>
 #include "emcglb.h"
 #include <rtapi_string.h>
+#include "emcLog.h"
 
 
 MillTask::MillTask(const char* emcFile) : running(false) {
     emcFile_ = std::string(emcFile);
     init();
+    EMCLog::SetLog("MillTask Init Finshed");
 }
 
 MillTask::~MillTask() {
@@ -21,7 +23,7 @@ void MillTask::doWork() {
     if (running) return; // Already running
 
     running = true;
-
+    EMCLog::SetLog("MillTask start work");
     workerThread = std::thread([this]() {
 
         while (running) {
