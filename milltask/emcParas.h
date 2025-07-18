@@ -60,6 +60,8 @@ public:
     static int loadTraj(EmcIniFile *trajInifile);
     static int loadKins(EmcIniFile *trajInifile);
 
+    static std::string showTrajParas();
+
     static int emcTrajSetAxes_(int axismask);
     static int emcTrajSetJoints_(int joints);
     static int emcTrajSetUnits_(double linearUnits, double angularUnits);
@@ -81,6 +83,8 @@ public:
     static int iniJoint(int joint, const char *filename);
     static int loadJoint(int joint, EmcIniFile *jointIniFile);
 
+    static std::string showJoint(int joint = 0);
+
     static int emcJointSetType_(int joint, unsigned char jointType);
     static int emcJointSetUnits_(int joint, double units);
     static int emcJointSetBacklash_(int joint, double backlash);
@@ -99,6 +103,9 @@ public:
 
     static int iniAxis(int axis, const char *filename);
     static int loadAxis(int axis, EmcIniFile *axisIniFile);
+
+    static std::string showAxis(int axis = 0);
+
     static int emcAxisSetMinPositionLimit_(int axis, double limit);
     static int emcAxisSetMaxPositionLimit_(int axis, double limit);
     static int emcAxisSetMaxVelocity_(int axis, double vel,double ext_offset_vel);
@@ -107,6 +114,8 @@ public:
 
     static int iniSpindle(int spindle, const char *filename);
     static int loadSpindle(int spindle, EmcIniFile *spindleIniFile);
+
+    static std::string showSpindle(int spindle = 0);
 
     static int emcSpindleSetParams_(int spindle, double max_pos, double min_pos, double max_neg,
                    double min_neg, double search_vel, double home_angle, int sequence, double increment);

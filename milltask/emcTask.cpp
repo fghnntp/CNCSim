@@ -153,6 +153,48 @@ int EMCTask::load_file(std::string filename, std::vector<IMillTaskInterface::Too
     return 0;
 }
 
+int EMCTask::load_file(std::string filename, std::string &err)
+{
+    if (!pinterp)//Wrong
+        return 1;
+
+    if (interp_list.len() > 0) {
+        //Clear the useless msg first
+        interp_list.clear();
+        return 2;
+    }
+
+    if (pinterp->open(filename.c_str())) {
+        std::cout << filename << " Wrong file" << std::endl;
+        return 3;
+    }
+
+    int code = 0;
+    char errText[256];
+    memset(errText, 0, 256);
+    while (!pinterp->read()) {
+        code = pinterp->execute();
+        if (code > INTERP_ENDFILE) {
+            std::ostringstream oss;
+            oss << std::fixed << std::setprecision(6); // 保证6位小数且非科学计数法
+            oss << "file:" << pinterp->file_name(errText, 256);
+            oss << " line:" << pinterp->line() << " " << pinterp->line_text(errText, 256);
+            oss << " err:" << pinterp->error_text(code, errText, 256);
+            err = oss.str();
+            std::cout << err << std::endl;
+            pinterp->reset();//This should reset the interp
+            pinterp->close();
+            return 4;
+        }
+    }
+
+    pinterp->close();
+
+    emitAllCmd();
+
+    return 0;
+}
+
 #include "motionTask.h"
 void EMCTask::init_all()
 {
@@ -588,15 +630,15 @@ int EMCTask::emcTaskIssueTrajCmd(NMLmsg *cmd)
     break;
 
     case EMC_TRAJ_SET_FO_ENABLE_TYPE:
-        retval = emcTrajSetFOEnable(((EMC_TRAJ_SET_FO_ENABLE *) cmd)->mode);  // feed override enable/disable
+//        retval = emcTrajSetFOEnable(((EMC_TRAJ_SET_FO_ENABLE *) cmd)->mode);  // feed override enable/disable
     break;
 
     case EMC_TRAJ_SET_FH_ENABLE_TYPE:
-        retval = emcTrajSetFHEnable(((EMC_TRAJ_SET_FH_ENABLE *) cmd)->mode); //feed hold enable/disable
+//        retval = emcTrajSetFHEnable(((EMC_TRAJ_SET_FH_ENABLE *) cmd)->mode); //feed hold enable/disable
     break;
 
     case EMC_TRAJ_SET_SO_ENABLE_TYPE:
-        retval = emcTrajSetSOEnable(((EMC_TRAJ_SET_SO_ENABLE *) cmd)->mode); //spindle speed override enable/disable
+//        retval = emcTrajSetSOEnable(((EMC_TRAJ_SET_SO_ENABLE *) cmd)->mode); //spindle speed override enable/disable
     break;
 
     case EMC_TRAJ_SET_VELOCITY_TYPE:
@@ -663,38 +705,38 @@ int EMCTask::emcTaskIssueTrajCmd(NMLmsg *cmd)
 
     case EMC_TRAJ_SET_OFFSET_TYPE:
     // update tool offset
-    emcStatus->task.toolOffset = ((EMC_TRAJ_SET_OFFSET *) cmd)->offset;
-        retval = emcTrajSetOffset(emcStatus->task.toolOffset);
+//        emcStatus->task.toolOffset = ((EMC_TRAJ_SET_OFFSET *) cmd)->offset;
+//        retval = emcTrajSetOffset(emcStatus->task.toolOffset);
     break;
 
     case EMC_TRAJ_SET_ROTATION_TYPE:
-        emcStatus->task.rotation_xy = ((EMC_TRAJ_SET_ROTATION *) cmd)->rotation;
-        retval = 0;
+//        emcStatus->task.rotation_xy = ((EMC_TRAJ_SET_ROTATION *) cmd)->rotation;
+//        retval = 0;
         break;
 
     case EMC_TRAJ_SET_G5X_TYPE:
     // struct-copy program origin
-    emcStatus->task.g5x_offset = ((EMC_TRAJ_SET_G5X *) cmd)->origin;
-        emcStatus->task.g5x_index = ((EMC_TRAJ_SET_G5X *) cmd)->g5x_index;
-    retval = 0;
+//    emcStatus->task.g5x_offset = ((EMC_TRAJ_SET_G5X *) cmd)->origin;
+//        emcStatus->task.g5x_index = ((EMC_TRAJ_SET_G5X *) cmd)->g5x_index;
+//    retval = 0;
     break;
     case EMC_TRAJ_SET_G92_TYPE:
     // struct-copy program origin
-    emcStatus->task.g92_offset = ((EMC_TRAJ_SET_G92 *) cmd)->origin;
-    retval = 0;
+//    emcStatus->task.g92_offset = ((EMC_TRAJ_SET_G92 *) cmd)->origin;
+//    retval = 0;
     break;
     case EMC_TRAJ_CLEAR_PROBE_TRIPPED_FLAG_TYPE:
-    retval = emcTrajClearProbeTrippedFlag();
+//    retval = emcTrajClearProbeTrippedFlag();
     break;
 
     case EMC_TRAJ_PROBE_TYPE:
-    retval = emcTrajProbe(
-        ((EMC_TRAJ_PROBE *) cmd)->pos,
-        ((EMC_TRAJ_PROBE *) cmd)->type,
-        ((EMC_TRAJ_PROBE *) cmd)->vel,
-            ((EMC_TRAJ_PROBE *) cmd)->ini_maxvel,
-        ((EMC_TRAJ_PROBE *) cmd)->acc,
-            ((EMC_TRAJ_PROBE *) cmd)->probe_type);
+//    retval = emcTrajProbe(
+//        ((EMC_TRAJ_PROBE *) cmd)->pos,
+//        ((EMC_TRAJ_PROBE *) cmd)->type,
+//        ((EMC_TRAJ_PROBE *) cmd)->vel,
+//            ((EMC_TRAJ_PROBE *) cmd)->ini_maxvel,
+//        ((EMC_TRAJ_PROBE *) cmd)->acc,
+//            ((EMC_TRAJ_PROBE *) cmd)->probe_type);
     break;
 
     case EMC_AUX_INPUT_WAIT_TYPE:
@@ -718,47 +760,47 @@ int EMCTask::emcTaskIssueTrajCmd(NMLmsg *cmd)
     break;
 
     case EMC_TRAJ_RIGID_TAP_TYPE:
-    emcTrajUpdateTag(((EMC_TRAJ_LINEAR_MOVE *) cmd)->tag);
-    retval = emcTrajRigidTap(((EMC_TRAJ_RIGID_TAP *) cmd)->pos,
-            ((EMC_TRAJ_RIGID_TAP *) cmd)->vel,
-            ((EMC_TRAJ_RIGID_TAP *) cmd)->ini_maxvel,
-        ((EMC_TRAJ_RIGID_TAP *) cmd)->acc,
-        ((EMC_TRAJ_RIGID_TAP *) cmd)->scale);
-    break;
+//    emcTrajUpdateTag(((EMC_TRAJ_LINEAR_MOVE *) cmd)->tag);
+//    retval = emcTrajRigidTap(((EMC_TRAJ_RIGID_TAP *) cmd)->pos,
+//            ((EMC_TRAJ_RIGID_TAP *) cmd)->vel,
+//            ((EMC_TRAJ_RIGID_TAP *) cmd)->ini_maxvel,
+//        ((EMC_TRAJ_RIGID_TAP *) cmd)->acc,
+//        ((EMC_TRAJ_RIGID_TAP *) cmd)->scale);
+//    break;
 
     case EMC_TRAJ_SET_TELEOP_ENABLE_TYPE:
-    if (((EMC_TRAJ_SET_TELEOP_ENABLE *) cmd)->enable) {
-        retval = emcTrajSetMode(EMC_TRAJ_MODE::TELEOP);
-    } else {
-        retval = emcTrajSetMode(EMC_TRAJ_MODE::FREE);
-    }
+//    if (((EMC_TRAJ_SET_TELEOP_ENABLE *) cmd)->enable) {
+//        retval = emcTrajSetMode(EMC_TRAJ_MODE::TELEOP);
+//    } else {
+//        retval = emcTrajSetMode(EMC_TRAJ_MODE::FREE);
+//    }
     break;
 
     case EMC_MOTION_SET_AOUT_TYPE:
-    retval = emcMotionSetAout(((EMC_MOTION_SET_AOUT *) cmd)->index,
-                  ((EMC_MOTION_SET_AOUT *) cmd)->start,
-                  ((EMC_MOTION_SET_AOUT *) cmd)->end,
-                  ((EMC_MOTION_SET_AOUT *) cmd)->now);
+//    retval = emcMotionSetAout(((EMC_MOTION_SET_AOUT *) cmd)->index,
+//                  ((EMC_MOTION_SET_AOUT *) cmd)->start,
+//                  ((EMC_MOTION_SET_AOUT *) cmd)->end,
+//                  ((EMC_MOTION_SET_AOUT *) cmd)->now);
     break;
 
     case EMC_MOTION_SET_DOUT_TYPE:
-    retval = emcMotionSetDout(((EMC_MOTION_SET_DOUT *) cmd)->index,
-                  ((EMC_MOTION_SET_DOUT *) cmd)->start,
-                  ((EMC_MOTION_SET_DOUT *) cmd)->end,
-                  ((EMC_MOTION_SET_DOUT *) cmd)->now);
+//    retval = emcMotionSetDout(((EMC_MOTION_SET_DOUT *) cmd)->index,
+//                  ((EMC_MOTION_SET_DOUT *) cmd)->start,
+//                  ((EMC_MOTION_SET_DOUT *) cmd)->end,
+//                  ((EMC_MOTION_SET_DOUT *) cmd)->now);
     break;
 
     case EMC_MOTION_ADAPTIVE_TYPE:
-    retval = emcTrajSetAFEnable(((EMC_MOTION_ADAPTIVE *) cmd)->status);
+//    retval = emcTrajSetAFEnable(((EMC_MOTION_ADAPTIVE *) cmd)->status);
     break;
 
     case EMC_SET_DEBUG_TYPE:
     /* set the debug level here */
-    emc_debug = ((EMC_SET_DEBUG *) cmd)->debug;
+//    emc_debug = ((EMC_SET_DEBUG *) cmd)->debug;
     /* and motion */
-    emcMotionSetDebug(emc_debug);
+//    emcMotionSetDebug(emc_debug);
     /* and reflect it in the status-- this isn't updated continually */
-    emcStatus->debug = emc_debug;
+//    emcStatus->debug = emc_debug;
     break;
 
     // unimplemented ones
@@ -1199,6 +1241,14 @@ int EMCTask::emcTaskIssueTrajCmd(NMLmsg *cmd)
     }
 
     return retval;
+}
+
+void EMCTask::emitAllCmd()
+{
+    while (interp_list.len() > 0) {
+        auto cmd = interp_list.get();
+        emcTaskIssueTrajCmd(cmd.get());
+    }
 }
 
 EMCTask::~EMCTask() {}

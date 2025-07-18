@@ -24,6 +24,8 @@ public:
 
     virtual int getlog(std::string &log, int &level) = 0;
 
+    virtual void setCmd(std::string &cmd) = 0;
+
     // Factory function
     static IMillTaskInterface* create(const char* emcfile = nullptr);
 };

@@ -55,17 +55,49 @@ void MillTask::stopWork() {
 #include "motionTask.h"
 #include "emcChannel.h"
 
-void MillTask::process() {
-    // Simulate work by incrementing counter
-    counter++;
-    std::string result = "Processed: " + std::to_string(counter);
+void MillTask::process() { 
+    switch (state_) {
+    case kIDLE:
+    case kHandle:
+    case kMDI:
+        break;
+    case kAuto:
+        if (!taskMethods->load_file(filename_, error_)) {
+        }
+        state_ = kIDLE;
+        break;
+    defualt:
+        break;
+    }
+
+    execCmd();
 
     // Emit result through callback
     if (resultCallback) {
+        std::string result;
         resultCallback(result);
     }
 
 }
+
+void MillTask::execCmd()
+{
+    int res = 0;
+    EMCChannel::MILLCmd cmd;
+    res = EMCChannel::getMillCmd(cmd);
+    if (res)
+        return;
+
+    switch (cmd) {
+    case EMCChannel::kMillNone:
+        break;
+    case EMCChannel::kMillAuto:
+        state_ = kAuto;
+        break;
+    default:
+        break;
+    }
+ }
 
 void MillTask::setResultCallback(std::function<void(const std::string&)> callback) {
     resultCallback = callback;
@@ -78,6 +110,23 @@ void MillTask::setFinishedCallback(std::function<void()> callback) {
 void MillTask::loadfile(std::string filename)
 {
 
+}
+
+int MillTask::load_file(std::string filename, std::vector<IMillTaskInterface::ToolPath> *toolPath, std::string &err)
+{
+    int retval = 0;
+    retval = taskMethods->load_file(filename, toolPath, err);
+
+    if (!retval)
+        filename_ = filename;
+
+    return retval;
+}
+
+int MillTask::setSts(TaskState sts)
+{
+    state_ = sts;
+    return 0;
 }
 
 void MillTask::init()

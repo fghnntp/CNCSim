@@ -152,6 +152,12 @@ install(FILES ${README_FILE} DESTINATION .
 
 install(FILES ${VERSION_HEADER_DIR}/Version.h DESTINATION .)
 
+# Automatically find and install all runtime dependencies (shared libs)
+install(IMPORTED_RUNTIME_ARTIFACTS
+    ${PROJECT_NAME}
+    DESTINATION lib
+)
+
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(CNCSimu)
 endif()

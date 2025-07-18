@@ -66,6 +66,7 @@ target_link_libraries(milltask PRIVATE
 
 # 设置头文件包含目录
 target_include_directories(milltask PUBLIC
+    ${VERSION_HEADER_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${LINUX_CNC_INC}
     ${LINUX_CNC_INC}/linuxcnc
@@ -115,4 +116,10 @@ set(MILL_FILE_IF "${CMAKE_CURRENT_SOURCE_DIR}/mill_task_interface.h")
 # 安装头文件
 install(FILES ${MILL_FILE_IF}
     DESTINATION include/milltask
+)
+
+# Automatically find and install all runtime dependencies (shared libs)
+install(IMPORTED_RUNTIME_ARTIFACTS
+    milltask
+    DESTINATION lib
 )

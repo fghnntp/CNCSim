@@ -4,6 +4,7 @@
 #include <cstring>
 #include <stdexcept>
 #include "emcLog.h"
+#include "cmdtask.h"
 
 // Concrete implementation of the interface
 class MillTaskImplementation : public IMillTaskInterface {
@@ -12,6 +13,7 @@ public:
         // Initialization code
         millTask_ = new MillTask(emcfile);
         motTask_ = new MotTask;
+        cmdTask_ = new CmdTask;
     }
 
     ~MillTaskImplementation() override {
@@ -22,6 +24,7 @@ public:
         // Initialization logic
         millTask_->doWork();
         motTask_->doWork();
+        cmdTask_->doWork();
     }
 
     void processData(const char* input, char* output, int size) override {
@@ -43,7 +46,7 @@ public:
         std::string name(filename);
         int retval = 0;
 
-        retval = millTask_->taskMethods->load_file(filename, &toolPath, err);
+        retval = millTask_->load_file(filename, &toolPath, err);
 
         return retval;
     }
@@ -58,9 +61,14 @@ public:
         return EMCLog::GetLog(log, level);
     }
 
+    void setCmd(std::string &cmd) override {
+        cmdTask_->SetCmd(cmd);
+    }
+
 private:
     MillTask *millTask_;
     MotTask *motTask_;
+    CmdTask *cmdTask_;
 };
 
 // Factory function

@@ -11,7 +11,8 @@ CommandTextEdit::CommandTextEdit(QWidget* parent) : QTextEdit(parent) {
 
 void CommandTextEdit::appendOutput(const QString& text) {
     moveCursor(QTextCursor::End);
-    insertPlainText("\n" + text);
+    insertPlainText(">>");
+    insertPlainText("\n" + text + "\n>>>");
     append("> ");
 }
 
@@ -52,6 +53,7 @@ void CommandTextEdit::keyPressEvent(QKeyEvent* event) {
             if (!cmd.isEmpty()) {
                 commandHistory.prepend(cmd);
                 historyIndex = -1;
+
                 emit commandEntered(cmd);
                 append("\n> ");
             }

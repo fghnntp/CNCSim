@@ -7,10 +7,12 @@
 #include <condition_variable>
 #include <string>
 #include <functional>
+#include "emcMsgQueue.h"
 
 //This should be asis worker, and can manage the simultion task
 class CmdTask {
 public:
+    using CommandFunc = std::function<std::string(const std::vector<std::string>&)>;
     CmdTask();
     ~CmdTask();
 
@@ -28,6 +30,8 @@ public:
 
     //load the file and get the previe date
     void loadfile(std::string filename);
+    void RegisterCommand(const std::string& name, CommandFunc func);
+    void SetCmd(const std::string &str);
 
 private:
     void init(); // Once prepaing main process function
@@ -36,14 +40,21 @@ private:
     std::thread workerThread;
     std::atomic<bool> running{false};
     std::mutex mutex;
+    std::mutex mutex_reg;
+    std::mutex mutex_cmd;
     std::condition_variable cv;
 
     // Callbacks to replace Qt signals
     std::function<void(const std::string&)> resultCallback;
     std::function<void()> finishedCallback;
 
-    int counter = 0;
+    std::unordered_map<std::string, CommandFunc> _commandTable;
+    std::pair<std::string, std::vector<std::string>> ParseCommand(std::string s);
 
+    MessageQueue <std::string> cmdQueue;
+    MessageQueue <std::string> resQueue;
+
+    std::string ExecuteCommand(const std::string &rawCmd);
 };
 
 #endif // _CMD_TASK_

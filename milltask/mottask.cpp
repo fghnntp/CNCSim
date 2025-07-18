@@ -70,6 +70,8 @@ void MotTask::process() {
     counter++;
     std::string result = "Processed: " + std::to_string(counter);
 
+    while (!EMCChannel::getMotCmd(*emcmotCommand))
+        MotionTask::CmdHandler();
 
     MotionTask::MotionCtrl();
     //if the msg send by milltask crated, msg will be get

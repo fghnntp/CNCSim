@@ -173,6 +173,24 @@ int EMCParas::loadKins(EmcIniFile *trajInifile)
     return 0;
 }
 
+std::string EMCParas::showTrajParas()
+{
+    std::stringstream ss;
+
+    ss << "TrajConfig" << std::endl;
+    ss << "Inited " << TrajConfig.Inited << std::endl;
+    ss << "Joints " << TrajConfig.Joints << std::endl;
+    ss << "Spindles " << TrajConfig.Spindles << std::endl;
+    ss << "MaxAccel " << TrajConfig.MaxAccel << std::endl;
+    ss << "MaxVel " << TrajConfig.MaxVel << std::endl;
+    ss << "AxisMask " << TrajConfig.AxisMask << std::endl;
+    ss << "LinearUnits " << TrajConfig.LinearUnits << std::endl;
+    ss << "AngularUnits " << TrajConfig.AngularUnits << std::endl;
+    ss << "MotionId " << TrajConfig.MotionId;
+
+    return ss.str();
+}
+
 
 /*
   loadTraj()
@@ -487,9 +505,8 @@ int EMCParas::emcTrajSetJoints_(int joints)
     }
 
     GetTrajConfig()->Joints = joints;
-    EMCChannel::emcmotCommand.command = EMCMOT_SET_NUM_JOINTS;
-    EMCChannel::emcmotCommand.joint = joints;
-    EMCChannel::push();
+    EMCChannel::emcTrajSetJoints(joints);
+
     return 0;
 }
 
@@ -517,9 +534,7 @@ int EMCParas::emcTrajSetSpindles_(int spindles)
     }
 
     GetTrajConfig()->Spindles = spindles;
-    EMCChannel::emcmotCommand.command = EMCMOT_SET_NUM_SPINDLES;
-    EMCChannel::emcmotCommand.spindle = spindles;
-    EMCChannel::push();
+    EMCChannel::emcTrajSetSpindles(spindles);
 
     return 0;
 }
@@ -547,16 +562,13 @@ int EMCParas::emcTrajSetVelocity_(double vel, double ini_maxvel)
     }
 
     if (ini_maxvel < 0.0) {
-        ini_maxvel = 0.0;
+//        ini_maxvel = 0.0;
+        ini_maxvel = GetTrajConfig()->MaxVel;
     } else if (vel > GetTrajConfig()->MaxVel) {
         ini_maxvel = GetTrajConfig()->MaxVel;
     }
 
-    EMCChannel::emcmotCommand.command = EMCMOT_SET_VEL;
-    EMCChannel::emcmotCommand.vel = vel;
-    EMCChannel::emcmotCommand.ini_maxvel = ini_maxvel;
-
-    EMCChannel::push();
+    EMCChannel::emcTrajSetVelocity(vel, ini_maxvel);
 
     return 0;
 }
@@ -574,10 +586,7 @@ int EMCParas::emcTrajSetMaxVelocity_(double vel)
 
     GetTrajConfig()->MaxVel = vel;
 
-    EMCChannel::emcmotCommand.command = EMCMOT_SET_VEL_LIMIT;
-    EMCChannel::emcmotCommand.vel = vel;
-
-    EMCChannel::push();
+    emcTrajSetMaxVelocity(vel);
 
     return 0;
 }
@@ -590,10 +599,7 @@ int EMCParas::emcTrajSetAcceleration_(double acc)
     acc = GetTrajConfig()->MaxAccel;
     }
 
-    EMCChannel::emcmotCommand.command = EMCMOT_SET_ACC;
-    EMCChannel::emcmotCommand.acc = acc;
-
-    EMCChannel::push();
+    EMCChannel::emcTrajSetAcceleration(acc);
 
     return 0;
 }
@@ -619,30 +625,22 @@ int EMCParas::emcSetupArcBlends_(int arcBlendEnable,
                         double arcBlendRampFreq,
                         double arcBlendTangentKinkRatio)
 {
-    EMCChannel::emcmotCommand.command = EMCMOT_SETUP_ARC_BLENDS;
-    EMCChannel::emcmotCommand.arcBlendEnable = arcBlendEnable;
-    EMCChannel::emcmotCommand.arcBlendFallbackEnable = arcBlendFallbackEnable;
-    EMCChannel::emcmotCommand.arcBlendOptDepth = arcBlendOptDepth;
-    EMCChannel::emcmotCommand.arcBlendGapCycles = arcBlendGapCycles;
-    EMCChannel::emcmotCommand.arcBlendRampFreq = arcBlendRampFreq;
-    EMCChannel::emcmotCommand.arcBlendTangentKinkRatio = arcBlendTangentKinkRatio;
-    EMCChannel::push();
-    return 0;
-}
-
-int EMCParas::emcSetMaxFeedOverride_(double maxFeedScale) {
-    EMCChannel::emcmotCommand.command = EMCMOT_SET_MAX_FEED_OVERRIDE;
-    EMCChannel::emcmotCommand.maxFeedScale = maxFeedScale;
-    EMCChannel::push();
+    EMCChannel::emcSetupArcBlends(arcBlendEnable, arcBlendFallbackEnable, arcBlendOptDepth,
+                                  arcBlendGapCycles, arcBlendRampFreq, arcBlendTangentKinkRatio);
 
     return 0;
 }
 
-int EMCParas::emcSetProbeErrorInhibit_(int j_inhibit, int h_inhibit) {
-    EMCChannel::emcmotCommand.command = EMCMOT_SET_PROBE_ERR_INHIBIT;
-    EMCChannel::emcmotCommand.probe_jog_err_inhibit = j_inhibit;
-    EMCChannel::emcmotCommand.probe_home_err_inhibit = h_inhibit;
-    EMCChannel::push();
+int EMCParas::emcSetMaxFeedOverride_(double maxFeedScale)
+{
+    EMCChannel::emcSetMaxFeedOverride(maxFeedScale);
+
+    return 0;
+}
+
+int EMCParas::emcSetProbeErrorInhibit_(int j_inhibit, int h_inhibit)
+{
+    EMCChannel::emcSetProbeErrorInhibit(j_inhibit, h_inhibit);
 
     return 0;
 }
@@ -658,9 +656,7 @@ int EMCParas::emcTrajSetHome(const EmcPose& home)
     }
 #endif
 
-    EMCChannel::emcmotCommand.command = EMCMOT_SET_WORLD_HOME;
-    EMCChannel::emcmotCommand.pos = home;
-    EMCChannel::push();
+    EMCChannel::emcTrajSetHome(home);
 
     return 0;
 }
@@ -910,6 +906,25 @@ int EMCParas::loadJoint(int joint, EmcIniFile *jointIniFile)
     return 0;
 }
 
+std::string EMCParas::showJoint(int joint)
+{
+    std::stringstream ss;
+
+    if (joint < 0 || joint >= EMCMOT_MAX_JOINTS)
+        return "";
+
+    ss << "Joint" << joint << std::endl;
+    ss << "Inited " << JointConfig[joint].Inited << std::endl;
+    ss << "Type " << (int)JointConfig[joint].Type << std::endl;
+    ss << "Units " << JointConfig[joint].Units << std::endl;
+    ss << "MaxVel " << JointConfig[joint].MaxVel << std::endl;
+    ss << "MaxAccel " << JointConfig[joint].MaxAccel << std::endl;
+    ss << "MinLimit " << JointConfig[joint].MinLimit << std::endl;
+    ss << "MaxLimit " << JointConfig[joint].MaxLimit;
+
+    return ss.str();
+}
+
 // axes and joints are numbered 0..NUM-1
 
 /*
@@ -960,11 +975,7 @@ int EMCParas::emcJointSetBacklash_(int joint, double backlash)
     return 0;
     }
 
-    EMCChannel::emcmotCommand.command = EMCMOT_SET_JOINT_BACKLASH;
-    EMCChannel::emcmotCommand.joint = joint;
-    EMCChannel::emcmotCommand.backlash = backlash;
-
-    EMCChannel::push();
+    EMCChannel::emcJointSetBacklash(joint, backlash);
 
     return 0;
 }
@@ -984,12 +995,7 @@ int EMCParas::emcJointSetMinPositionLimit_(int joint, double limit)
 
     GetJointConfig(joint)->MinLimit = limit;
 
-    EMCChannel::emcmotCommand.command = EMCMOT_SET_JOINT_POSITION_LIMITS;
-    EMCChannel::emcmotCommand.joint = joint;
-    EMCChannel::emcmotCommand.minLimit = GetJointConfig(joint)->MinLimit;
-    EMCChannel::emcmotCommand.maxLimit = GetJointConfig(joint)->MaxLimit;
-
-    EMCChannel::push();
+    EMCChannel::emcJointSetMinPositionLimit(joint, limit);
 
     return 0;
 }
@@ -1008,13 +1014,7 @@ int EMCParas::emcJointSetMaxPositionLimit_(int joint, double limit)
     }
 
     GetJointConfig(joint)->MaxLimit = limit;
-
-    EMCChannel::emcmotCommand.command = EMCMOT_SET_JOINT_POSITION_LIMITS;
-    EMCChannel::emcmotCommand.joint = joint;
-    EMCChannel::emcmotCommand.minLimit = GetJointConfig(joint)->MinLimit;
-    EMCChannel::emcmotCommand.maxLimit = GetJointConfig(joint)->MaxLimit;
-
-    EMCChannel::push();
+    emcJointSetMaxPositionLimit(joint, limit);
 
     return 0;
 }
@@ -1032,11 +1032,7 @@ int EMCParas::emcJointSetFerror_(int joint, double ferror)
     return 0;
     }
 
-    EMCChannel::emcmotCommand.command = EMCMOT_SET_JOINT_MAX_FERROR;
-    EMCChannel::emcmotCommand.joint = joint;
-    EMCChannel::emcmotCommand.maxFerror = ferror;
-
-    EMCChannel::push();
+    EMCChannel::emcJointSetFerror(joint, ferror);
 
     return 0;
 }
@@ -1053,11 +1049,7 @@ int EMCParas::emcJointSetMinFerror_(int joint, double ferror)
     if (joint < 0 || joint >= EMCMOT_MAX_JOINTS) {
     return 0;
     }
-    EMCChannel::emcmotCommand.command = EMCMOT_SET_JOINT_MIN_FERROR;
-    EMCChannel::emcmotCommand.joint = joint;
-    EMCChannel::emcmotCommand.minFerror = ferror;
-
-    EMCChannel::push();
+    EMCChannel::emcJointSetMinFerror(joint, ferror);
 
     return 0;
 }
@@ -1080,48 +1072,11 @@ int EMCParas::emcJointSetHomingParams_(int joint, double home, double offset, do
     return 0;
     }
 
-    EMCChannel::emcmotCommand.command = EMCMOT_SET_JOINT_HOMING_PARAMS;
-    EMCChannel::emcmotCommand.joint = joint;
-    EMCChannel::emcmotCommand.home = home;
-    EMCChannel::emcmotCommand.offset = offset;
-    EMCChannel::emcmotCommand.home_final_vel = home_final_vel;
-    EMCChannel::emcmotCommand.search_vel = search_vel;
-    EMCChannel::emcmotCommand.latch_vel = latch_vel;
-    EMCChannel::emcmotCommand.flags = 0;
-    EMCChannel::emcmotCommand.home_sequence = sequence;
-    EMCChannel::emcmotCommand.volatile_home = volatile_home;
-    if (use_index) {
-    EMCChannel::emcmotCommand.flags |= HOME_USE_INDEX;
-    }
-    if (encoder_does_not_reset) {
-    EMCChannel::emcmotCommand.flags |= HOME_INDEX_NO_ENCODER_RESET;
-    }
-    if (ignore_limits) {
-    EMCChannel::emcmotCommand.flags |= HOME_IGNORE_LIMITS;
-    }
-    if (is_shared) {
-    EMCChannel::emcmotCommand.flags |= HOME_IS_SHARED;
-    }
-    if (locking_indexer) {
-        EMCChannel::emcmotCommand.flags |= HOME_UNLOCK_FIRST;
-    }
-    if (absolute_encoder) {
-        switch (absolute_encoder) {
-          case 0: break;
-          case 1: EMCChannel::emcmotCommand.flags |= HOME_ABSOLUTE_ENCODER;
-                  EMCChannel::emcmotCommand.flags |= HOME_NO_REHOME;
-                  break;
-          case 2: EMCChannel::emcmotCommand.flags |= HOME_ABSOLUTE_ENCODER;
-                  EMCChannel::emcmotCommand.flags |= HOME_NO_REHOME;
-                  EMCChannel::emcmotCommand.flags |= HOME_NO_FINAL_MOVE;
-                  break;
-          default: fprintf(stderr,
-                   "Unknown option for absolute_encoder <%d>",absolute_encoder);
-                  break;
-        }
-    }
-
-    EMCChannel::push();
+    EMCChannel::emcJointSetHomingParams(joint, home, offset, home_final_vel,
+                                        search_vel, latch_vel,
+                                        use_index, encoder_does_not_reset,
+                                        ignore_limits, is_shared,
+                                        sequence, volatile_home, locking_indexer, absolute_encoder);
 
     return 0;
 }
@@ -1140,11 +1095,7 @@ int EMCParas::emcJointSetMaxVelocity_(int joint, double vel)
 
     GetJointConfig(joint)->MaxVel = vel;
 
-    EMCChannel::emcmotCommand.command = EMCMOT_SET_JOINT_VEL_LIMIT;
-    EMCChannel::emcmotCommand.joint = joint;
-    EMCChannel::emcmotCommand.vel = vel;
-
-    EMCChannel::push();
+    EMCChannel::emcJointSetMaxVelocity(joint, vel);
 
     return 0;
 }
@@ -1160,12 +1111,7 @@ int EMCParas::emcJointSetMaxAcceleration_(int joint, double acc)
     acc = 0.0;
     }
     GetJointConfig(joint)->MaxAccel = acc;
-    //FIXME-AJ: need functions for setting the AXIS_MAX_ACCEL (either from the INI, or from kins..)
-    EMCChannel::emcmotCommand.command = EMCMOT_SET_JOINT_ACC_LIMIT;
-    EMCChannel::emcmotCommand.joint = joint;
-    EMCChannel::emcmotCommand.acc = acc;
-
-    EMCChannel::push();
+    EMCChannel::emcJointSetMaxAcceleration(joint, acc);
 
     return 0;
 }
@@ -1176,10 +1122,7 @@ int EMCParas::emcJointActivate_(int joint)
     return 0;
     }
 
-    EMCChannel::emcmotCommand.command = EMCMOT_JOINT_ACTIVATE;
-    EMCChannel::emcmotCommand.joint = joint;
-
-    EMCChannel::push();
+    EMCChannel::emcJointActivate(joint);
 
     return 0;
 }
@@ -1340,6 +1283,25 @@ int EMCParas::loadAxis(int axis, EmcIniFile *axisIniFile)
     return 0;
 }
 
+std::string EMCParas::showAxis(int axis)
+{
+    std::stringstream ss;
+
+    if (axis < 0 || axis >= EMCMOT_MAX_AXIS)
+        return "";
+
+    ss << "Axis" << axis << std::endl;
+    ss << "Inited " << AxisConfig[axis].Inited << std::endl;
+    ss << "Type " << (int)AxisConfig[axis].Type << std::endl;
+    ss << "MaxVel " << AxisConfig[axis].MaxVel << std::endl;
+    ss << "MaxVel " << AxisConfig[axis].MaxVel << std::endl;
+    ss << "MaxAccel " << AxisConfig[axis].MaxAccel << std::endl;
+    ss << "MinLimit " << AxisConfig[axis].MinLimit << std::endl;
+    ss << "MaxLimit " << AxisConfig[axis].MaxLimit;
+
+    return ss.str();
+}
+
 /*! functions involving cartesian Axes (X,Y,Z,A,B,C,U,V,W) */
 
 int EMCParas::emcAxisSetMinPositionLimit_(int axis, double limit)
@@ -1352,12 +1314,7 @@ int EMCParas::emcAxisSetMinPositionLimit_(int axis, double limit)
 
     GetAxisConfig(axis)->MinLimit = limit;
 
-    EMCChannel::emcmotCommand.command = EMCMOT_SET_AXIS_POSITION_LIMITS;
-    EMCChannel::emcmotCommand.axis = axis;
-    EMCChannel::emcmotCommand.minLimit = GetAxisConfig(axis)->MinLimit;
-    EMCChannel::emcmotCommand.maxLimit = GetAxisConfig(axis)->MaxLimit;
-
-    EMCChannel::push();
+    EMCChannel::emcAxisSetMinPositionLimit(axis, limit);
 
     return 0;
 }
@@ -1372,12 +1329,7 @@ int EMCParas::emcAxisSetMaxPositionLimit_(int axis, double limit)
 
     GetAxisConfig(axis)->MaxLimit = limit;
 
-    EMCChannel::emcmotCommand.command = EMCMOT_SET_AXIS_POSITION_LIMITS;
-    EMCChannel::emcmotCommand.axis = axis;
-    EMCChannel::emcmotCommand.minLimit = GetAxisConfig(axis)->MinLimit;
-    EMCChannel::emcmotCommand.maxLimit = GetAxisConfig(axis)->MaxLimit;
-
-    EMCChannel::push();
+    EMCChannel::emcAxisSetMaxPositionLimit(axis, limit);
 
     return 0;
 }
@@ -1396,12 +1348,7 @@ int EMCParas::emcAxisSetMaxVelocity_(int axis, double vel,double ext_offset_vel)
 
     GetAxisConfig(axis)->MaxVel = vel;
 
-    EMCChannel::emcmotCommand.command = EMCMOT_SET_AXIS_VEL_LIMIT;
-    EMCChannel::emcmotCommand.axis = axis;
-    EMCChannel::emcmotCommand.vel = vel;
-    EMCChannel::emcmotCommand.ext_offset_vel = ext_offset_vel;
-
-    EMCChannel::push();
+    EMCChannel::emcAxisSetMaxVelocity(axis, vel, ext_offset_vel);
 
     return 0;
 }
@@ -1420,12 +1367,7 @@ int EMCParas::emcAxisSetMaxAcceleration_(int axis, double acc,double ext_offset_
 
     GetAxisConfig(axis)->MaxAccel = acc;
 
-    EMCChannel::emcmotCommand.command = EMCMOT_SET_AXIS_ACC_LIMIT;
-    EMCChannel::emcmotCommand.axis = axis;
-    EMCChannel::emcmotCommand.acc = acc;
-    EMCChannel::emcmotCommand.ext_offset_acc = ext_offset_acc;
-
-    EMCChannel::push();
+    EMCChannel::emcAxisSetMaxAcceleration(axis, acc, ext_offset_acc);
 
     return 0;
 }
@@ -1441,11 +1383,7 @@ int EMCParas::emcAxisSetLockingJoint_(int axis, int joint)
     joint = -1;
     }
 
-    EMCChannel::emcmotCommand.command = EMCMOT_SET_AXIS_LOCKING_JOINT;
-    EMCChannel::emcmotCommand.axis    = axis;
-    EMCChannel::emcmotCommand.joint   = joint;
-
-    EMCChannel::push();
+    EMCChannel::emcAxisSetLockingJoint(axis, joint);
 
     return 0;
 }
@@ -1541,25 +1479,33 @@ int EMCParas::loadSpindle(int spindle, EmcIniFile *spindleIniFile)
     return 0;
 }
 
+std::string EMCParas::showSpindle(int spindle)
+{
+    std::stringstream ss;
+
+    if (spindle < 0 || spindle >= EMCMOT_MAX_SPINDLES)
+        return "";
+
+    ss << "Spindle" << spindle << std::endl;
+    ss << "Inited " << SpindleConfig[spindle].Inited << std::endl;
+    ss << "max_pos_speed " << (int)SpindleConfig[spindle].max_pos_speed << std::endl;
+    ss << "max_neg_speed " << SpindleConfig[spindle].max_neg_speed << std::endl;
+    ss << "min_pos_speed " << SpindleConfig[spindle].min_pos_speed << std::endl;
+    ss << "min_neg_speed " << SpindleConfig[spindle].min_neg_speed << std::endl;
+    ss << "home_sequence " << SpindleConfig[spindle].home_sequence << std::endl;
+    ss << "home_search_velocity " << SpindleConfig[spindle].home_search_velocity;
+
+    return ss.str();
+}
+
 int EMCParas::emcSpindleSetParams_(int spindle, double max_pos, double min_pos, double max_neg,
                double min_neg, double search_vel, double home_angle, int sequence, double increment)
 {
-
     if (spindle < 0 || spindle >= EMCMOT_MAX_SPINDLES) {
     return 0;
     }
 
-    EMCChannel::emcmotCommand.command = EMCMOT_SET_SPINDLE_PARAMS;
-    EMCChannel::emcmotCommand.spindle = spindle;
-    EMCChannel::emcmotCommand.maxLimit = max_pos;
-    EMCChannel::emcmotCommand.minLimit = min_neg;
-    EMCChannel::emcmotCommand.min_pos_speed = min_pos;
-    EMCChannel::emcmotCommand.max_neg_speed = max_neg;
-    EMCChannel::emcmotCommand.home = home_angle;
-    EMCChannel::emcmotCommand.search_vel = search_vel;
-    EMCChannel::emcmotCommand.home_sequence = sequence;
-    EMCChannel::emcmotCommand.offset = increment;
-
-    EMCChannel::push();
+    EMCChannel::emcSpindleSetParams(spindle, max_pos, min_pos, max_neg,
+                                   min_neg, search_vel, home_angle, sequence, increment);
     return 0;
 }

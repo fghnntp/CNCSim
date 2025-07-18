@@ -58,3 +58,9 @@ install(TARGETS tool
 install(FILES ${TOOL_HEADERS}
     DESTINATION include/tool
 )
+
+# Automatically find and install all runtime dependencies (shared libs)
+install(IMPORTED_RUNTIME_ARTIFACTS
+    tool
+    DESTINATION lib
+)

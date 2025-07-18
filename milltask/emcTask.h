@@ -28,8 +28,10 @@ public:
     int tool_status;
 
     int load_file(std::string filename, std::vector<IMillTaskInterface::ToolPath>* toolPath, std::string &err);
+    int load_file(std::string filename, std::string &err);
     int simulate(std::string filename, std::string &res, std::string &err);
     void init_all(void);
+
 private:
     //This name is used to quickly init EMCTask
     //And it will pass name to emcPars for global using
@@ -56,6 +58,8 @@ private:
 
     //emcTrajcmd generator for TP
     int emcTaskIssueTrajCmd(NMLmsg * cmd);
+
+    void emitAllCmd();
 
 };
 

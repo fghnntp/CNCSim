@@ -701,6 +701,12 @@ void MainWindow::setCmdLogDock()
     if (!cmdTextDock) {
         cmdTextDock = new QDockWidget(tr("CmdLine"), this);
         cmdTextEdit = new CommandTextEdit(cmdTextDock);
+
+        connect(cmdTextEdit, &CommandTextEdit::commandEntered, this, [this](const QString &cmd) {
+            std::string cmdStdStr = cmd.toStdString();
+            millIf_->setCmd(cmdStdStr);
+        });
+
         cmdTextDock->setWidget(cmdTextEdit);
         addDockWidget(Qt::RightDockWidgetArea, cmdTextDock);
         QScreen *screen = QGuiApplication::primaryScreen();
@@ -743,6 +749,8 @@ void MainWindow::setCmdLogDock()
                     logDisplayWidget->appendWarning(timeStr + QString::fromStdString(log));
                 else if (level == 2)
                     logDisplayWidget->appendError(timeStr + QString::fromStdString(log));
+                else if (level == 3)
+                    cmdTextEdit->appendOutput(QString::fromStdString(log));
             }
         });
 

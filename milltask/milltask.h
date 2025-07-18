@@ -13,6 +13,12 @@
 //This should be asis worker, and can manage the simultion task
 class MillTask {
 public:
+    enum TaskState {
+        kIDLE,
+        kHandle,
+        kMDI,
+        kAuto,
+    };
     MillTask(const char* emcFile=nullptr);
     ~MillTask();
 
@@ -30,6 +36,9 @@ public:
 
     //load the file and get the previe date
     void loadfile(std::string filename);
+    int load_file(std::string filename, std::vector<IMillTaskInterface::ToolPath>* toolPath, std::string &err);
+
+    int setSts(TaskState sts);
 
 private:
     void init(); // Once prepaing main process function
@@ -47,9 +56,13 @@ private:
     int counter = 0;
 
     std::string emcFile_;
- public:
-    EMCTask *taskMethods = nullptr;
+    std::string filename_;
+    std::string error_;
 
+    EMCTask *taskMethods = nullptr;
+    TaskState state_ = kIDLE;
+
+    void execCmd();
 };
 
 #endif // _MILL_TASK_
