@@ -9,6 +9,7 @@
 
 class EMCParas {
     //Paras include milltask and emc area
+    //These interface also control the rs274 connon
 public:
     struct MotTrajConfig {
         double traj_default_velocity;
@@ -46,6 +47,12 @@ public:
         double axis_max_acceleration;
     };
 
+
+    static TrajConfig_t *GetTrajConfig();
+    static JointConfig_t *GetJointConfig(int joint);
+    static AxisConfig_t *GetAxisConfig(int axis);
+    static SpindleConfig_t* GetSpindleConfig(int spindle);
+    static void InitTaskinft(void);
 
 
     static std::string inifileName;

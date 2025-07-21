@@ -293,7 +293,7 @@ void EMCTask::init_all()
     MotionTask::InitMotion();
 
     EMC_TRAJ_SET_SCALE testmsg;
-    testmsg.scale = 0.8;
+    testmsg.scale = 1.0;
     emcTaskIssueTrajCmd(&testmsg);
 }
 
@@ -611,92 +611,93 @@ int EMCTask::emcTaskIssueTrajCmd(NMLmsg *cmd)
     case EMC_TRAJ_SET_SCALE_TYPE:
         EMCChannel::emcTrajSetScaleMsg = (EMC_TRAJ_SET_SCALE *) cmd;
         retval = EMCChannel::emcTrajSetScale(EMCChannel::emcTrajSetScaleMsg->scale);
-    break;
+        break;
 
     case EMC_TRAJ_SET_RAPID_SCALE_TYPE:
         EMCChannel::emcTrajSetRapidScaleMsg = (EMC_TRAJ_SET_RAPID_SCALE *) cmd;
         retval = EMCChannel::emcTrajSetRapidScale(EMCChannel::emcTrajSetRapidScaleMsg->scale);
-    break;
+        break;
 
     case EMC_TRAJ_SET_MAX_VELOCITY_TYPE:
         EMCChannel::emcTrajSetMaxVelocityMsg = (EMC_TRAJ_SET_MAX_VELOCITY *) cmd;
         retval = EMCChannel::emcTrajSetMaxVelocity(EMCChannel::emcTrajSetMaxVelocityMsg->velocity);
-    break;
+        break;
 
     case EMC_TRAJ_SET_SPINDLE_SCALE_TYPE:
 //        EMCChannel::emcTrajSetSpindleScaleMsg = (EMC_TRAJ_SET_SPINDLE_SCALE *) cmd;
 //        retval = EMCChannel::emcTrajSetSpindleScale(EMCChannel::emcTrajSetSpindleScaleMsg->spindle,
 //                                         EMCChannel::emcTrajSetSpindleScaleMsg->scale);
-    break;
+        break;
 
     case EMC_TRAJ_SET_FO_ENABLE_TYPE:
 //        retval = emcTrajSetFOEnable(((EMC_TRAJ_SET_FO_ENABLE *) cmd)->mode);  // feed override enable/disable
-    break;
+        break;
 
     case EMC_TRAJ_SET_FH_ENABLE_TYPE:
 //        retval = emcTrajSetFHEnable(((EMC_TRAJ_SET_FH_ENABLE *) cmd)->mode); //feed hold enable/disable
-    break;
+        break;
 
     case EMC_TRAJ_SET_SO_ENABLE_TYPE:
 //        retval = emcTrajSetSOEnable(((EMC_TRAJ_SET_SO_ENABLE *) cmd)->mode); //spindle speed override enable/disable
-    break;
+        break;
 
     case EMC_TRAJ_SET_VELOCITY_TYPE:
-//    emcTrajSetVelocityMsg = (EMC_TRAJ_SET_VELOCITY *) cmd;
-//    retval = emcTrajSetVelocity(emcTrajSetVelocityMsg->velocity,
-//            emcTrajSetVelocityMsg->ini_maxvel);
-    break;
+        EMCChannel::emcTrajSetVelocityMsg = (EMC_TRAJ_SET_VELOCITY *) cmd;
+        retval = EMCChannel::emcTrajSetVelocity(EMCChannel::emcTrajSetVelocityMsg->velocity,
+                        EMCChannel::emcTrajSetVelocityMsg->ini_maxvel);
+        break;
 
     case EMC_TRAJ_SET_ACCELERATION_TYPE:
-//    emcTrajSetAccelerationMsg = (EMC_TRAJ_SET_ACCELERATION *) cmd;
-//    retval = emcTrajSetAcceleration(emcTrajSetAccelerationMsg->acceleration);
-    break;
+        EMCChannel::emcTrajSetAccelerationMsg = (EMC_TRAJ_SET_ACCELERATION *) cmd;
+        retval = EMCChannel::emcTrajSetAcceleration(EMCChannel::emcTrajSetAccelerationMsg->acceleration);
+        break;
 
     case EMC_TRAJ_LINEAR_MOVE_TYPE:
-//    emcTrajUpdateTag(((EMC_TRAJ_LINEAR_MOVE *) cmd)->tag);
-//    emcTrajLinearMoveMsg = (EMC_TRAJ_LINEAR_MOVE *) cmd;
-//        retval = emcTrajLinearMove(emcTrajLinearMoveMsg->end,
-//                                   emcTrajLinearMoveMsg->type, emcTrajLinearMoveMsg->vel,
-//                                   emcTrajLinearMoveMsg->ini_maxvel, emcTrajLinearMoveMsg->acc,
-//                                   emcTrajLinearMoveMsg->indexer_jnum);
-    break;
+        EMCChannel::emcTrajUpdateTag(((EMC_TRAJ_LINEAR_MOVE *) cmd)->tag);
+        EMCChannel::emcTrajLinearMoveMsg = (EMC_TRAJ_LINEAR_MOVE *) cmd;
+            retval = EMCChannel::emcMotSetLine(EMCChannel::emcTrajLinearMoveMsg->end, EMCParas::GetTrajConfig()->MotionId,
+                                       EMCChannel::emcTrajLinearMoveMsg->type, EMCChannel::emcTrajLinearMoveMsg->vel,
+                                       EMCChannel::emcTrajLinearMoveMsg->ini_maxvel, EMCChannel::emcTrajLinearMoveMsg->acc,
+                                       EMCChannel::emcTrajLinearMoveMsg->indexer_jnum, EMCChannel::localEmcTrajTag);
+        break;
 
     case EMC_TRAJ_CIRCULAR_MOVE_TYPE:
-//    emcTrajUpdateTag(((EMC_TRAJ_LINEAR_MOVE *) cmd)->tag);
-//    emcTrajCircularMoveMsg = (EMC_TRAJ_CIRCULAR_MOVE *) cmd;
-//        retval = emcTrajCircularMove(emcTrajCircularMoveMsg->end,
-//                emcTrajCircularMoveMsg->center, emcTrajCircularMoveMsg->normal,
-//                emcTrajCircularMoveMsg->turn, emcTrajCircularMoveMsg->type,
-//                emcTrajCircularMoveMsg->vel,
-//                emcTrajCircularMoveMsg->ini_maxvel,
-//                emcTrajCircularMoveMsg->acc);
-    break;
+        EMCChannel::emcTrajUpdateTag(((EMC_TRAJ_LINEAR_MOVE *) cmd)->tag);
+        EMCChannel::emcTrajCircularMoveMsg = (EMC_TRAJ_CIRCULAR_MOVE *) cmd;
+            retval = EMCChannel::emcMotSetCircle(EMCChannel::emcTrajCircularMoveMsg->end, EMCParas::GetTrajConfig()->MotionId,
+                    EMCChannel::emcTrajCircularMoveMsg->center, EMCChannel::emcTrajCircularMoveMsg->normal,
+                    EMCChannel::emcTrajCircularMoveMsg->turn, EMCChannel::emcTrajCircularMoveMsg->type,
+                    EMCChannel::emcTrajCircularMoveMsg->vel,
+                    EMCChannel::emcTrajCircularMoveMsg->ini_maxvel,
+                    EMCChannel::emcTrajCircularMoveMsg->acc, EMCChannel::localEmcTrajTag);
+        break;
 
     case EMC_TRAJ_PAUSE_TYPE:
 //    emcStatus->task.task_paused = 1;
-    retval = emcTrajPause();
-    break;
+        retval = EMCChannel::emcMotPause();
+        break;
 
     case EMC_TRAJ_RESUME_TYPE:
 //    emcStatus->task.task_paused = 0;
-//    retval = emcTrajResume();
-    break;
+        retval = EMCChannel::emcMotResume();
+        break;
 
     case EMC_TRAJ_ABORT_TYPE:
-//    retval = emcTrajAbort();
-    break;
+        retval = EMCChannel::emcMotAbort();
+        break;
 
     case EMC_TRAJ_DELAY_TYPE:
 //    emcTrajDelayMsg = (EMC_TRAJ_DELAY *) cmd;
     // set the timeout clock to expire at 'now' + delay time
 //    taskExecDelayTimeout = etime() + emcTrajDelayMsg->delay;
-    retval = 0;
-    break;
+        retval = 0;
+        break;
 
     case EMC_TRAJ_SET_TERM_COND_TYPE:
-//    emcTrajSetTermCondMsg = (EMC_TRAJ_SET_TERM_COND *) cmd;
-//    retval = emcTrajSetTermCond(emcTrajSetTermCondMsg->cond, emcTrajSetTermCondMsg->tolerance);
-    break;
+        EMCChannel::emcTrajSetTermCondMsg = (EMC_TRAJ_SET_TERM_COND *) cmd;
+        retval = EMCChannel::emcMotSetTermCond(EMCChannel::emcTrajSetTermCondMsg->cond,
+                                                EMCChannel::emcTrajSetTermCondMsg->tolerance);
+        break;
 
     case EMC_TRAJ_SET_SPINDLESYNC_TYPE:
 //        emcTrajSetSpindlesyncMsg = (EMC_TRAJ_SET_SPINDLESYNC *) cmd;
@@ -707,7 +708,7 @@ int EMCTask::emcTaskIssueTrajCmd(NMLmsg *cmd)
     // update tool offset
 //        emcStatus->task.toolOffset = ((EMC_TRAJ_SET_OFFSET *) cmd)->offset;
 //        retval = emcTrajSetOffset(emcStatus->task.toolOffset);
-    break;
+        break;
 
     case EMC_TRAJ_SET_ROTATION_TYPE:
 //        emcStatus->task.rotation_xy = ((EMC_TRAJ_SET_ROTATION *) cmd)->rotation;

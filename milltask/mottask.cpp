@@ -29,7 +29,7 @@ void MotTask::doWork() {
             process();
 
             // Small delay to prevent busy waiting
-            //std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
 
@@ -65,23 +65,34 @@ extern struct emcmot_config_t *emcmotConfig;
 extern struct emcmot_internal_t *emcmotInternal;
 extern struct emcmot_error_t *emcmotError;	/* unused for RT_FIFO */
 
+#include "motionhalctrl.h"
+
 void MotTask::process() {
     // Simulate work by incrementing counter
     counter++;
     std::string result = "Processed: " + std::to_string(counter);
 
-    while (!EMCChannel::getMotCmd(*emcmotCommand))
+    MotHalCtrl::emcmot_hal_update();
+    MotHalCtrl::spindle_hal_update();
+    MotHalCtrl::joint_hal_update();
+
+
+    while (!EMCChannel::getMotCmdFromCmd(*emcmotCommand))
         MotionTask::CmdHandler();
 
     MotionTask::MotionCtrl();
     //if the msg send by milltask crated, msg will be get
-    if (!EMCChannel::pop(*emcmotCommand))
+    if (!EMCChannel::getMotCmdFromMill(*emcmotCommand))
         MotionTask::CmdHandler();
 
     // Emit result through callback
     if (resultCallback) {
         resultCallback(result);
     }
+
+    printf("X:%f Y:%f Z:%f\n", emcmotStatus->carte_pos_cmd.tran.x,
+           emcmotStatus->carte_pos_cmd.tran.y,
+           emcmotStatus->carte_pos_cmd.tran.z);
 
 }
 

@@ -52,33 +52,33 @@ extern struct JointConfig_t JointConfig[EMCMOT_MAX_JOINTS];
 extern struct AxisConfig_t AxisConfig[EMCMOT_MAX_AXIS];
 extern struct SpindleConfig_t SpindleConfig[EMCMOT_MAX_SPINDLES];
 
-TrajConfig_t *GetTrajConfig()
+TrajConfig_t *EMCParas::GetTrajConfig()
 {
     return &TrajConfig;
 }
 
-JointConfig_t *GetJointConfig(int joint)
+JointConfig_t *EMCParas::GetJointConfig(int joint)
 {
     if (joint < 0 || joint >= EMCMOT_MAX_JOINTS)
         return nullptr;
     return &JointConfig[joint];
 }
 
-AxisConfig_t *GetAxisConfig(int axis)
+AxisConfig_t *EMCParas::GetAxisConfig(int axis)
 {
     if (axis < 0 || axis >= EMCMOT_MAX_AXIS)
         return nullptr;
     return &AxisConfig[axis];
 }
 
-SpindleConfig_t *GetSpindleConfig(int spindle)
+SpindleConfig_t *EMCParas::GetSpindleConfig(int spindle)
 {
     if (spindle < 0 || spindle > EMCMOT_MAX_SPINDLES)
         return nullptr;
     return &SpindleConfig[spindle];
 }
 
-void InitTaskinft(void)
+void EMCParas::InitTaskinft(void)
 {
     TrajConfig.Inited = 1;
     TrajConfig.Joints = 5;
@@ -1014,7 +1014,7 @@ int EMCParas::emcJointSetMaxPositionLimit_(int joint, double limit)
     }
 
     GetJointConfig(joint)->MaxLimit = limit;
-    emcJointSetMaxPositionLimit(joint, limit);
+    EMCChannel::emcJointSetMaxPositionLimit(joint, limit);
 
     return 0;
 }

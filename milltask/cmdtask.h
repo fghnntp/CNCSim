@@ -29,7 +29,6 @@ public:
     void setFinishedCallback(std::function<void()> callback);
 
     //load the file and get the previe date
-    void loadfile(std::string filename);
     void RegisterCommand(const std::string& name, CommandFunc func);
     void SetCmd(const std::string &str);
 

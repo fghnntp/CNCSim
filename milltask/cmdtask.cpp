@@ -77,11 +77,6 @@ void CmdTask::setFinishedCallback(std::function<void()> callback) {
     finishedCallback = callback;
 }
 
-void CmdTask::loadfile(std::string filename)
-{
-
-}
-
 void CmdTask::init()
 {
     RegisterCommand("RUN", [this](const std::vector<std::string>& args) -> std::string {
@@ -201,8 +196,149 @@ void CmdTask::init()
         std::string res;
         std::stringstream ss;
        
+        EMCChannel::emcMotAbort();
+
         return res;
         });
+
+    RegisterCommand("ENABLE", [this](const std::vector<std::string>& args) -> std::string {
+        std::string res;
+        std::stringstream ss;
+
+        EMCChannel::emcMotEna();
+
+        return res;
+        });
+
+    RegisterCommand("DISABLE", [this](const std::vector<std::string>& args) -> std::string {
+        std::string res;
+        std::stringstream ss;
+
+        EMCChannel::emcMotDisable();
+
+        return res;
+        });
+
+    RegisterCommand("FREE", [this](const std::vector<std::string>& args) -> std::string {
+        std::string res;
+        std::stringstream ss;
+
+        EMCChannel::emcMotFree();
+
+        return res;
+        });
+
+    RegisterCommand("COOR", [this](const std::vector<std::string>& args) -> std::string {
+        std::string res;
+        std::stringstream ss;
+
+        EMCChannel::emcMotCoord();
+
+        return res;
+        });
+
+    RegisterCommand("TELEOP", [this](const std::vector<std::string>& args) -> std::string {
+        std::string res;
+        std::stringstream ss;
+
+        EMCChannel::emcMotTeleop();
+
+        return res;
+        });
+
+    RegisterCommand("PAUSE", [this](const std::vector<std::string>& args) -> std::string {
+        std::string res;
+        std::stringstream ss;
+
+        EMCChannel::emcMotPause();
+
+        return res;
+        });
+
+    RegisterCommand("REVERSE", [this](const std::vector<std::string>& args) -> std::string {
+        std::string res;
+        std::stringstream ss;
+
+        EMCChannel::emcMotReverse();
+
+        return res;
+        });
+
+    RegisterCommand("FORWARD", [this](const std::vector<std::string>& args) -> std::string {
+        std::string res;
+        std::stringstream ss;
+
+        EMCChannel::emcMotForward();
+
+        return res;
+        });
+
+    RegisterCommand("RESUME", [this](const std::vector<std::string>& args) -> std::string {
+        std::string res;
+        std::stringstream ss;
+
+        EMCChannel::emcMotResume();
+
+        return res;
+        });
+
+    RegisterCommand("STEP", [this](const std::vector<std::string>& args) -> std::string {
+        std::string res;
+        std::stringstream ss;
+
+        EMCChannel::emcMotStep();
+
+        return res;
+        });
+
+    RegisterCommand("FSENA", [this](const std::vector<std::string>& args) -> std::string {
+        std::string res;
+        std::stringstream ss;
+
+        EMCChannel::emcMotFSEna();
+
+        return res;
+        });
+
+    RegisterCommand("FHENA", [this](const std::vector<std::string>& args) -> std::string {
+        std::string res;
+        std::stringstream ss;
+
+        EMCChannel::emcMotFHEna();
+
+        return res;
+        });
+
+    RegisterCommand("FHENA", [this](const std::vector<std::string>& args) -> std::string {
+        std::string res;
+        std::stringstream ss;
+
+        EMCChannel::emcMotFHEna();
+
+        return res;
+        });
+
+    RegisterCommand("HOME", [this](const std::vector<std::string>& args) -> std::string {
+        std::string res;
+        std::stringstream ss;
+
+        if (args.size() == 0) {
+            EMCChannel::emcMotJointHome(-1);
+        }
+        else if (args.size() == 1) {
+            int joint = std::stoi(args[0]);
+            EMCChannel::emcMotJointHome(joint);
+        }
+        else {
+
+        }
+
+
+        EMCChannel::emcMotFHEna();
+
+        return res;
+        });
+
 }
 
 void CmdTask::RegisterCommand(const std::string &name, CommandFunc func)

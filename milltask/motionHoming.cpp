@@ -139,7 +139,7 @@ typedef struct {
     one_joint_home_data_t jhd[EMCMOT_MAX_JOINTS];
 } all_joints_home_data_t;
 
-static all_joints_home_data_t *joint_home_data = 0;
+all_joints_home_data_t *joint_home_data = 0;
 
 /***********************************************************************
 *                      LOCAL FUNCTIONS                                 *
