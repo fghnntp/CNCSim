@@ -16,8 +16,6 @@ CmdTask::~CmdTask() {
     stopWork(); // Ensure thread is stopped on destruction
 }
 
-//extern int main_load(int argc, char *argv[]);
-
 void CmdTask::doWork() {
     if (running) return; // Already running
 
@@ -339,6 +337,16 @@ void CmdTask::init()
         return res;
         });
 
+    RegisterCommand("RST", [this](const std::vector<std::string>& args) -> std::string {
+        std::string res;
+        std::stringstream ss;
+
+        EMCChannel::emitMillCmd(EMCChannel::kMillRest);
+        EMCChannel::emitMotCmd(EMCChannel::kMotRest);
+
+        return res;
+        });
+
 }
 
 void CmdTask::RegisterCommand(const std::string &name, CommandFunc func)
@@ -349,7 +357,7 @@ void CmdTask::RegisterCommand(const std::string &name, CommandFunc func)
 
 std::pair<std::string, std::vector<std::string>> CmdTask::ParseCommand(std::string s)
 {
-    // 方法1: 使用 transform 和 toupper
+    // 使用 transform 和 toupper
     std::transform(s.begin(), s.end(), s.begin(),
     [](unsigned char c){ return std::toupper(c); });
 
@@ -360,7 +368,7 @@ std::pair<std::string, std::vector<std::string>> CmdTask::ParseCommand(std::stri
 
     std::vector<std::string> args;
     std::string arg;
-    while (iss >> arg) {  // C++11兼容的迭代方式
+    while (iss >> arg) {
         args.push_back(arg);
     }
 
@@ -381,7 +389,7 @@ std::string CmdTask::ExecuteCommand(const std::string &rawCmd)
     EMCLog::SetLog("Do Cmd: " + cmd);
 
     // 执行注册函数
-    CommandTable::const_iterator it = _commandTable.find(cmd);
+    CommandTable::const_iterator it = _commandTable.find(cmd);//Best match
     if (it != _commandTable.end()) {
         result = it->second(args);  // 调用注册的函数
     }

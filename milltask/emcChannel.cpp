@@ -32,6 +32,8 @@ MessageQueue<emcmot_command_t> EMCChannel::mill2MotQueue;
 MessageQueue<EMCChannel::MILLCmd> EMCChannel::millCmdQueue;
 MessageQueue<emcmot_command_t> EMCChannel::cmd2MotQueue;
 std::mutex EMCChannel::mutex_cmd;
+MessageQueue<EMCChannel::MotCmd> EMCChannel::motCmdQueue;
+std::string EMCChannel::millMotFileName;
 
 int EMCChannel::emcTrajSetScale(double scale, enum MOTChannel channel)
 {
@@ -1062,18 +1064,6 @@ int EMCChannel::emcMotProbe(enum MOTChannel channel)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 int EMCChannel::getMotCmdFromMill(emcmot_command_t &cmd)
 {
     if (mill2MotQueue.empty())
@@ -1093,6 +1083,19 @@ int EMCChannel::getMillCmd(MILLCmd &cmd)
     if (millCmdQueue.empty())
         return 1;
     cmd = millCmdQueue.pop();
+    return 0;
+}
+
+void EMCChannel::emitMotCmd(MotCmd cmd)
+{
+    motCmdQueue.push(cmd);
+}
+
+int EMCChannel::getMotCmd(MotCmd &cmd)
+{
+    if (motCmdQueue.empty())
+        return 1;
+    cmd = motCmdQueue.pop();
     return 0;
 }
 

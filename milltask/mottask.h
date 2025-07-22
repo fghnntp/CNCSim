@@ -9,10 +9,19 @@
 #include <functional>
 #include <interp_base.hh>
 #include "emcTask.h"
+#include <fstream>
 
 //This should be asis worker, and can manage the simultion task
 class MotTask {
 public:
+    enum MotTaskSts {
+        kIdle,
+        kStart,
+        kOpenFile,
+        kStartGather,
+        kEndGather,
+        kError,
+    };
     MotTask();
     ~MotTask();
 
@@ -47,9 +56,11 @@ private:
     int counter = 0;
 
     std::string emcFile_;
- public:
-    EMCTask *taskMethods = nullptr;
-
+    std::ofstream ofs_;
+    bool needWait_ = true;
+    enum MotTaskSts motTaskSts_ = kIdle;
+    bool start_= false;
+    void execCmd();
 };
 
 #endif // _MOT_TASK_

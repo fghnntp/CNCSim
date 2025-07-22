@@ -35,10 +35,7 @@ public:
     void setFinishedCallback(std::function<void()> callback);
 
     //load the file and get the previe date
-    void loadfile(std::string filename);
     int load_file(std::string filename, std::vector<IMillTaskInterface::ToolPath>* toolPath, std::string &err);
-
-    int setSts(TaskState sts);
 
 private:
     void init(); // Once prepaing main process function

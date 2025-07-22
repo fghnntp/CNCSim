@@ -5,6 +5,7 @@
 #include <condition_variable>
 #include <optional>
 
+//A thread safe Queue template
 template<typename T>
 class MessageQueue {
 public:

@@ -28,6 +28,8 @@ public:
 
     // Factory function
     static IMillTaskInterface* create(const char* emcfile = nullptr);
+
+
 };
 
 extern "C" {

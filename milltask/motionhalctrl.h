@@ -15,6 +15,7 @@ extern struct emcmot_error_t *emcmotError;	/* unused for RT_FIFO */
 class MotHalCtrl {
     //ShareMemory ctrl based, for emcmot direct control
     //and simulation contrl
+    //Direct control using share memory, no waste time
 public:
     static void inithaldata(void) {
 //        emcmot_hal_data->joint->joint_acc_cmd = 1;

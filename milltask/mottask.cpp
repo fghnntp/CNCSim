@@ -29,7 +29,8 @@ void MotTask::doWork() {
             process();
 
             // Small delay to prevent busy waiting
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            if (needWait_)
+                std::this_thread::sleep_for(std::chrono::milliseconds(25));
         }
 
 
@@ -66,34 +67,105 @@ extern struct emcmot_internal_t *emcmotInternal;
 extern struct emcmot_error_t *emcmotError;	/* unused for RT_FIFO */
 
 #include "motionhalctrl.h"
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
 
 void MotTask::process() {
     // Simulate work by incrementing counter
-    counter++;
-    std::string result = "Processed: " + std::to_string(counter);
+    //    counter++;
+    //    std::string result = "Processed: " + std::to_string(counter);
 
     MotHalCtrl::emcmot_hal_update();
     MotHalCtrl::spindle_hal_update();
     MotHalCtrl::joint_hal_update();
 
 
-    while (!EMCChannel::getMotCmdFromCmd(*emcmotCommand))
+    while (!EMCChannel::getMotCmdFromCmd(*emcmotCommand))//High priority
         MotionTask::CmdHandler();
 
     MotionTask::MotionCtrl();
+
     //if the msg send by milltask crated, msg will be get
-    if (!EMCChannel::getMotCmdFromMill(*emcmotCommand))
+    if (!EMCChannel::getMotCmdFromMill(*emcmotCommand))//Low priority
         MotionTask::CmdHandler();
 
-    // Emit result through callback
-    if (resultCallback) {
-        resultCallback(result);
+    execCmd();
+
+    std::stringstream ss;
+
+    switch (motTaskSts_) {
+    case kIdle:
+        needWait_ = true;
+        if (start_) {
+            motTaskSts_ = kStart;
+            start_ = false;
+        }
+        break;
+    case kStart:
+        needWait_ = true;
+        if (emcmotStatus->tcqlen > 0)
+            motTaskSts_ = kOpenFile;
+        break;
+    case kOpenFile:
+        needWait_ = true;
+        ofs_.open(EMCChannel::millMotFileName);
+        if (ofs_) {
+            EMCLog::SetLog(EMCChannel::millMotFileName + " simu start");
+            motTaskSts_ = kStartGather;
+        }
+        else {
+            EMCLog::SetLog(EMCChannel::millMotFileName + " simu open error");
+            motTaskSts_ = kError;
+        }
+        break;
+    case kStartGather:
+        needWait_ = false;
+        ss << std::fixed << std::setprecision(6);
+        ss << "X " << emcmotStatus->carte_pos_cmd.tran.x << " " << emcmotStatus->carte_pos_cmd.tran.x <<
+              " Y " << emcmotStatus->carte_pos_cmd.tran.y << " " << emcmotStatus->carte_pos_cmd.tran.x <<
+              " Z " << emcmotStatus->carte_pos_cmd.tran.z << " " << emcmotStatus->carte_pos_cmd.tran.x << std::endl;
+        ofs_ << ss.str();
+        if (emcmotStatus->tcqlen == 0)
+            motTaskSts_ = kEndGather;
+        break;
+    case kEndGather:
+        needWait_ = true;
+        ofs_.close();
+        EMCLog::SetLog(EMCChannel::millMotFileName + " simu finished");
+        motTaskSts_ = kIdle;
+        break;
+    case kError:
+    default:
+        EMCLog::SetLog(EMCChannel::millMotFileName + " simu error");
+        motTaskSts_ = kIdle;
+        break;
+
     }
+}
 
-    printf("X:%f Y:%f Z:%f\n", emcmotStatus->carte_pos_cmd.tran.x,
-           emcmotStatus->carte_pos_cmd.tran.y,
-           emcmotStatus->carte_pos_cmd.tran.z);
+void MotTask::execCmd()
+{
+    int res = 0;
+    EMCChannel::MotCmd cmd;
+    res = EMCChannel::getMotCmd(cmd);
+    if (res)
+        return;
 
+    switch (cmd) {
+    case EMCChannel::kMotNone:
+        break;
+    case EMCChannel::kMotStart:
+        start_ = true;
+        break;
+    case EMCChannel::kMotRest:
+        start_ = false;
+        motTaskSts_ = kIdle;
+        break;
+    default:
+        break;
+    }
 }
 
 void MotTask::setResultCallback(std::function<void(const std::string&)> callback) {

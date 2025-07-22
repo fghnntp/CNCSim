@@ -586,7 +586,7 @@ int EMCParas::emcTrajSetMaxVelocity_(double vel)
 
     GetTrajConfig()->MaxVel = vel;
 
-    emcTrajSetMaxVelocity(vel);
+    EMCChannel::emcTrajSetMaxVelocity(vel);
 
     return 0;
 }

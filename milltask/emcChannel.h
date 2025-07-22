@@ -9,13 +9,24 @@
 #include "motion.h"
 #include "emcMsgQueue.h"
 
+//This class is just a function encapsulator
+//You can think this is a channel between milltask and emcmot
+//The channel have the priority.
 class EMCChannel {
     //Queue control the all emcchannels
 public:
     enum MILLCmd{
         kMillNone,
         kMillAuto,
+        kMillRest,
         kMillCmdNum,
+    };
+
+    enum MotCmd {
+        kMotNone,
+        kMotStart,
+        kMotRest,
+        kMotCmdNum,
     };
 
     enum MOTChannel {
@@ -140,10 +151,16 @@ public:
     static void emitMillCmd(MILLCmd cmd);
     static int getMillCmd(MILLCmd& cmd);
 
+    //Thse used to control mottaks
+    static void emitMotCmd(MotCmd cmd);
+    static int getMotCmd(MotCmd& cmd);
+
     //These used to control mottask
     //Mot mod direct cmd
     //cmdtask is speical, it directly controlled by UI
     static int getMotCmdFromCmd(emcmot_command_t &cmd);
+
+    static std::string millMotFileName;
 
 private:
     static int commandNum;
@@ -151,6 +168,7 @@ private:
     static MessageQueue<emcmot_command_t> mill2MotQueue;
     static MessageQueue<MILLCmd> millCmdQueue;
     static MessageQueue<emcmot_command_t> cmd2MotQueue;
+    static MessageQueue<MotCmd> motCmdQueue;
     static std::mutex mutex_cmd;
     EMCChannel() = delete;
 };

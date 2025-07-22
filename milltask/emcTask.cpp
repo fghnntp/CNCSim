@@ -18,6 +18,9 @@
 #include "emcParas.h"
 #include "emc_nml.hh"
 
+#include "emcLog.h"
+#include "emcChannel.h"
+
 EMCTask::EMCTask(std::string iniFileName)
     :emcFileName_(iniFileName)
 {
@@ -74,8 +77,11 @@ int EMCTask::load_file(std::string filename, std::vector<IMillTaskInterface::Too
 
     if (pinterp->open(filename.c_str())) {
         std::cout << filename << " Wrong file" << std::endl;
+        EMCLog::SetLog(filename + " Wrong file");
         return 3;
     }
+
+    EMCLog::SetLog(filename + "Start to load");
 
     int code = 0;
     char errText[256];
@@ -90,6 +96,7 @@ int EMCTask::load_file(std::string filename, std::vector<IMillTaskInterface::Too
             oss << " err:" << pinterp->error_text(code, errText, 256);
             err = oss.str();
             std::cout << err << std::endl;
+            EMCLog::SetLog(err);
             pinterp->reset();//This should reset the interp
             pinterp->close();
             return 4;
@@ -147,11 +154,14 @@ int EMCTask::load_file(std::string filename, std::vector<IMillTaskInterface::Too
         }
     }
 
+    EMCLog::SetLog(filename + "load finish");
+
     if (toolPath->size() == 0)
         return 5;
 
     return 0;
 }
+
 
 int EMCTask::load_file(std::string filename, std::string &err)
 {
@@ -161,13 +171,16 @@ int EMCTask::load_file(std::string filename, std::string &err)
     if (interp_list.len() > 0) {
         //Clear the useless msg first
         interp_list.clear();
+        EMCLog::SetLog("Interplist wrong not run");
         return 2;
     }
 
     if (pinterp->open(filename.c_str())) {
         std::cout << filename << " Wrong file" << std::endl;
+        EMCLog::SetLog( filename + " Wrong File not run");
         return 3;
     }
+
 
     int code = 0;
     char errText[256];
@@ -181,16 +194,20 @@ int EMCTask::load_file(std::string filename, std::string &err)
             oss << " line:" << pinterp->line() << " " << pinterp->line_text(errText, 256);
             oss << " err:" << pinterp->error_text(code, errText, 256);
             err = oss.str();
+            EMCLog::SetLog(err);
             std::cout << err << std::endl;
             pinterp->reset();//This should reset the interp
             pinterp->close();
-            return 4;
+            return 5;
         }
     }
 
     pinterp->close();
 
     emitAllCmd();
+
+    EMCChannel::millMotFileName = filename + ".ngc";
+    EMCChannel::emitMotCmd(EMCChannel::kMotStart);
 
     return 0;
 }

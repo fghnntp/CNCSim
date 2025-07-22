@@ -17,8 +17,6 @@ MillTask::~MillTask() {
     stopWork(); // Ensure thread is stopped on destruction
 }
 
-//extern int main_load(int argc, char *argv[]);
-
 void MillTask::doWork() {
     if (running) return; // Already running
 
@@ -94,6 +92,9 @@ void MillTask::execCmd()
     case EMCChannel::kMillAuto:
         state_ = kAuto;
         break;
+    case EMCChannel::kMillRest:
+        state_ = kIDLE;
+        break;
     default:
         break;
     }
@@ -107,11 +108,6 @@ void MillTask::setFinishedCallback(std::function<void()> callback) {
     finishedCallback = callback;
 }
 
-void MillTask::loadfile(std::string filename)
-{
-
-}
-
 int MillTask::load_file(std::string filename, std::vector<IMillTaskInterface::ToolPath> *toolPath, std::string &err)
 {
     int retval = 0;
@@ -121,12 +117,6 @@ int MillTask::load_file(std::string filename, std::vector<IMillTaskInterface::To
         filename_ = filename;
 
     return retval;
-}
-
-int MillTask::setSts(TaskState sts)
-{
-    state_ = sts;
-    return 0;
 }
 
 void MillTask::init()

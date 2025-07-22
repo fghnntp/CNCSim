@@ -3,6 +3,7 @@
 #include <string>
 #include "emcMsgQueue.h"
 
+//Just a log encapsulator
 class EMCLog {
 public:
     struct Msg {

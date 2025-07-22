@@ -29,7 +29,7 @@ public:
     void setFinishedCallback(std::function<void()> callback);
 
     //load the file and get the previe date
-    void RegisterCommand(const std::string& name, CommandFunc func);
+
     void SetCmd(const std::string &str);
 
 private:
@@ -53,6 +53,7 @@ private:
     MessageQueue <std::string> cmdQueue;
     MessageQueue <std::string> resQueue;
 
+    void RegisterCommand(const std::string& name, CommandFunc func);
     std::string ExecuteCommand(const std::string &rawCmd);
 };
 
