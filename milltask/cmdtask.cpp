@@ -10,6 +10,7 @@
 
 CmdTask::CmdTask() : running(false) {
     init();
+    EMCLog::SetLog("CmdTask start work");
 }
 
 CmdTask::~CmdTask() {
@@ -21,6 +22,7 @@ void CmdTask::doWork() {
 
     running = true;
     workerThread = std::thread([this]() {
+        EMCLog::SetLog("CmdTask start work");
 
         while (running) {
             // Process work

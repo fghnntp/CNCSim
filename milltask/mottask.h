@@ -61,6 +61,8 @@ private:
     enum MotTaskSts motTaskSts_ = kIdle;
     bool start_= false;
     void execCmd();
+
+    int usrmotReadEmcmotError(char *e);
 };
 
 #endif // _MOT_TASK_

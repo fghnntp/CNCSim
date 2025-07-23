@@ -143,17 +143,18 @@ public:
     static int emcMotSetJointComp();
 
 
-    //
-
     static int getMotCmdFromMill(emcmot_command_t &cmd);
+    static void clearMill2MotQueue();
 
     //Thse used to control milltask
     static void emitMillCmd(MILLCmd cmd);
     static int getMillCmd(MILLCmd& cmd);
+    static void clearMillCmd();
 
     //Thse used to control mottaks
     static void emitMotCmd(MotCmd cmd);
     static int getMotCmd(MotCmd& cmd);
+    static void clearMotCmd();
 
     //These used to control mottask
     //Mot mod direct cmd

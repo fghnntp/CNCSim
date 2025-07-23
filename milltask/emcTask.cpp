@@ -76,7 +76,6 @@ int EMCTask::load_file(std::string filename, std::vector<IMillTaskInterface::Too
     }
 
     if (pinterp->open(filename.c_str())) {
-        std::cout << filename << " Wrong file" << std::endl;
         EMCLog::SetLog(filename + " Wrong file");
         return 3;
     }
@@ -95,7 +94,6 @@ int EMCTask::load_file(std::string filename, std::vector<IMillTaskInterface::Too
             oss << " line:" << pinterp->line() << " " << pinterp->line_text(errText, 256);
             oss << " err:" << pinterp->error_text(code, errText, 256);
             err = oss.str();
-            std::cout << err << std::endl;
             EMCLog::SetLog(err);
             pinterp->reset();//This should reset the interp
             pinterp->close();
@@ -176,7 +174,6 @@ int EMCTask::load_file(std::string filename, std::string &err)
     }
 
     if (pinterp->open(filename.c_str())) {
-        std::cout << filename << " Wrong file" << std::endl;
         EMCLog::SetLog( filename + " Wrong File not run");
         return 3;
     }
@@ -196,7 +193,7 @@ int EMCTask::load_file(std::string filename, std::string &err)
             err = oss.str();
             EMCLog::SetLog(err);
             std::cout << err << std::endl;
-            pinterp->reset();//This should reset the interp
+            pinterp->reset();
             pinterp->close();
             return 5;
         }

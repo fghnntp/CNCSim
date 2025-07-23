@@ -13,6 +13,7 @@ public:
     //level 0: Log
     //level 1: warning
     //level 2: error
+    //level 3: cmd
     static int GetLog(std::string &log, int &level);
     static int SetLog(std::string log, int level = 0);
 private:

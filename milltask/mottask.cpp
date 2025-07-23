@@ -5,9 +5,11 @@
 #include "emcglb.h"
 #include <rtapi_string.h>
 #include "emcLog.h"
+#include "usrmotintf.h"
 
 MotTask::MotTask() : running(false) {
     emcFile_ = emc_inifile;
+    init();
     EMCLog::SetLog("MotTask init finshed");
 }
 
@@ -21,7 +23,7 @@ void MotTask::doWork() {
     running = true;
 
     workerThread = std::thread([this]() {
-        init();
+
 
         EMCLog::SetLog("MotTask start work");
         while (running) {
@@ -71,6 +73,34 @@ extern struct emcmot_error_t *emcmotError;	/* unused for RT_FIFO */
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include "dbuf.h"
+#include "stashf.h"
+
+
+/* copies error to s */
+int MotTask::usrmotReadEmcmotError(char *e)
+{
+    /* check to see if ptr still around */
+    if (emcmotError == 0) {
+    return -1;
+    }
+
+    char data[EMCMOT_ERROR_LEN];
+    struct dbuf d;
+    dbuf_init(&d, (unsigned char *)data, EMCMOT_ERROR_LEN);
+
+    /* returns 0 if something, -1 if not */
+    int result = emcmotErrorGet(emcmotError, data);
+    if(result < 0) return result;
+
+    struct dbuf_iter di;
+    dbuf_iter_init(&di, &d);
+
+    result =  snprintdbuf(e, EMCMOT_ERROR_LEN, &di);
+    if(result < 0) return result;
+    return 0;
+}
+
 
 void MotTask::process() {
     // Simulate work by incrementing counter
@@ -88,10 +118,22 @@ void MotTask::process() {
     MotionTask::MotionCtrl();
 
     //if the msg send by milltask crated, msg will be get
-    if (!EMCChannel::getMotCmdFromMill(*emcmotCommand))//Low priority
-        MotionTask::CmdHandler();
+
+    if (emcmotStatus->tcqlen > 0.8 * DEFAULT_TC_QUEUE_SIZE) {
+    }
+    else {
+        if (!EMCChannel::getMotCmdFromMill(*emcmotCommand))//Low priority
+            MotionTask::CmdHandler();
+    }
 
     execCmd();
+
+    char errMsg[EMCMOT_ERROR_LEN];
+
+    // read the emcmot error
+    while (!usrmotReadEmcmotError(errMsg)) {
+        EMCLog::SetLog(errMsg, 2);
+    }
 
     std::stringstream ss;
 
@@ -107,6 +149,12 @@ void MotTask::process() {
         needWait_ = true;
         if (emcmotStatus->tcqlen > 0)
             motTaskSts_ = kOpenFile;
+
+        if (emcmotStatus->commandStatus != EMCMOT_COMMAND_OK) {
+            EMCChannel::clearMill2MotQueue();
+            EMCLog::SetLog("EMC_COMMAND is not ok", 2);
+            motTaskSts_ = kError;
+        }
         break;
     case kOpenFile:
         needWait_ = true;
@@ -119,22 +167,48 @@ void MotTask::process() {
             EMCLog::SetLog(EMCChannel::millMotFileName + " simu open error");
             motTaskSts_ = kError;
         }
+
+        if (emcmotStatus->commandStatus != EMCMOT_COMMAND_OK) {
+            if (ofs_)
+                ofs_.close();
+            EMCChannel::clearMill2MotQueue();
+            EMCLog::SetLog("EMC_COMMAND is not ok", 2);
+            motTaskSts_ = kError;
+        }
         break;
     case kStartGather:
         needWait_ = false;
         ss << std::fixed << std::setprecision(6);
         ss << "X " << emcmotStatus->carte_pos_cmd.tran.x << " " << emcmotStatus->carte_pos_cmd.tran.x <<
               " Y " << emcmotStatus->carte_pos_cmd.tran.y << " " << emcmotStatus->carte_pos_cmd.tran.x <<
-              " Z " << emcmotStatus->carte_pos_cmd.tran.z << " " << emcmotStatus->carte_pos_cmd.tran.x << std::endl;
+              " Z " << emcmotStatus->carte_pos_cmd.tran.z << " " << emcmotStatus->carte_pos_cmd.tran.x <<
+              " A " << emcmotStatus->carte_pos_cmd.a << " " << emcmotStatus->carte_pos_cmd.a <<
+              " B " << emcmotStatus->carte_pos_cmd.b << " " << emcmotStatus->carte_pos_cmd.b <<
+              " C " << emcmotStatus->carte_pos_cmd.c << " " << emcmotStatus->carte_pos_cmd.c << std::endl;
+
         ofs_ << ss.str();
         if (emcmotStatus->tcqlen == 0)
             motTaskSts_ = kEndGather;
+
+        if (emcmotStatus->commandStatus != EMCMOT_COMMAND_OK) {
+            if (ofs_)
+                ofs_.close();
+            EMCChannel::clearMill2MotQueue();
+            EMCLog::SetLog("EMC_COMMAND is not ok", 2);
+            motTaskSts_ = kError;
+        }
         break;
     case kEndGather:
         needWait_ = true;
         ofs_.close();
         EMCLog::SetLog(EMCChannel::millMotFileName + " simu finished");
         motTaskSts_ = kIdle;
+
+        if (emcmotStatus->commandStatus != EMCMOT_COMMAND_OK) {
+            EMCChannel::clearMill2MotQueue();
+            EMCLog::SetLog("EMC_COMMAND is not ok", 2);
+            motTaskSts_ = kError;
+        }
         break;
     case kError:
     default:

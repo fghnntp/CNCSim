@@ -44,6 +44,13 @@ public:
         return queue_.empty();
     }
 
+    void clear() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        while (!queue_.empty()) {
+            queue_.pop();
+        }
+    }
+
 private:
     mutable std::mutex mutex_;
     std::queue<T> queue_;

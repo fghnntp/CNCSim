@@ -1062,8 +1062,6 @@ int EMCChannel::emcMotProbe(enum MOTChannel channel)
 }
 
 
-
-
 int EMCChannel::getMotCmdFromMill(emcmot_command_t &cmd)
 {
     if (mill2MotQueue.empty())
@@ -1071,6 +1069,11 @@ int EMCChannel::getMotCmdFromMill(emcmot_command_t &cmd)
 
     cmd = mill2MotQueue.pop();
     return 0;
+}
+
+void EMCChannel::clearMill2MotQueue()
+{
+    mill2MotQueue.clear();
 }
 
 void EMCChannel::emitMillCmd(MILLCmd cmd)
@@ -1086,6 +1089,11 @@ int EMCChannel::getMillCmd(MILLCmd &cmd)
     return 0;
 }
 
+void EMCChannel::clearMillCmd()
+{
+    millCmdQueue.clear();
+}
+
 void EMCChannel::emitMotCmd(MotCmd cmd)
 {
     motCmdQueue.push(cmd);
@@ -1097,6 +1105,11 @@ int EMCChannel::getMotCmd(MotCmd &cmd)
         return 1;
     cmd = motCmdQueue.pop();
     return 0;
+}
+
+void EMCChannel::clearMotCmd()
+{
+    motCmdQueue.clear();
 }
 
 int EMCChannel::getMotCmdFromCmd(emcmot_command_t &cmd)
