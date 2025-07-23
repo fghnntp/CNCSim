@@ -77,8 +77,97 @@ void CmdTask::setFinishedCallback(std::function<void()> callback) {
     finishedCallback = callback;
 }
 
+
+//These struct is crated by motion module, and these
+//point is used to drive motion module
+//motion module is quickly scanned, and alawys run
+extern struct emcmot_struct_t *emcmotStruct;
+/* ptrs to either buffered copies or direct memory for command and status */
+extern struct emcmot_command_t *emcmotCommand;
+extern struct emcmot_status_t *emcmotStatus;
+extern struct emcmot_config_t *emcmotConfig;
+extern struct emcmot_internal_t *emcmotInternal;
+extern struct emcmot_error_t *emcmotError;	/* unused for RT_FIFO */
+
+std::string getEmcPose(EmcPose pose)
+{
+    std::stringstream ss;
+    ss << "X:" << pose.tran.x << "\n" <<
+          "Y:" << pose.tran.y << "\n" <<
+          "Z:" << pose.tran.z << "\n" <<
+          "A:" << pose.a << "\n" <<
+          "B:" << pose.b << "\n" <<
+          "C:" << pose.c << "\n" <<
+          "U:" << pose.u << "\n" <<
+          "V:" << pose.v << "\n" <<
+          "W:" << pose.w;
+    return ss.str();
+}
+
 void CmdTask::init()
 {
+    RegisterCommand("MOTPOS", [this](const std::vector<std::string>& args) -> std::string {
+        std::stringstream ss;
+
+        ss << "carte_pos_cmd:\n" << getEmcPose(emcmotStatus->carte_pos_cmd) << "\n" <<
+              "carte_pos_fb:\n" << getEmcPose(emcmotStatus->carte_pos_fb) << "\n" <<
+              "world_home:\n" << getEmcPose(emcmotStatus->world_home);
+
+        return ss.str();
+        });
+
+    RegisterCommand("MOTSTS", [this](const std::vector<std::string>& args) -> std::string {
+        std::stringstream ss;
+        std::string motionStateStr;
+        switch (emcmotStatus->motion_state) {
+        case EMCMOT_MOTION_DISABLED:
+            motionStateStr = "EMCMOT_MOTION_DISABLED";
+            break;
+        case EMCMOT_MOTION_FREE:
+            motionStateStr = "EMCMOT_MOTION_FREE";
+            break;
+        case EMCMOT_MOTION_TELEOP:
+            motionStateStr = "EMCMOT_MOTION_TELEOP";
+            break;
+        case EMCMOT_MOTION_COORD:
+            motionStateStr = "EMCMOT_MOTION_COORD";
+            break;
+        default:
+            motionStateStr = "EMCMOT_MOTION_UNKNOW";
+            break;
+        }
+
+        std::string motionStsStr = "MotionSts:";
+        if (emcmotStatus->motionFlag & EMCMOT_MOTION_ENABLE_BIT)
+            motionStsStr += " enable ";
+        if (emcmotStatus->motionFlag & EMCMOT_MOTION_INPOS_BIT)
+            motionStsStr += " inpos ";
+        if (emcmotStatus->motionFlag & EMCMOT_MOTION_COORD_BIT)
+            motionStsStr += " coord ";
+        if (emcmotStatus->motionFlag & EMCMOT_MOTION_ERROR_BIT)
+            motionStsStr += " error ";
+        if (emcmotStatus->motionFlag & EMCMOT_MOTION_TELEOP_BIT)
+            motionStsStr += " teleop ";
+
+        std::string softLimitStr;
+        if (emcmotStatus->on_soft_limit)
+            softLimitStr = "on_soft_limit";
+        else
+            softLimitStr = "no_soft_limit";
+
+
+        ss << "emcmot_status_t\n" <<
+              "feed_scale " << emcmotStatus->feed_scale << "\n" <<
+              "rapid_scale " << emcmotStatus->rapid_scale << "\n" <<
+              "motion_state " << motionStateStr << "\n" <<
+              "motionFlag " << motionStsStr << "\n" <<
+              "soft_limit " << softLimitStr;
+
+
+        return ss.str();
+        });
+
+
     RegisterCommand("RUN", [this](const std::vector<std::string>& args) -> std::string {
         std::string res;
         std::stringstream ss;

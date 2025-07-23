@@ -2,6 +2,7 @@
 #define _EMC_LOG_H_
 #include <string>
 #include "emcMsgQueue.h"
+#include "cstdio"
 
 //Just a log encapsulator
 class EMCLog {

@@ -1,5 +1,6 @@
 #include "emcChannel.h"
 #include "emcParas.h"
+#include "emcLog.h"
 
 // Initialize static members
 EMC_TRAJ_SET_SCALE emcTrajSetScaleMsgEntry;
@@ -333,6 +334,7 @@ int EMCChannel::emcJointSetHomingParams(int joint, double home, double offset, d
         emcmotCommand.flags |= HOME_UNLOCK_FIRST;
     }
     if (absolute_encoder) {
+        char emc_msg[256];
         switch (absolute_encoder) {
           case 0: break;
           case 1: emcmotCommand.flags |= HOME_ABSOLUTE_ENCODER;
@@ -342,8 +344,10 @@ int EMCChannel::emcJointSetHomingParams(int joint, double home, double offset, d
                   emcmotCommand.flags |= HOME_NO_REHOME;
                   emcmotCommand.flags |= HOME_NO_FINAL_MOVE;
                   break;
-          default: fprintf(stderr,
+          default:
+            snprintf(emc_msg, 256,
                    "Unknown option for absolute_encoder <%d>",absolute_encoder);
+            EMCLog::SetLog(emc_msg);
                   break;
         }
     }

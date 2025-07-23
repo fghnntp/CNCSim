@@ -11,6 +11,7 @@
 * Copyright (c) 2004 All rights reserved.
 ********************************************************************/
 #include "rtapi.h"              /* rtapi_print_msg */
+#include "emcLog.h"
 #include "posemath.h"           /* Geometry types & functions */
 #include "emcpose.h"
 #include "rtapi_math.h"

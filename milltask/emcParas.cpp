@@ -12,6 +12,7 @@
 #include "emccfg.h"
 //#include "usrmotintf.h"
 #include "homing.h"
+#include "emcLog.h"
 
 /* define this to catch isnan errors, for rtlinux FPU register
    problem testing */
@@ -104,8 +105,6 @@ void EMCParas::InitTaskinft(void)
 
 }
 
-
-
 void EMCParas::init_emc_paras()
 {
     emcStatus->motion.traj.axis_mask=~0;
@@ -125,13 +124,17 @@ void EMCParas::init_emc_paras()
         for (int axis = 0; axis < EMCMOT_MAX_AXIS; axis++) {
               if (GetTrajConfig()->AxisMask & (1<<axis)) {
               if (0 != iniAxis(axis, inifileName.c_str())) {
-                    printf("%s: emcAxisInit(%d) failed\n", __FUNCTION__, axis);
+                  char emc_msg[256];
+                    snprintf(emc_msg, 256, "%s: emcAxisInit(%d) failed\n", __FUNCTION__, axis);
+                    EMCLog::SetLog(emc_msg, 1);
               }
             }
         }
         for (int spindle = 0; spindle < GetTrajConfig()->Spindles; spindle++) {
                if (0 != iniSpindle(spindle, inifileName.c_str())) {
-                    printf("%s: emcSpindleInit(%d) failed\n", __FUNCTION__, spindle);
+                   char emc_msg[256];
+                   snprintf(emc_msg, 256, "%s: emcSpindleInit(%d) failed\n", __FUNCTION__, spindle);
+                   EMCLog::SetLog(emc_msg, 1);
                }
         }
     }
@@ -272,9 +275,9 @@ int EMCParas::loadTraj(EmcIniFile *trajInifile)
         axismask = 1 | 2 | 4;		// default: XYZ machine
     }
         if (0 != emcTrajSetAxes_(axismask)) {
-            if (emc_debug & EMC_DEBUG_CONFIG) {
-                printf("bad return value from emcTrajSetAxes\n");
-            }
+
+                EMCLog::SetLog("bad return value from emcTrajSetAxes", 1);
+
             return -1;
         }
 
@@ -283,8 +286,8 @@ int EMCParas::loadTraj(EmcIniFile *trajInifile)
         angularUnits = 0;
         trajInifile->FindAngularUnits(&angularUnits, "ANGULAR_UNITS", "TRAJ");
         if (0 != emcTrajSetUnits_(linearUnits, angularUnits)) {
-            printf("emcTrajSetUnits failed to set "
-                      "[TRAJ]LINEAR_UNITS or [TRAJ]ANGULAR_UNITS\n");
+            EMCLog::SetLog("emcTrajSetUnits failed to set "
+                      "[TRAJ]LINEAR_UNITS or [TRAJ]ANGULAR_UNITS", 1);
             return -1;
         }
 
@@ -294,9 +297,9 @@ int EMCParas::loadTraj(EmcIniFile *trajInifile)
 
         // and set dynamic value
         if (0 != emcTrajSetVelocity_(vel, vel)) { //default velocity on startup 0
-            if (emc_debug & EMC_DEBUG_CONFIG) {
-                printf("bad return value from emcTrajSetVelocity\n");
-            }
+
+                EMCLog::SetLog("bad return value from emcTrajSetVelocity", 1);
+
             return -1;
         }
 
@@ -307,18 +310,18 @@ int EMCParas::loadTraj(EmcIniFile *trajInifile)
 
         // and set dynamic value
         if (0 != emcTrajSetMaxVelocity_(vel)) {
-            if (emc_debug & EMC_DEBUG_CONFIG) {
-                printf("bad return value from emcTrajSetMaxVelocity\n");
-            }
+
+                EMCLog::SetLog("bad return value from emcTrajSetMaxVelocity", 1);
+
             return -1;
         }
 
         acc = 1e99; // let the axis values apply
         trajInifile->Find(&acc, "DEFAULT_LINEAR_ACCELERATION", "TRAJ");
         if (0 != emcTrajSetAcceleration_(acc)) {
-            if (emc_debug & EMC_DEBUG_CONFIG) {
-                printf("bad return value from emcTrajSetAcceleration\n");
-            }
+
+                EMCLog::SetLog("bad return value from emcTrajSetAcceleration", 1);
+
             return -1;
         }
         trajconfig.traj_default_acceleration = acc;
@@ -326,9 +329,9 @@ int EMCParas::loadTraj(EmcIniFile *trajInifile)
         acc = 1e99; // let the axis values apply
         trajInifile->Find(&acc, "MAX_LINEAR_ACCELERATION", "TRAJ");
         if (0 != emcTrajSetMaxAcceleration_(acc)) {
-            if (emc_debug & EMC_DEBUG_CONFIG) {
-                printf("bad return value from emcTrajSetMaxAcceleration\n");
-            }
+
+                EMCLog::SetLog("bad return value from emcTrajSetMaxAcceleration", 1);
+
             return -1;
         }
         trajconfig.traj_max_acceleration = acc;
@@ -349,9 +352,9 @@ int EMCParas::loadTraj(EmcIniFile *trajInifile)
 
         if (0 != emcSetupArcBlends_(arcBlendEnable, arcBlendFallbackEnable,
                     arcBlendOptDepth, arcBlendGapCycles, arcBlendRampFreq, arcBlendTangentKinkRatio)) {
-            if (emc_debug & EMC_DEBUG_CONFIG) {
-                printf("bad return value from emcSetupArcBlends\n");
-            }
+
+                EMCLog::SetLog("bad return value from emcSetupArcBlends", 1);
+
             return -1;
         }
 
@@ -367,9 +370,9 @@ int EMCParas::loadTraj(EmcIniFile *trajInifile)
         trajInifile->Find(&maxFeedScale, "MAX_FEED_OVERRIDE", "DISPLAY");
 
         if (0 != emcSetMaxFeedOverride_(maxFeedScale)) {
-            if (emc_debug & EMC_DEBUG_CONFIG) {
-                printf("bad return value from emcSetMaxFeedOverride\n");
-            }
+
+                EMCLog::SetLog("bad return value from emcSetMaxFeedOverride", 1);
+
             return -1;
         }
 
@@ -378,9 +381,9 @@ int EMCParas::loadTraj(EmcIniFile *trajInifile)
         trajInifile->Find(&j_inhibit, "NO_PROBE_JOG_ERROR", "TRAJ");
         trajInifile->Find(&h_inhibit, "NO_PROBE_HOME_ERROR", "TRAJ");
         if (0 != emcSetProbeErrorInhibit_(j_inhibit, h_inhibit)) {
-            if (emc_debug & EMC_DEBUG_CONFIG) {
-                printf("bad return value from emcSetProbeErrorInhibit\n");
-            }
+
+                EMCLog::SetLog("bad return value from emcSetProbeErrorInhibit", 1);
+
             return -1;
         }
     }
@@ -448,16 +451,18 @@ int EMCParas::loadTraj(EmcIniFile *trajInifile)
                     }
                 } else {
                     // badly formatted entry
-                    printf("invalid INI file value for [TRAJ] HOME: %s\n",
+                    char emc_msg[256];
+                    snprintf(emc_msg, 256, "invalid INI file value for [TRAJ] HOME: %s\n",
                           inistring);
+                    EMCLog::SetLog(emc_msg, 1);
                         return -1;
                 }
             }  // end of for-loop on coordinateMark[]
         }
         if (0 != emcTrajSetHome(homePose)) {
-            if (emc_debug & EMC_DEBUG_CONFIG) {
-                printf("bad return value from emcTrajSetHome\n");
-            }
+
+                EMCLog::SetLog("bad return value from emcTrajSetHome", 1);
+
             return -1;
         }
      } //try
@@ -499,8 +504,10 @@ int EMCParas::iniTraj(const char *filename)
 int EMCParas::emcTrajSetJoints_(int joints)
 {
     if (joints <= 0 || joints > EMCMOT_MAX_JOINTS) {
-    printf("emcTrajSetJoints failing: joints=%d\n",
+        char emc_msg[256];
+        snprintf(emc_msg, 256, "emcTrajSetJoints failing: joints=%d\n",
         joints);
+        EMCLog::SetLog(emc_msg, 1);
     return -1;
     }
 
@@ -519,17 +526,22 @@ int EMCParas::emcTrajSetUnits_(double linearUnits, double angularUnits)
     GetTrajConfig()->LinearUnits = linearUnits;
     GetTrajConfig()->AngularUnits = angularUnits;
 
-    if (emc_debug & EMC_DEBUG_CONFIG) {
-        printf("%s(%.4f, %.4f)\n", __FUNCTION__, linearUnits, angularUnits);
-    }
+    char emc_msg[256];
+
+        snprintf(emc_msg, 256, "%s(%.4f, %.4f)\n", __FUNCTION__, linearUnits, angularUnits);
+
+    EMCLog::SetLog(emc_msg, 256);
+
     return 0;
 }
 
 int EMCParas::emcTrajSetSpindles_(int spindles)
 {
     if (spindles <= 0 || spindles > EMCMOT_MAX_SPINDLES) {
-    printf("emcTrajSetSpindles failing: spindles=%d\n",
+    char emc_msg[256];
+        snprintf(emc_msg, 256, "emcTrajSetSpindles failing: spindles=%d\n",
         spindles);
+        EMCLog::SetLog(emc_msg, 1);
     return -1;
     }
 
@@ -547,9 +559,9 @@ int EMCParas::emcTrajSetAxes_(int axismask)
 
     GetTrajConfig()->AxisMask = axismask;
 
-    if (emc_debug & EMC_DEBUG_CONFIG) {
-        printf("%s(%d, %d)\n", __FUNCTION__, axes, axismask);
-    }
+    char emc_msg[256];
+        snprintf(emc_msg, 256, "%s(%d, %d)\n", __FUNCTION__, axes, axismask);
+    EMCLog::SetLog(emc_msg, 1);
     return 0;
 }
 
@@ -611,10 +623,10 @@ int EMCParas::emcTrajSetMaxAcceleration_(double acc)
     }
 
     GetTrajConfig()->MaxAccel = acc;
+    char emc_msg[256];
 
-    if (emc_debug & EMC_DEBUG_CONFIG) {
-        printf("%s(%.4g)\n", __FUNCTION__, acc);
-    }
+        snprintf(emc_msg, 256, "%s(%.4g)\n", __FUNCTION__, acc);
+    EMCLog::SetLog(emc_msg, 1);
     return 0;
 }
 
@@ -651,7 +663,7 @@ int EMCParas::emcTrajSetHome(const EmcPose& home)
     if (std::isnan(home.tran.x) || std::isnan(home.tran.y) || std::isnan(home.tran.z) ||
     std::isnan(home.a) || std::isnan(home.b) || std::isnan(home.c) ||
     std::isnan(home.u) || std::isnan(home.v) || std::isnan(home.w)) {
-    printf("std::isnan error in emcTrajSetHome()\n");
+    EMCLog::SetLog("std::isnan error in emcTrajSetHome()\n", 1);
     return 0;		// ignore it for now, just don't send it
     }
 #endif
@@ -942,9 +954,12 @@ int EMCParas::emcJointSetType_(int joint, unsigned char jointType)
 
     GetJointConfig(joint)->Type = jointType;
 
-    if (emc_debug & EMC_DEBUG_CONFIG) {
-        printf("%s(%d, %d)\n", __FUNCTION__, joint, jointType);
-    }
+    char emc_msg[256];
+
+        snprintf(emc_msg, 256, "%s(%d, %d)\n", __FUNCTION__, joint, jointType);
+
+    EMCLog::SetLog(emc_msg, 1);
+
     return 0;
 }
 
@@ -956,9 +971,12 @@ int EMCParas::emcJointSetUnits_(int joint, double units)
 
     GetJointConfig(joint)->Units = units;
 
-    if (emc_debug & EMC_DEBUG_CONFIG) {
-        printf("%s(%d, %.4f)\n", __FUNCTION__, joint, units);
-    }
+    char emc_msg[256];
+
+        snprintf(emc_msg, 256, "%s(%d, %.4f)\n", __FUNCTION__, joint, units);
+
+    EMCLog::SetLog(emc_msg, 1);
+
     return 0;
 }
 
@@ -966,7 +984,7 @@ int EMCParas::emcJointSetBacklash_(int joint, double backlash)
 {
 #ifdef ISNAN_TRAP
     if (std::isnan(backlash)) {
-    printf("std::isnan error in emcJointSetBacklash()\n");
+    EMCLog::SetLog("std::isnan error in emcJointSetBacklash()", 1);
     return -1;
     }
 #endif
@@ -984,7 +1002,7 @@ int EMCParas::emcJointSetMinPositionLimit_(int joint, double limit)
 {
 #ifdef ISNAN_TRAP
     if (std::isnan(limit)) {
-    printf("isnan error in emcJointSetMinPosition()\n");
+    EMCLog::SetLog("isnan error in emcJointSetMinPosition()", 1);
     return -1;
     }
 #endif
@@ -1004,7 +1022,7 @@ int EMCParas::emcJointSetMaxPositionLimit_(int joint, double limit)
 {
 #ifdef ISNAN_TRAP
     if (std::isnan(limit)) {
-    printf("std::isnan error in emcJointSetMaxPosition()\n");
+    EMCLog::SetLog("std::isnan error in emcJointSetMaxPosition()", 1);
     return -1;
     }
 #endif
@@ -1023,7 +1041,7 @@ int EMCParas::emcJointSetFerror_(int joint, double ferror)
 {
 #ifdef ISNAN_TRAP
     if (std::isnan(ferror)) {
-    printf("isnan error in emcJointSetFerror()\n");
+    EMCLog::SetLog("isnan error in emcJointSetFerror()", 1);
     return -1;
     }
 #endif
@@ -1041,7 +1059,7 @@ int EMCParas::emcJointSetMinFerror_(int joint, double ferror)
 {
 #ifdef ISNAN_TRAP
     if (std::isnan(ferror)) {
-    printf("isnan error in emcJointSetMinFerror()\n");
+    EMCLog::SetLog("isnan error in emcJointSetMinFerror()", 1);
     return -1;
     }
 #endif
@@ -1063,7 +1081,7 @@ int EMCParas::emcJointSetHomingParams_(int joint, double home, double offset, do
 #ifdef ISNAN_TRAP
     if (std::isnan(home) || std::isnan(offset) || std::isnan(home_final_vel) ||
     std::isnan(search_vel) || std::isnan(latch_vel)) {
-    printf("isnan error in emcJointSetHomingParams()\n");
+    EMCLog::SetLog("isnan error in emcJointSetHomingParams()", 1);
     return -1;
     }
 #endif
@@ -1206,9 +1224,7 @@ int EMCParas::loadAxis(int axis, EmcIniFile *axisIniFile)
         limit = -1e99;	                // default
         axisIniFile->Find(&limit, "MIN_LIMIT", axisString);
         if (0 != emcAxisSetMinPositionLimit_(axis, limit)) {
-            if (emc_debug & EMC_DEBUG_CONFIG) {
-                printf("bad return from emcAxisSetMinPositionLimit\n");
-            }
+                EMCLog::SetLog("bad return from emcAxisSetMinPositionLimit", 1);
             return -1;
         }
         axisconfig[axis].axis_min_limit = limit;
@@ -1217,9 +1233,7 @@ int EMCParas::loadAxis(int axis, EmcIniFile *axisIniFile)
         limit = 1e99;	                // default
         axisIniFile->Find(&limit, "MAX_LIMIT", axisString);
         if (0 != emcAxisSetMaxPositionLimit_(axis, limit)) {
-            if (emc_debug & EMC_DEBUG_CONFIG) {
-                printf("bad return from emcAxisSetMaxPositionLimit\n");
-            }
+                EMCLog::SetLog("bad return from emcAxisSetMaxPositionLimit", 1);
             return -1;
         }
         axisconfig[axis].axis_max_limit = limit;
@@ -1232,10 +1246,12 @@ int EMCParas::loadAxis(int axis, EmcIniFile *axisIniFile)
         if (   (ext_offset_a_or_v_ratio[axis] < 0)
             || (ext_offset_a_or_v_ratio[axis] > MAX_AV_RATIO)
            ) {
-           printf("\n   Invalid:[%s]OFFSET_AV_RATIO= %8.5f\n"
+           char emc_msg[256];
+            snprintf(emc_msg, 256, "\n   Invalid:[%s]OFFSET_AV_RATIO= %8.5f\n"
                              "   Using:  [%s]OFFSET_AV_RATIO= %8.5f\n",
                            axisString,ext_offset_a_or_v_ratio[axis],
                            axisString,REPLACE_AV_RATIO);
+            EMCLog::SetLog(emc_msg, 2);
            ext_offset_a_or_v_ratio[axis] = REPLACE_AV_RATIO;
         }
 
@@ -1245,9 +1261,7 @@ int EMCParas::loadAxis(int axis, EmcIniFile *axisIniFile)
         if (0 != emcAxisSetMaxVelocity_(axis,
                    (1 - ext_offset_a_or_v_ratio[axis]) * maxVelocity,
                    (    ext_offset_a_or_v_ratio[axis]) * maxVelocity)) {
-            if (emc_debug & EMC_DEBUG_CONFIG) {
-                printf("bad return from emcAxisSetMaxVelocity\n");
-            }
+                EMCLog::SetLog("bad return from emcAxisSetMaxVelocity", 1);
             return -1;
         }
         axisconfig[axis].axis_max_velocity = maxVelocity;
@@ -1258,18 +1272,14 @@ int EMCParas::loadAxis(int axis, EmcIniFile *axisIniFile)
         if (0 != emcAxisSetMaxAcceleration_(axis,
                     (1 - ext_offset_a_or_v_ratio[axis]) * maxAcceleration,
                     (    ext_offset_a_or_v_ratio[axis]) * maxAcceleration)) {
-            if (emc_debug & EMC_DEBUG_CONFIG) {
-                printf("bad return from emcAxisSetMaxAcceleration\n");
-            }
+                EMCLog::SetLog("bad return from emcAxisSetMaxAcceleration", 1);
             return -1;
         }
         axisconfig[axis].axis_max_acceleration = maxAcceleration;
 
         axisIniFile->Find(&lockingjnum, "LOCKING_INDEXER_JOINT", axisString);
         if (0 != emcAxisSetLockingJoint_(axis, lockingjnum)) {
-            if (emc_debug & EMC_DEBUG_CONFIG) {
-                printf("bad return from emcAxisSetLockingJoint\n");
-            }
+                EMCLog::SetLog("bad return from emcAxisSetLockingJoint", 1);
             return -1;
         }
     }
