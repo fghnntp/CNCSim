@@ -331,7 +331,7 @@ void MainWindow::createActions()
     aboutQtAct->setStatusTip(tr("显示Qt库的About对话框"));
     connect(aboutQtAct, &QAction::triggered, this, &MainWindow::aboutQt);
 
-    toolTableAct = new QAction(tr("tool"), this);
+    toolTableAct = new QAction(tr("刀具"), this);
     // toolTableAct->setShortcuts();
     toolTableAct->setStatusTip(tr("管理刀具"));
     connect(toolTableAct, &QAction::triggered, this, [this]() {
@@ -340,16 +340,16 @@ void MainWindow::createActions()
         dlg->show(); // Non-modal display
     });
 
-    pathPlotAct = new QAction(tr("path"), this);
+    pathPlotAct = new QAction(tr("刀路"), this);
     // pathPlotAct->setShortcuts();
-    pathPlotAct->setStatusTip(tr("tool path"));
+    pathPlotAct->setStatusTip(tr("显示刀路界面"));
     connect(pathPlotAct, &QAction::triggered, this, [this]() {
         setPathDock();
-
+        setKeyInfoDock();
     });
 
-    loadPlotFileAct = new QAction(tr("load"), this);
-    loadPlotFileAct->setStatusTip(tr("load the opened file in 3d-plot"));
+    loadPlotFileAct = new QAction(tr("载入"), this);
+    loadPlotFileAct->setStatusTip(tr("装载当前激活的NC"));
     connect(loadPlotFileAct, &QAction::triggered, this, [this]() {
         GCodeEdit *child = activeGCodeEdit();
         if (!child)
@@ -375,21 +375,21 @@ void MainWindow::createActions()
 
             }
             livePlotter->setPath(initialPath);
-            statusBar()->showMessage(tr("load path finished"), 2000);
+            statusBar()->showMessage(tr("装载结束"), 2000);
         }
         else {
             statusBar()->showMessage(tr(err.c_str()), 10000);
         }
     });
 
-    cncCmdAct = new QAction(tr("cmdline"), this);
-    cncCmdAct->setStatusTip(tr("open cmdline for comnunication with cnc"));
+    cncCmdAct = new QAction(tr("指令"), this);
+    cncCmdAct->setStatusTip(tr("打开命令行控制"));
     connect(cncCmdAct, &QAction::triggered, this, [this]() {
         setCmdLogDock();
     });
 
-    motionPlotAct = new QAction(tr("motion"), this);
-    motionPlotAct->setStatusTip(tr("open motion profile ploter"));
+    motionPlotAct = new QAction(tr("速度"), this);
+    motionPlotAct->setStatusTip(tr("打开速度规划运动曲线查看器"));
     connect(motionPlotAct, &QAction::triggered, this, [this]() {
         setMotionProfileDock();
     });
@@ -430,8 +430,6 @@ void MainWindow::createSearchActions()
     replaceAllAct->setStatusTip(tr("Replace all occurrences"));
     connect(replaceAllAct, &QAction::triggered, this, &MainWindow::replaceAll);
 }
-
-
 
 void MainWindow::createMenus()
 {
@@ -625,7 +623,7 @@ void MainWindow::writeSettings()
 void MainWindow::setPathDock()
 {
     if (!livePlotterDock) {
-        livePlotterDock = new QDockWidget(tr("3D Path Viewer"), this);
+        livePlotterDock = new QDockWidget(tr("3D刀路"), this);
         livePlotter = new LivePlotter(livePlotterDock);
         livePlotterDock->setWidget(livePlotter);
         addDockWidget(Qt::LeftDockWidgetArea, livePlotterDock);
@@ -665,7 +663,7 @@ void MainWindow::setPathDock()
 void MainWindow::setMotionProfileDock()
 {
     if (!livePlotterMotionDock) {
-        livePlotterMotionDock = new QDockWidget(tr("Motion Analysis Viewer"), this);
+        livePlotterMotionDock = new QDockWidget(tr("速度规划"), this);
         livePlotterMotion = new LivePlotterMotion(livePlotterMotionDock);
         livePlotterMotionDock->setWidget(livePlotterMotion);
         addDockWidget(Qt::LeftDockWidgetArea, livePlotterMotionDock);
@@ -713,7 +711,7 @@ void MainWindow::setMotionProfileDock()
 void MainWindow::setCmdLogDock()
 {
     if (!cmdTextDock) {
-        cmdTextDock = new QDockWidget(tr("CmdLine"), this);
+        cmdTextDock = new QDockWidget(tr("命令行"), this);
         cmdTextEdit = new CommandTextEdit(cmdTextDock);
 
         connect(cmdTextEdit, &CommandTextEdit::commandEntered, this, [this](const QString &cmd) {
@@ -743,7 +741,7 @@ void MainWindow::setCmdLogDock()
 
     if (!logDisplayDock) {
         logTimer = new QTimer(this);
-        logDisplayDock = new QDockWidget(tr("LogDisplay"), this);
+        logDisplayDock = new QDockWidget(tr("日志"), this);
         logDisplayWidget = new LogDisplayWidget(logDisplayDock);
         logDisplayDock->setWidget(logDisplayWidget);
         addDockWidget(Qt::RightDockWidgetArea, logDisplayDock);
@@ -779,6 +777,44 @@ void MainWindow::setCmdLogDock()
             if (logDisplayDock->isFloating())
                 logDisplayDock->setFloating(false);
             logDisplayDock->show();
+        }
+    }
+}
+
+void MainWindow::setKeyInfoDock()
+{
+    if (!keyInfoDisplayDock) {
+        infoTimer = new QTimer(this);
+        keyInfoDisplayDock = new QDockWidget(tr("信息"), this);
+        keyInfoDisplayWidget = new KeyInfoDisplayWidget(keyInfoDisplayDock);
+        keyInfoDisplayDock->setWidget(keyInfoDisplayWidget);
+        addDockWidget(Qt::LeftDockWidgetArea, keyInfoDisplayDock);
+        QScreen *screen = QGuiApplication::primaryScreen();
+        QRect screenGeometry = screen->availableGeometry();
+        int oneThirdWidth = screenGeometry.width() / 3;
+
+        connect(infoTimer, &QTimer::timeout, this, [this] {
+            QVector<double> posVec;
+            auto path = millIf_->getCarteCmdPos();
+            posVec << path.x << path.y << path.z <<
+                      path.a << path.b << path.c <<
+                      path.u << path.v << path.w;
+            keyInfoDisplayWidget->updatePosition(posVec);
+        });
+
+        infoTimer->start(100);
+
+        // Resize the dock widget
+        keyInfoDisplayDock->setMinimumWidth(oneThirdWidth);
+    }
+    else {
+        if (keyInfoDisplayDock->isHidden()) {
+            //Reset the dock for the clear postion when reshow
+            removeDockWidget(keyInfoDisplayDock);
+            addDockWidget(Qt::LeftDockWidgetArea, keyInfoDisplayDock);
+            if (keyInfoDisplayDock->isFloating())
+                keyInfoDisplayDock->setFloating(false);
+            keyInfoDisplayDock->show();
         }
     }
 }

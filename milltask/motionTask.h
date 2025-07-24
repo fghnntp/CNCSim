@@ -8,6 +8,7 @@
 #include "interpl.hh"
 #include "motion.h"
 #include "emcMsgQueue.h"
+#include "mill_task_interface.h"
 
 class MotionTask {
 public:
@@ -15,6 +16,8 @@ public:
     static void InitMotion();
     static void CmdHandler();
     static void MotionCtrl();
+
+    static struct IMillTaskInterface::ToolPath getCarteCmdPos();
 
     MotionTask() = delete;
 };

@@ -13,18 +13,28 @@ public:
     };
     virtual ~IMillTaskInterface() = default;
 
+    //Call to start start 3 thread
+    //cmd function can be use
+    //milltask function can be use
+    //mottask function can be use
     virtual void initialize() = 0;
+    //This is useless now
     virtual void processData(const char* input, char* output, int size) = 0;
+    //This is uesless now
     virtual void shutdown() = 0;
 
-    // load the file and get the tool path with nc, one line nc
+    //load the file and get the tool path with nc, one line nc,
+    //this will let called thread to interpter NC, it's fast
     virtual int loadfile(const char *filename, std::vector<ToolPath> &toolPath, std::string &err) = 0;
-    // generator motion profile for configured tool machine
+    // generator motion profile for configured tool machine,
+    // this will send task to milltask, and milltask will let mottask do fastest simulation
     virtual int simulate(const char *filename, std::string &res, std::string &err) = 0;
-
+    //level 0: message 1: warning 2:error 3:cmdline echo
     virtual int getlog(std::string &log, int &level) = 0;
-
+    //do some command have been reigisted
     virtual void setCmd(std::string &cmd) = 0;
+
+    virtual ToolPath getCarteCmdPos() = 0;
 
     // Factory function
     static IMillTaskInterface* create(const char* emcfile = nullptr);

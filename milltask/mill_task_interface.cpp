@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include "emcLog.h"
 #include "cmdtask.h"
+#include "motionTask.h"
 
 // Concrete implementation of the interface
 class MillTaskImplementation : public IMillTaskInterface {
@@ -63,6 +64,10 @@ public:
 
     void setCmd(std::string &cmd) override {
         cmdTask_->SetCmd(cmd);
+    }
+
+    ToolPath getCarteCmdPos() override {
+        return MotionTask::getCarteCmdPos();
     }
 
 private:

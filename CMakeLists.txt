@@ -83,6 +83,8 @@ set(PROJECT_SOURCES
         CmdTextEdit.h
         LogDisplayWidget.cpp
         LogDisplayWidget.h
+        KeyInfoDisplayWidget.cpp
+        KeyInfoDisplayWidget.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

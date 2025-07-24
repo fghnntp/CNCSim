@@ -18,6 +18,7 @@
 #include <QLineEdit>
 #include "CmdTextEdit.h"
 #include "LogDisplayWidget.h"
+#include "KeyInfoDisplayWidget.h"
 
 class MainWindow : public QMainWindow
 {
@@ -140,6 +141,10 @@ private:
 
     void setCmdLogDock();
 
+    QDockWidget *keyInfoDisplayDock = nullptr;
+    KeyInfoDisplayWidget *keyInfoDisplayWidget = nullptr;
+    QTimer *infoTimer = nullptr;
+    void setKeyInfoDock();
 };
 
 #endif // MAINWINDOW_H
