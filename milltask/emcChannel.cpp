@@ -693,6 +693,32 @@ int EMCChannel::emcMotJogCont(int joint, int axis, double vel, enum MOTChannel c
 int EMCChannel::emcMotJogInc(int joint, int axis, double vel, double offset, enum MOTChannel channel)
 {
     std::lock_guard<std::mutex> lock(mutex_cmd);
+
+    if (joint == -1) {
+    //axis home mode
+        if (axis < 0 || axis >= EMCMOT_MAX_AXIS)
+            return 2;
+        if (vel > EMCParas::GetAxisConfig(axis)->MaxVel)
+            vel = EMCParas::GetAxisConfig(axis)->MaxVel;
+        else if (vel < -EMCParas::GetAxisConfig(axis)->MaxVel)
+            vel = -EMCParas::GetAxisConfig(axis)->MaxVel;
+        else;
+    }
+    else if (axis == -1) {
+    //joint home mode
+        if (joint < 0 || joint >= EMCMOT_MAX_JOINTS)
+            return 3;
+        if (vel > EMCParas::GetJointConfig(joint)->MaxVel)
+            vel = EMCParas::GetJointConfig(joint)->MaxVel;
+        else if (vel < -EMCParas::GetJointConfig(joint)->MaxVel)
+            vel = -EMCParas::GetJointConfig(joint)->MaxVel;
+        else;
+    }
+    else {
+    //wrong mode
+        return 1;
+    }
+
     emcmotCommand.command = EMCMOT_JOG_INCR;
     emcmotCommand.joint = joint;
     emcmotCommand.axis = axis;
@@ -711,6 +737,32 @@ int EMCChannel::emcMotJogInc(int joint, int axis, double vel, double offset, enu
 int EMCChannel::emcMotJogAbs(int joint, int axis, double vel, double offset, enum MOTChannel channel)
 {
     std::lock_guard<std::mutex> lock(mutex_cmd);
+
+    if (joint == -1) {
+    //axis home mode
+        if (axis < 0 || axis >= EMCMOT_MAX_AXIS)
+            return 2;
+        if (vel > EMCParas::GetAxisConfig(axis)->MaxVel)
+            vel = EMCParas::GetAxisConfig(axis)->MaxVel;
+        else if (vel < -EMCParas::GetAxisConfig(axis)->MaxVel)
+            vel = -EMCParas::GetAxisConfig(axis)->MaxVel;
+        else;
+    }
+    else if (axis == -1) {
+    //joint home mode
+        if (joint < 0 || joint >= EMCMOT_MAX_JOINTS)
+            return 3;
+        if (vel > EMCParas::GetJointConfig(joint)->MaxVel)
+            vel = EMCParas::GetJointConfig(joint)->MaxVel;
+        else if (vel < -EMCParas::GetJointConfig(joint)->MaxVel)
+            vel = -EMCParas::GetJointConfig(joint)->MaxVel;
+        else;
+    }
+    else {
+    //wrong mode
+        return 1;
+    }
+
     emcmotCommand.command = EMCMOT_JOG_ABS;
     emcmotCommand.joint = joint;
     emcmotCommand.axis = axis;

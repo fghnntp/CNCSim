@@ -32,7 +32,7 @@ void MotTask::doWork() {
 
             // Small delay to prevent busy waiting
             if (needWait_)
-                std::this_thread::sleep_for(std::chrono::milliseconds(25));
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
 

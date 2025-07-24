@@ -7,6 +7,7 @@
 #include "Version.h"
 #include "emcParas.h"
 #include "emcChannel.h"
+#include "iomanip"
 
 CmdTask::CmdTask() : running(false) {
     init();
@@ -92,6 +93,7 @@ extern struct emcmot_error_t *emcmotError;	/* unused for RT_FIFO */
 std::string getEmcPose(EmcPose pose)
 {
     std::stringstream ss;
+    ss << std::fixed << std::setprecision(6);
     ss << "X:" << pose.tran.x << "\n" <<
           "Y:" << pose.tran.y << "\n" <<
           "Z:" << pose.tran.z << "\n" <<
@@ -104,11 +106,226 @@ std::string getEmcPose(EmcPose pose)
     return ss.str();
 }
 
+std::string getModesStr(struct state_tag_t &tag)
+{
+    std::stringstream ss;
+    if (tag.packed_flags & GM_FLAG_UNITS) {
+        ss << "GM_FLAG_UNITS\n";
+    }
+    if (tag.packed_flags & GM_FLAG_DISTANCE_MODE) {
+        ss << "GM_FLAG_DISTANCE_MODE\n";
+    }
+    if (tag.packed_flags & GM_FLAG_TOOL_OFFSETS_ON) {
+        ss << "GM_FLAG_TOOL_OFFSETS_ON\n";
+    }
+    if (tag.packed_flags & GM_FLAG_RETRACT_OLDZ) {
+        ss << "GM_FLAG_RETRACT_OLDZ\n";
+    }
+    if (tag.packed_flags & GM_FLAG_BLEND) {
+        ss << "GM_FLAG_BLEND\n";
+    }
+    if (tag.packed_flags & GM_FLAG_EXACT_STOP) {
+        ss << "GM_FLAG_EXACT_STOP\n";
+    }
+    if (tag.packed_flags & GM_FLAG_FEED_INVERSE_TIME) {
+        ss << "GM_FLAG_FEED_INVERSE_TIME\n";
+    }
+    if (tag.packed_flags & GM_FLAG_FEED_UPM) {
+        ss << "GM_FLAG_FEED_UPM\n";
+    }
+    if (tag.packed_flags & GM_FLAG_CSS_MODE) {
+        ss << "GM_FLAG_CSS_MODE\n";
+    }
+    if (tag.packed_flags & GM_FLAG_IJK_ABS) {
+        ss << "GM_FLAG_IJK_ABS\n";
+    }
+    if (tag.packed_flags & GM_FLAG_DIAMETER_MODE) {
+        ss << "GM_FLAG_DIAMETER_MODE\n";
+    }
+    if (tag.packed_flags & GM_FLAG_G92_IS_APPLIED) {
+        ss << "GM_FLAG_G92_IS_APPLIED\n";
+    }
+    if (tag.packed_flags & GM_FLAG_SPINDLE_ON) {
+        ss << "GM_FLAG_SPINDLE_ON\n";
+    }
+    if (tag.packed_flags & GM_FLAG_SPINDLE_CW) {
+        ss << "GM_FLAG_SPINDLE_CW\n";
+    }
+    if (tag.packed_flags & GM_FLAG_MIST) {
+        ss << "GM_FLAG_MIST\n";
+    }
+    if (tag.packed_flags & GM_FLAG_FLOOD) {
+        ss << "GM_FLAG_FLOOD\n";
+    }
+    if (tag.packed_flags & GM_FLAG_FEED_OVERRIDE) {
+        ss << "GM_FLAG_FEED_OVERRIDE\n";
+    }
+    if (tag.packed_flags & GM_FLAG_SPEED_OVERRIDE) {
+        ss << "GM_FLAG_SPEED_OVERRIDE\n";
+    }
+    if (tag.packed_flags & GM_FLAG_ADAPTIVE_FEED) {
+        ss << "GM_FLAG_ADAPTIVE_FEED\n";
+    }
+    if (tag.packed_flags & GM_FLAG_FEED_HOLD) {
+        ss << "GM_FLAG_FEED_HOLD\n";
+    }
+    if (tag.packed_flags & GM_FLAG_RESTORABLE) {
+        ss << "GM_FLAG_RESTORABLE\n";
+    }
+    if (tag.packed_flags & GM_FLAG_IN_REMAP) {
+        ss << "GM_FLAG_IN_REMAP\n";
+    }
+    if (tag.packed_flags & GM_FLAG_IN_SUB) {
+        ss << "GM_FLAG_IN_SUB\n";
+    }
+    if (tag.packed_flags & GM_FLAG_EXTERNAL_FILE) {
+        ss << "GM_FLAG_EXTERNAL_FILE\n";
+    }
+    return ss.str();
+}
+
+std::string getModesDetialStr(struct state_tag_t &tag)
+{
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(6);
+
+    ss << "LINE_NUMBER: " << tag.fields[GM_FIELD_LINE_NUMBER] << "\n" <<
+          "G_MODE_0: "  << tag.fields[GM_FIELD_G_MODE_0] << "\n" <<
+          "CUTTER_COMP: " << tag.fields[GM_FIELD_CUTTER_COMP] << "\n" <<
+          "MOTION_MODE: " << tag.fields[GM_FIELD_MOTION_MODE] << "\n" <<
+          "PLANE: " << tag.fields[GM_FIELD_PLANE] << "\n" <<
+          "M_MODES_4: " << tag.fields[GM_FIELD_M_MODES_4] << "\n" <<
+          "ORIGIN: " << tag.fields[GM_FIELD_ORIGIN] << "\n" <<
+          "TOOLCHANGE: " << tag.fields[GM_FIELD_TOOLCHANGE] << "\n" <<
+          "FLOAT_LINE_NUMBER: " << tag.fields_float[GM_FIELD_FLOAT_LINE_NUMBER] << "\n" <<
+          "FLOAT_FEED: " << tag.fields_float[GM_FIELD_FLOAT_FEED] << "\n" <<
+          "FLOAT_SPEED: " << tag.fields_float[GM_FIELD_FLOAT_SPEED] << "\n" <<
+          "FLOAT_PATH_TOLERANCE: " << tag.fields_float[GM_FIELD_FLOAT_PATH_TOLERANCE] << "\n" <<
+          "FLOAT_NAIVE_CAM_TOLERANCE: " << tag.fields_float[GM_FIELD_FLOAT_NAIVE_CAM_TOLERANCE];
+
+    return ss.str();
+}
+
 void CmdTask::init()
 {
+
+    RegisterCommand("JINC", [this](const std::vector<std::string>& args) -> std::string {
+        int joint = 0, axis = -1;
+        double vel = 0.0, offset = 0.0;
+
+        if (args.size() == 2) {
+            //use max velocity to jog
+            joint = std::stod(args[0]);
+            offset = std::stof(args[1]);
+            vel = EMCParas::GetJointConfig(joint)->MaxVel;
+        }
+        else if (args.size() == 3) {
+            //use specify velocity to jog
+            joint = std::stod(args[0]);
+            offset = std::stof(args[1]);
+            vel = std::stof(args[2]);
+        }
+        else {
+            return "wrong";
+        }
+
+        EMCChannel::emcMotJogInc(joint, axis, vel, offset);
+
+        return "done";
+        });
+
+    RegisterCommand("JABS", [this](const std::vector<std::string>& args) -> std::string {
+        int joint = 0, axis = -1;
+        double vel = 0.0, offset = 0.0;
+
+        if (args.size() == 2) {
+            //use max velocity to jog
+            joint = std::stod(args[0]);
+            offset = std::stof(args[1]);
+            vel = EMCParas::GetJointConfig(joint)->MaxVel;
+        }
+        else if (args.size() == 3) {
+            //use specify velocity to jog
+            joint = std::stod(args[0]);
+            offset = std::stof(args[1]);
+            vel = std::stof(args[2]);
+        }
+        else {
+            return "wrong";
+        }
+
+        EMCChannel::emcMotJogAbs(joint, axis, vel, offset);
+
+        return "done";
+        });
+
+    RegisterCommand("AINC", [this](const std::vector<std::string>& args) -> std::string {
+        int joint = -1, axis = 0;
+        double vel = 0.0, offset = 0.0;
+
+        if (args.size() == 2) {
+            //use max velocity to jog
+            axis = std::stod(args[0]);
+            offset = std::stof(args[1]);
+            vel = EMCParas::GetAxisConfig(axis)->MaxVel;
+        }
+        else if (args.size() == 3) {
+            //use specify velocity to jog
+            axis = std::stod(args[0]);
+            offset = std::stof(args[1]);
+            vel = std::stof(args[2]);
+        }
+        else {
+            return "wrong";
+        }
+
+        EMCChannel::emcMotJogInc(joint, axis, vel, offset);
+
+        return "done";
+        });
+
+    RegisterCommand("AABS", [this](const std::vector<std::string>& args) -> std::string {
+        int joint = -1, axis = 0;
+        double vel = 0.0, offset = 0.0;
+
+        if (args.size() == 2) {
+            //use max velocity to jog
+            axis = std::stod(args[0]);
+            offset = std::stof(args[1]);
+            vel = EMCParas::GetAxisConfig(axis)->MaxVel;
+        }
+        else if (args.size() == 3) {
+            //use specify velocity to jog
+            axis = std::stod(args[0]);
+            offset = std::stof(args[1]);
+            vel = std::stof(args[2]);
+        }
+        else {
+            return "wrong";
+        }
+
+        EMCChannel::emcMotJogAbs(joint, axis, vel, offset);
+
+        return "done";
+        });
+
+    RegisterCommand("MOTMODE", [this](const std::vector<std::string>& args) -> std::string {
+        std::stringstream ss;
+
+        struct state_tag_t &tag = emcmotStatus->tag;
+
+        ss << "In file: " << tag.filename << "\n" <<
+              "Modes: " << getModesStr(tag) << "\n" <<
+              "Modes detial info:\n" << getModesDetialStr(tag) << "\n";
+
+        return ss.str();
+        });
+
+
     RegisterCommand("MOTPOS", [this](const std::vector<std::string>& args) -> std::string {
         std::stringstream ss;
 
+        ss << std::fixed << std::setprecision(6);
         ss << "carte_pos_cmd:\n" << getEmcPose(emcmotStatus->carte_pos_cmd) << "\n" <<
               "carte_pos_fb:\n" << getEmcPose(emcmotStatus->carte_pos_fb) << "\n" <<
               "world_home:\n" << getEmcPose(emcmotStatus->world_home);
@@ -285,7 +502,7 @@ void CmdTask::init()
         std::string res;
         std::stringstream ss;
        
-        EMCChannel::emcMotAbort();
+        EMCChannel::emcMotAbort(EMCChannel::kCmdChannel);
 
         return res;
         });
