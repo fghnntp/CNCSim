@@ -69,6 +69,9 @@ int EMCTask::load_file(std::string filename, std::vector<IMillTaskInterface::Too
     if (!pinterp)//Wrong
         return 1;
 
+    pinterp->reset();
+    pinterp->close();
+
     if (interp_list.len() > 0) {
         //Clear the useless msg first
         interp_list.clear();
@@ -81,6 +84,7 @@ int EMCTask::load_file(std::string filename, std::vector<IMillTaskInterface::Too
     }
 
     EMCLog::SetLog(filename + "Start to load");
+
 
     int code = 0;
     char errText[256];
@@ -95,13 +99,13 @@ int EMCTask::load_file(std::string filename, std::vector<IMillTaskInterface::Too
             oss << " err:" << pinterp->error_text(code, errText, 256);
             err = oss.str();
             EMCLog::SetLog(err);
-            pinterp->reset();//This should reset the interp
-            pinterp->close();
+//            pinterp->reset();//This should reset the interp
+//            pinterp->close();
             return 4;
         }
     }
 
-    pinterp->close();
+//    pinterp->close();
 
     while (interp_list.len() > 0) {
         auto msg = interp_list.get();
@@ -173,6 +177,9 @@ int EMCTask::load_file(std::string filename, std::string &err)
         return 2;
     }
 
+    pinterp->reset();
+    pinterp->close();
+
     if (pinterp->open(filename.c_str())) {
         EMCLog::SetLog( filename + " Wrong File not run");
         return 3;
@@ -193,13 +200,13 @@ int EMCTask::load_file(std::string filename, std::string &err)
             err = oss.str();
             EMCLog::SetLog(err);
             std::cout << err << std::endl;
-            pinterp->reset();
-            pinterp->close();
+//            pinterp->reset();
+//            pinterp->close();
             return 5;
         }
     }
 
-    pinterp->close();
+//    pinterp->close();
 
     emitAllCmd();
 

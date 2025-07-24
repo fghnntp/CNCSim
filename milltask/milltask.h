@@ -37,6 +37,18 @@ public:
     //load the file and get the previe date
     int load_file(std::string filename, std::vector<IMillTaskInterface::ToolPath>* toolPath, std::string &err);
 
+    void active_gcodes(int active_gcodes[ACTIVE_G_CODES]) {
+        return taskMethods->pinterp->active_g_codes(active_gcodes);
+    }
+
+    void active_mcodes(int active_mcodes[ACTIVE_M_CODES]) {
+        return taskMethods->pinterp->active_m_codes(active_mcodes);
+    }
+
+    void active_settings(double active_settings[ACTIVE_SETTINGS]) {
+        return taskMethods->pinterp->active_settings(active_settings);
+    }
+
 private:
     void init(); // Once prepaing main process function
     void process();  // Main processing function

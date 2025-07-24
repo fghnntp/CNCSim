@@ -800,6 +800,17 @@ void MainWindow::setKeyInfoDock()
                       path.a << path.b << path.c <<
                       path.u << path.v << path.w;
             keyInfoDisplayWidget->updatePosition(posVec);
+            int active_gmodes[ACTIVE_G_CODES];
+            millIf_->active_g_codes(active_gmodes);
+            keyInfoDisplayWidget->updateGModes(active_gmodes);
+
+            int active_mmodes[ACTIVE_M_CODES];
+            millIf_->active_m_codes(active_mmodes);
+            keyInfoDisplayWidget->updateMModes(active_mmodes);
+
+            double settings[ACTIVE_SETTINGS];
+            millIf_->active_settings(settings);
+            keyInfoDisplayWidget->updateSModes(settings);
         });
 
         infoTimer->start(100);

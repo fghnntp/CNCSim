@@ -31,6 +31,7 @@ public:
     int load_file(std::string filename, std::string &err);
     int simulate(std::string filename, std::string &res, std::string &err);
     void init_all(void);
+    InterpBase *pinterp=0;
 
 private:
     //This name is used to quickly init EMCTask
@@ -42,7 +43,7 @@ private:
     int taskPlanError = 0;
     int taskExecuteError = 0;
 
-    InterpBase *pinterp=0;
+
 
     //G01 is too simple to generate so just do it
     // Arch Helix Generator

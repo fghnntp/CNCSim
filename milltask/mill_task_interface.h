@@ -4,6 +4,9 @@
 #include <vector>
 #include <string>
 // C++ interface
+#define ACTIVE_G_CODES 17
+#define ACTIVE_M_CODES 10
+#define ACTIVE_SETTINGS 5
 class IMillTaskInterface {
 public:
     struct ToolPath {
@@ -11,6 +14,7 @@ public:
         double a, b, c;
         double u, v, w;
     };
+
     virtual ~IMillTaskInterface() = default;
 
     //Call to start start 3 thread
@@ -35,6 +39,9 @@ public:
     virtual void setCmd(std::string &cmd) = 0;
 
     virtual ToolPath getCarteCmdPos() = 0;
+    virtual void active_g_codes(int active_gcodes[ACTIVE_G_CODES]) = 0;
+    virtual void active_m_codes(int active_gcodes[ACTIVE_M_CODES]) = 0;
+    virtual void active_settings(double settings[ACTIVE_SETTINGS]) = 0;
 
     // Factory function
     static IMillTaskInterface* create(const char* emcfile = nullptr);

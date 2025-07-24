@@ -70,6 +70,18 @@ public:
         return MotionTask::getCarteCmdPos();
     }
 
+    void active_g_codes(int active_gcodes[]) override {
+        millTask_->active_gcodes(active_gcodes);
+    }
+
+    void active_m_codes(int active_mcodes[]) override {
+        millTask_->active_mcodes(active_mcodes);
+    }
+
+    void active_settings(double settings[]) override {
+        millTask_->active_settings(settings);
+    }
+
 private:
     MillTask *millTask_;
     MotTask *motTask_;
