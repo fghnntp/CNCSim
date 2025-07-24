@@ -345,6 +345,7 @@ void MainWindow::createActions()
     pathPlotAct->setStatusTip(tr("tool path"));
     connect(pathPlotAct, &QAction::triggered, this, [this]() {
         setPathDock();
+
     });
 
     loadPlotFileAct = new QAction(tr("load"), this);
@@ -385,6 +386,12 @@ void MainWindow::createActions()
     cncCmdAct->setStatusTip(tr("open cmdline for comnunication with cnc"));
     connect(cncCmdAct, &QAction::triggered, this, [this]() {
         setCmdLogDock();
+    });
+
+    motionPlotAct = new QAction(tr("motion"), this);
+    motionPlotAct->setStatusTip(tr("open motion profile ploter"));
+    connect(motionPlotAct, &QAction::triggered, this, [this]() {
+        setMotionProfileDock();
     });
 
     // Add search actions
@@ -450,6 +457,7 @@ void MainWindow::createMenus()
     toolMenu->addAction(pathPlotAct);
     toolMenu->addAction(loadPlotFileAct);
     toolMenu->addAction(cncCmdAct);
+    toolMenu->addAction(motionPlotAct);
     
     // Add search menu
     searchMenu = menuBar()->addMenu(tr("&Search"));
@@ -586,6 +594,7 @@ void MainWindow::createToolBars()
     viewToolBar->addAction(pathPlotAct);
     viewToolBar->addAction(loadPlotFileAct);
     viewToolBar->addAction(cncCmdAct);
+    viewToolBar->addAction(motionPlotAct);
 }
 
 void MainWindow::createStatusBar()
@@ -650,6 +659,11 @@ void MainWindow::setPathDock()
         }
     }
 
+
+}
+
+void MainWindow::setMotionProfileDock()
+{
     if (!livePlotterMotionDock) {
         livePlotterMotionDock = new QDockWidget(tr("Motion Analysis Viewer"), this);
         livePlotterMotion = new LivePlotterMotion(livePlotterMotionDock);

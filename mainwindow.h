@@ -53,6 +53,7 @@ private:
     void readSettings();
     void writeSettings();
     void setPathDock();
+    void setMotionProfileDock();
 
     void createBckThread();
     IMillTaskInterface *millIf_;
@@ -100,6 +101,8 @@ private:
     QAction *loadPlotFileAct;
 
     QAction *cncCmdAct;
+
+    QAction *motionPlotAct;
     
     QActionGroup *windowActionGroup;
 
