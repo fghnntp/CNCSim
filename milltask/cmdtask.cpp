@@ -702,7 +702,7 @@ std::string CmdTask::ExecuteCommand(const std::string &rawCmd)
         result = it->second(args);  // 调用注册的函数
     }
 
-    resQueue.push(result);
+//    resQueue.push(result);
     EMCLog::SetLog("Cmd Res: " + result, 3);
 
     return result;

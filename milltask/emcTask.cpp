@@ -312,10 +312,9 @@ void EMCTask::init_all()
     }
 
     MotionTask::InitMotion();
-
-    EMC_TRAJ_SET_SCALE testmsg;
-    testmsg.scale = 1.0;
-    emcTaskIssueTrajCmd(&testmsg);
+//    EMC_TRAJ_SET_SCALE testmsg;
+//    testmsg.scale = 1.0;
+//    emcTaskIssueTrajCmd(&testmsg);
 }
 
 std::deque <IMillTaskInterface::ToolPath>
