@@ -82,6 +82,43 @@ public:
         millTask_->active_settings(settings);
     }
 
+    void getFeedrateSacle(double &rapid, double &feed) override {
+        MotionTask::getFeedrateSacle(rapid, feed);
+    }
+
+    void getMotionState(int &state) override {
+        MotionTask::getMotionState(state);
+    }
+
+    void getMotionFlag(int &flag) override {
+        MotionTask::getMotionFlag(flag);
+    }
+
+    void getCmdFbPosFlag(int &carte_pos_cmd_ok, int &carte_pos_fb_ok) override {
+        MotionTask::getMotCmdFb(carte_pos_cmd_ok, carte_pos_fb_ok);
+    }
+
+    int isSoftLimit() override {
+        return MotionTask::isSoftLimit();
+    }
+
+    double getDtg() override {
+        return MotionTask::getMotDtg();
+    }
+
+    void getStateTag(state_tag_t &tag) override {
+        MotionTask::getStateTag(tag);
+    }
+
+    void runInfo(double &curVel, double &reqVel) override {
+        MotionTask::getRunInfo(curVel, reqVel);
+    }
+
+    int isJoggingActive() override {
+        return MotionTask::isJogging();
+    }
+
+
 private:
     MillTask *millTask_;
     MotTask *motTask_;

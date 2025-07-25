@@ -18,6 +18,15 @@ public:
     static void MotionCtrl();
 
     static struct IMillTaskInterface::ToolPath getCarteCmdPos();
+    static void getFeedrateSacle(double &rapid, double &feed);
+    static void getMotionState(int &state);
+    static void getMotionFlag(int &flag);
+    static void getMotCmdFb(int &cmd, int &fb);
+    static int isSoftLimit();
+    static double getMotDtg();
+    static void getRunInfo(double &vel, double &req_vel);
+    static int isJogging();
+    static void getStateTag(state_tag_t &tag);
 
     MotionTask() = delete;
 };

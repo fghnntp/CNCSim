@@ -17,6 +17,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     toolManager = new ToolManager(TOOL_FILE_PATH);
+    createBckThread();
 
     // 创建 MDI 区域
     mdiArea = new QMdiArea;
@@ -39,8 +40,6 @@ MainWindow::MainWindow(QWidget *parent)
     
     setWindowTitle(tr("CNC G-Code Editor"));
     setUnifiedTitleAndToolBarOnMac(true);
-
-    createBckThread();
 }
 
 MainWindow::~MainWindow()
@@ -811,6 +810,41 @@ void MainWindow::setKeyInfoDock()
             double settings[ACTIVE_SETTINGS];
             millIf_->active_settings(settings);
             keyInfoDisplayWidget->updateSModes(settings);
+
+            double rapid_scale = 0.0, feed_scale = 0.0;
+            millIf_->getFeedrateSacle(rapid_scale, feed_scale);
+            keyInfoDisplayWidget->updateScale(rapid_scale, feed_scale);
+
+            int cmd_flag = 0, fb_flag = 0;
+            millIf_->getCmdFbPosFlag(cmd_flag, fb_flag);
+            keyInfoDisplayWidget->updateCmdFb(cmd_flag, fb_flag);
+
+            keyInfoDisplayWidget->updateSoftLimit(
+                        millIf_->isSoftLimit());
+
+            keyInfoDisplayWidget->updateDtg(
+                        millIf_->getDtg());
+
+            double cur_vel = 0.0, req_vel = 0.0;
+            millIf_->runInfo(cur_vel, req_vel);
+            keyInfoDisplayWidget->updateRuninfo(cur_vel, req_vel);
+
+            keyInfoDisplayWidget->updateJogging(
+                        millIf_->isJoggingActive());
+
+            int state = 0;
+            millIf_->getMotionState(state);
+            keyInfoDisplayWidget->updateState(state);
+
+            int flag = 0;
+            millIf_->getMotionFlag(flag);
+            keyInfoDisplayWidget->updateMotionFlag(flag);
+
+            state_tag_t tag;
+            millIf_->getStateTag(tag);
+            keyInfoDisplayWidget->updateTag(tag);
+
+
         });
 
         infoTimer->start(100);

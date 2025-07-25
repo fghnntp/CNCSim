@@ -157,11 +157,11 @@ void KeyInfoDisplayWidget::setupUI() {
     interGroupS->setLayout(interLayoutS);
     mainLayout->addWidget(interGroupS);
 
-    // 运行信息
-    QGroupBox *runGroup = new QGroupBox("运行状态");
-    QGridLayout *runLayout = new QGridLayout();
+    //Mot信息组
+    QGroupBox *motInfoGroup = new QGroupBox("Mot信息");
+    QGridLayout *motInfoLayout = new QGridLayout();
 
-    auto addRunItem = [&](InfoType type, const QString &name, const QString &unit = "") {
+    auto addMotInfoItem = [&](InfoType type, const QString &name, const QString &unit = "") {
         infoItems[type].title = new QLabel(name + ":");
         infoItems[type].value = new QLabel("--");
         infoItems[type].unit = unit;
@@ -171,29 +171,43 @@ void KeyInfoDisplayWidget::setupUI() {
         itemLayout->addWidget(infoItems[type].value);
         itemLayout->addStretch();
 
-        int row = type - TOOL_NUM;
-        runLayout->addLayout(itemLayout, row, 0);
+        int row = type - MOT_F_S;
+        motInfoLayout->addLayout(itemLayout, row / 6,  row % 6);
     };
 
-    addRunItem(TOOL_NUM, "当前刀具", "");
-    addRunItem(TOOL_LENGTH, "刀具长度补偿", "mm");
-    addRunItem(CYCLE_TIME, "循环时间", "");
+    addMotInfoItem(MOT_F_S, "RS/FS");
+    addMotInfoItem(MOT_CMD_FB_OK, "CMD/FB");
+    addMotInfoItem(MOT_SF_LIMIT, "SL");
+    addMotInfoItem(MOT_DTG, "DTG");
+    addMotInfoItem(MOT_VEL, "VEL");
+    addMotInfoItem(MOT_JOGGING, "JOG");
+    addMotInfoItem(MOT_STATE,"S");
+    addMotInfoItem(MOT_FLAG,"B");
 
-    runGroup->setLayout(runLayout);
-    mainLayout->addWidget(runGroup);
+    motInfoGroup->setLayout(motInfoLayout);
+    mainLayout->addWidget(motInfoGroup);
 
-    // 报警信息组
-    QGroupBox *alarmGroup = new QGroupBox("报警信息");
-    QVBoxLayout *alarmLayout = new QVBoxLayout();
+    //Mot模态
+    QGroupBox *motModeGroup = new QGroupBox("Mot模态");
+    QGridLayout *motModeLayout = new QGridLayout();
 
-    infoItems[ALARM_MSG].title = nullptr;
-    infoItems[ALARM_MSG].value = new QLabel("无报警");
-    infoItems[ALARM_MSG].value->setWordWrap(true);
-    infoItems[ALARM_MSG].unit = "";
+    auto addMotModeItem = [&](InfoType type, const QString &name, const QString &unit = "") {
+        infoItems[type].title = new QLabel(name + ":");
+        infoItems[type].value = new QLabel("--");
+        infoItems[type].unit = unit;
 
-    alarmLayout->addWidget(infoItems[ALARM_MSG].value);
-    alarmGroup->setLayout(alarmLayout);
-    mainLayout->addWidget(alarmGroup);
+        QHBoxLayout *itemLayout = new QHBoxLayout();
+        itemLayout->addWidget(infoItems[type].title);
+        itemLayout->addWidget(infoItems[type].value);
+        itemLayout->addStretch();
+
+        int row = type - MOT_TAG;
+        motModeLayout->addLayout(itemLayout, row / 6,  row % 6);
+    };
+    addMotModeItem(MOT_TAG, "Tag");
+
+    motModeGroup->setLayout(motModeLayout);
+    mainLayout->addWidget(motModeGroup);
 
     mainLayout->addStretch();
 }
@@ -214,7 +228,7 @@ void KeyInfoDisplayWidget::setupStyle() {
     }
 
     // 报警信息特殊样式
-    infoItems[ALARM_MSG].value->setStyleSheet("color: red;");
+//    infoItems[ALARM_MSG].value->setStyleSheet("color: red;");
 
     // 整体样式
     setStyleSheet(R"(
@@ -277,31 +291,242 @@ void KeyInfoDisplayWidget::updateMModes(int active_mcodes[])
 
 void KeyInfoDisplayWidget::updateSModes(double active_settings[])
 {
-    for (int mode = S_0; mode < TOOL_NUM; mode++) {
+    for (int mode = S_0; mode < MOT_F_S; mode++) {
         QString value;
         value = QString::number(active_settings[mode-S_0], 'f', 6);
         infoItems[mode].value->setText(value);
     }
 }
 
-void KeyInfoDisplayWidget::updateToolInfo(int toolNum, double toolLength) {
-    infoItems[TOOL_NUM].value->setText(QString::number(toolNum));
-    infoItems[TOOL_LENGTH].value->setText(QString::number(toolLength, 'f', 3));
+void KeyInfoDisplayWidget::updateScale(double rapid_scale, double feed_scale)
+{
+    QString value;
+    value += QString::number(static_cast<int>(rapid_scale * 100));
+    value += "%/";
+    value += QString::number(static_cast<int>(feed_scale * 100));
+    value += "%";
+    infoItems[MOT_F_S].value->setText(value);
 }
 
-void KeyInfoDisplayWidget::updateCycleTime(const QString &time) {
-    infoItems[CYCLE_TIME].value->setText(time);
+void KeyInfoDisplayWidget::updateCmdFb(int cmd, int fb)
+{
+    QString value;
+    value += QString::number(cmd) + "/" + QString::number(fb);
+    infoItems[MOT_CMD_FB_OK].value->setText(value);
 }
 
-void KeyInfoDisplayWidget::updateAlarm(const QString &alarmMsg) {
-    infoItems[ALARM_MSG].value->setText(alarmMsg.isEmpty() ? "无报警" : alarmMsg);
-    infoItems[ALARM_MSG].value->setStyleSheet(alarmMsg.isEmpty() ? "" : "color: red; font-weight: bold;");
+void KeyInfoDisplayWidget::updateSoftLimit(int limit)
+{
+    QString value;
+    value += QString::number(limit);
+    infoItems[MOT_SF_LIMIT].value->setText(value);
+}
+
+void KeyInfoDisplayWidget::updateDtg(double dtg)
+{
+    QString value;
+    value += QString::number(dtg, 'f', 2);
+    infoItems[MOT_DTG].value->setText(value);
+}
+
+void KeyInfoDisplayWidget::updateRuninfo(double cur_vel, double req_vel)
+{
+    infoItems[MOT_VEL].value->setText(
+                QString::number(cur_vel, 'f', 2) + "/" +
+                QString::number(req_vel, 'f', 2));
+}
+
+void KeyInfoDisplayWidget::updateJogging(int jogging)
+{
+    infoItems[MOT_JOGGING].value->setText(
+                QString::number(jogging));
+}
+
+void KeyInfoDisplayWidget::updateState(int state)
+{
+    QString value;
+
+    if (state == 0) {
+        value = "DISABLE";
+    }
+    else if (state == 1) {
+        value = "FREE";
+    }
+    else if (state == 2) {
+        value = "TELEOP";
+    }
+    else if (state == 3) {
+        value = "COOR";
+    }
+    else {
+        value = "WRONG";
+    }
+    infoItems[MOT_STATE].value->setText(value);
+}
+
+
+void KeyInfoDisplayWidget::updateMotionFlag(int flag)
+{
+    /* bit masks */
+    #define EMCMOT_MOTION_ENABLE_BIT      0x0001
+    #define EMCMOT_MOTION_INPOS_BIT       0x0002
+    #define EMCMOT_MOTION_COORD_BIT       0x0004
+    #define EMCMOT_MOTION_ERROR_BIT       0x0008
+    #define EMCMOT_MOTION_TELEOP_BIT      0x0010
+
+    QString value;
+    if (flag & EMCMOT_MOTION_ENABLE_BIT) {
+        value += "ena ";
+    }
+    else {
+        value += "dis ";
+    }
+
+    if (flag & EMCMOT_MOTION_INPOS_BIT) {
+        value += "inpos ";
+    }
+    else {
+        value += "noInpos ";
+    }
+
+    if (flag & EMCMOT_MOTION_COORD_BIT) {
+        value += "coord ";
+    }
+    else {
+        value += "noCoord ";
+    }
+
+    if (flag & EMCMOT_MOTION_ERROR_BIT) {
+        value += "error ";
+    }
+    else {
+        value += "noErr ";
+    }
+
+    if (flag & EMCMOT_MOTION_TELEOP_BIT) {
+        value += "teleop ";
+    }
+    else {
+        value += "noTeleop ";
+    }
+
+    infoItems[MOT_FLAG].value->setText(value);
+}
+
+std::string getModesStr(struct state_tag_t &tag)
+{
+    std::stringstream ss;
+    if (tag.packed_flags & GM_FLAG_UNITS) {
+        ss << "GM_FLAG_UNITS\n";
+    }
+    if (tag.packed_flags & GM_FLAG_DISTANCE_MODE) {
+        ss << "GM_FLAG_DISTANCE_MODE\n";
+    }
+    if (tag.packed_flags & GM_FLAG_TOOL_OFFSETS_ON) {
+        ss << "GM_FLAG_TOOL_OFFSETS_ON\n";
+    }
+    if (tag.packed_flags & GM_FLAG_RETRACT_OLDZ) {
+        ss << "GM_FLAG_RETRACT_OLDZ\n";
+    }
+    if (tag.packed_flags & GM_FLAG_BLEND) {
+        ss << "GM_FLAG_BLEND\n";
+    }
+    if (tag.packed_flags & GM_FLAG_EXACT_STOP) {
+        ss << "GM_FLAG_EXACT_STOP\n";
+    }
+    if (tag.packed_flags & GM_FLAG_FEED_INVERSE_TIME) {
+        ss << "GM_FLAG_FEED_INVERSE_TIME\n";
+    }
+    if (tag.packed_flags & GM_FLAG_FEED_UPM) {
+        ss << "GM_FLAG_FEED_UPM\n";
+    }
+    if (tag.packed_flags & GM_FLAG_CSS_MODE) {
+        ss << "GM_FLAG_CSS_MODE\n";
+    }
+    if (tag.packed_flags & GM_FLAG_IJK_ABS) {
+        ss << "GM_FLAG_IJK_ABS\n";
+    }
+    if (tag.packed_flags & GM_FLAG_DIAMETER_MODE) {
+        ss << "GM_FLAG_DIAMETER_MODE\n";
+    }
+    if (tag.packed_flags & GM_FLAG_G92_IS_APPLIED) {
+        ss << "GM_FLAG_G92_IS_APPLIED\n";
+    }
+    if (tag.packed_flags & GM_FLAG_SPINDLE_ON) {
+        ss << "GM_FLAG_SPINDLE_ON\n";
+    }
+    if (tag.packed_flags & GM_FLAG_SPINDLE_CW) {
+        ss << "GM_FLAG_SPINDLE_CW\n";
+    }
+    if (tag.packed_flags & GM_FLAG_MIST) {
+        ss << "GM_FLAG_MIST\n";
+    }
+    if (tag.packed_flags & GM_FLAG_FLOOD) {
+        ss << "GM_FLAG_FLOOD\n";
+    }
+    if (tag.packed_flags & GM_FLAG_FEED_OVERRIDE) {
+        ss << "GM_FLAG_FEED_OVERRIDE\n";
+    }
+    if (tag.packed_flags & GM_FLAG_SPEED_OVERRIDE) {
+        ss << "GM_FLAG_SPEED_OVERRIDE\n";
+    }
+    if (tag.packed_flags & GM_FLAG_ADAPTIVE_FEED) {
+        ss << "GM_FLAG_ADAPTIVE_FEED\n";
+    }
+    if (tag.packed_flags & GM_FLAG_FEED_HOLD) {
+        ss << "GM_FLAG_FEED_HOLD\n";
+    }
+    if (tag.packed_flags & GM_FLAG_RESTORABLE) {
+        ss << "GM_FLAG_RESTORABLE\n";
+    }
+    if (tag.packed_flags & GM_FLAG_IN_REMAP) {
+        ss << "GM_FLAG_IN_REMAP\n";
+    }
+    if (tag.packed_flags & GM_FLAG_IN_SUB) {
+        ss << "GM_FLAG_IN_SUB\n";
+    }
+    if (tag.packed_flags & GM_FLAG_EXTERNAL_FILE) {
+        ss << "GM_FLAG_EXTERNAL_FILE\n";
+    }
+    return ss.str();
+}
+
+#include <iomanip>
+std::string getModesDetialStr(struct state_tag_t &tag)
+{
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(6);
+
+    ss << "LINE_NUMBER: " << tag.fields[GM_FIELD_LINE_NUMBER] << "\n" <<
+          "G_MODE_0: "  << tag.fields[GM_FIELD_G_MODE_0] << "\n" <<
+          "CUTTER_COMP: " << tag.fields[GM_FIELD_CUTTER_COMP] << "\n" <<
+          "MOTION_MODE: " << tag.fields[GM_FIELD_MOTION_MODE] << "\n" <<
+          "PLANE: " << tag.fields[GM_FIELD_PLANE] << "\n" <<
+          "M_MODES_4: " << tag.fields[GM_FIELD_M_MODES_4] << "\n" <<
+          "ORIGIN: " << tag.fields[GM_FIELD_ORIGIN] << "\n" <<
+          "TOOLCHANGE: " << tag.fields[GM_FIELD_TOOLCHANGE] << "\n" <<
+          "FLOAT_LINE_NUMBER: " << tag.fields_float[GM_FIELD_FLOAT_LINE_NUMBER] << "\n" <<
+          "FLOAT_FEED: " << tag.fields_float[GM_FIELD_FLOAT_FEED] << "\n" <<
+          "FLOAT_SPEED: " << tag.fields_float[GM_FIELD_FLOAT_SPEED] << "\n" <<
+          "FLOAT_PATH_TOLERANCE: " << tag.fields_float[GM_FIELD_FLOAT_PATH_TOLERANCE] << "\n" <<
+          "FLOAT_NAIVE_CAM_TOLERANCE: " << tag.fields_float[GM_FIELD_FLOAT_NAIVE_CAM_TOLERANCE];
+
+    return ss.str();
+}
+
+void KeyInfoDisplayWidget::updateTag(state_tag_t &tag)
+{
+    QString value;
+    QString filename = tag.filename;
+    if (!filename.isEmpty())
+        value += filename + "\n";
+
+    value += QString::fromStdString(getModesStr(tag));
+    value += QString::fromStdString(getModesDetialStr(tag));
+    infoItems[MOT_TAG].value->setText(value);
 }
 
 void KeyInfoDisplayWidget::resetAll() {
     QVector<double> zeros(6, 0.0);
     updatePosition(zeros);
-    updateToolInfo(0, 0.0);
-    updateCycleTime("00:00:00");
-    updateAlarm("");
 }

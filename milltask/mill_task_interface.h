@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 // C++ interface
+#include "state_tag.h"
 #define ACTIVE_G_CODES 17
 #define ACTIVE_M_CODES 10
 #define ACTIVE_SETTINGS 5
@@ -42,6 +43,16 @@ public:
     virtual void active_g_codes(int active_gcodes[ACTIVE_G_CODES]) = 0;
     virtual void active_m_codes(int active_gcodes[ACTIVE_M_CODES]) = 0;
     virtual void active_settings(double settings[ACTIVE_SETTINGS]) = 0;
+
+    virtual void getFeedrateSacle(double &rapid, double &feed) = 0;
+    virtual void getMotionState(int &state) = 0;
+    virtual void getMotionFlag(int &flag) = 0;
+    virtual void getCmdFbPosFlag(int &carte_pos_cmd_ok, int &carte_pos_fb_ok) = 0;
+    virtual int isSoftLimit() = 0;
+    virtual double getDtg() = 0;
+    virtual void getStateTag(state_tag_t &state_tag) = 0;
+    virtual void runInfo(double &curVel, double &reqVel) = 0;
+    virtual int isJoggingActive() = 0;
 
     // Factory function
     static IMillTaskInterface* create(const char* emcfile = nullptr);

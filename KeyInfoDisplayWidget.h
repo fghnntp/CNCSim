@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QTimer>
 #include <QVector>
+#include "state_tag.h"
 
 class KeyInfoDisplayWidget : public QWidget {
     Q_OBJECT
@@ -18,10 +19,15 @@ public:
     void updateGModes(int active_gcodes[]);
     void updateMModes(int active_mcodes[]);
     void updateSModes(double active_settings[]);
-
-    void updateToolInfo(int toolNum, double toolLength);
-    void updateCycleTime(const QString &time);
-    void updateAlarm(const QString &alarmMsg);
+    void updateScale(double rapid_scale, double feed_scale);
+    void updateCmdFb(int cmd, int fb);
+    void updateSoftLimit(int limit);
+    void updateDtg(double dtg);
+    void updateRuninfo(double cur_vel, double req_vel);
+    void updateJogging(int jogging);
+    void updateState(int state);
+    void updateMotionFlag(int flag);
+    void updateTag(state_tag_t &tag);
 
     // 重置所有信息
     void resetAll();
@@ -43,8 +49,8 @@ private:
         G_0, G_1, G_2, G_3, G_4, G_5, G_6, G_7, G_8, G_9, G_10, G_11, G_12, G_13, G_14, G_15, G_16,
         M_0, M_1, M_2, M_3, M_4, M_5, M_6, M_7, M_8, M_9,
         S_0, S_1, S_2, S_3, S_4,
-        TOOL_NUM, TOOL_LENGTH, CYCLE_TIME,
-        ALARM_MSG,
+        MOT_F_S, MOT_CMD_FB_OK, MOT_SF_LIMIT, MOT_DTG, MOT_VEL, MOT_JOGGING, MOT_STATE, MOT_FLAG,
+        MOT_TAG,
         INFO_COUNT
     };
 

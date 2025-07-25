@@ -55,3 +55,51 @@ IMillTaskInterface::ToolPath MotionTask::getCarteCmdPos()
                 emcmotStatus->carte_pos_cmd.v,
                 emcmotStatus->carte_pos_cmd.w};
 }
+
+void MotionTask::getFeedrateSacle(double &rapid, double &feed)
+{
+    rapid = emcmotStatus->rapid_scale;
+    feed = emcmotStatus->feed_scale;
+}
+
+void MotionTask::getMotionState(int &state)
+{
+    state = emcmotStatus->motion_state;
+}
+
+void MotionTask::getMotionFlag(int &flag)
+{
+    flag = emcmotStatus->motionFlag;
+}
+
+void MotionTask::getMotCmdFb(int &cmd, int &fb)
+{
+    cmd = emcmotStatus->carte_pos_cmd_ok;
+    fb = emcmotStatus->carte_pos_fb_ok;
+}
+
+int MotionTask::isSoftLimit()
+{
+    return emcmotStatus->on_soft_limit;
+}
+
+double MotionTask::getMotDtg()
+{
+    return emcmotStatus->distance_to_go;
+}
+
+void MotionTask::getRunInfo(double &vel, double &req_vel)
+{
+    vel = emcmotStatus->current_vel;
+    req_vel = emcmotStatus->requested_vel;
+}
+
+int MotionTask::isJogging()
+{
+    return emcmotStatus->jogging_active;
+}
+
+void MotionTask::getStateTag(state_tag_t &tag)
+{
+    tag = emcmotStatus->tag;
+}
