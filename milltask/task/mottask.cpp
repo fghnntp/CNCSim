@@ -180,8 +180,8 @@ void MotTask::process() {
         needWait_ = false;
         ss << std::fixed << std::setprecision(6);
         ss << "X " << emcmotStatus->carte_pos_cmd.tran.x << " " << emcmotStatus->carte_pos_cmd.tran.x <<
-              " Y " << emcmotStatus->carte_pos_cmd.tran.y << " " << emcmotStatus->carte_pos_cmd.tran.x <<
-              " Z " << emcmotStatus->carte_pos_cmd.tran.z << " " << emcmotStatus->carte_pos_cmd.tran.x <<
+              " Y " << emcmotStatus->carte_pos_cmd.tran.y << " " << emcmotStatus->carte_pos_cmd.tran.y <<
+              " Z " << emcmotStatus->carte_pos_cmd.tran.z << " " << emcmotStatus->carte_pos_cmd.tran.z <<
               " A " << emcmotStatus->carte_pos_cmd.a << " " << emcmotStatus->carte_pos_cmd.a <<
               " B " << emcmotStatus->carte_pos_cmd.b << " " << emcmotStatus->carte_pos_cmd.b <<
               " C " << emcmotStatus->carte_pos_cmd.c << " " << emcmotStatus->carte_pos_cmd.c << std::endl;

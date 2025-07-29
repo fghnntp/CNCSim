@@ -30,6 +30,42 @@ file(GLOB MILLTASK_HEADERS
 add_library(milltask SHARED
     ${MILLTASK_SOURCES}
     ${MILLTASK_HEADERS}
+    kines/kineCubic.cpp
+    kines/kineIf.cpp
+    kines/kineIf.h
+    traj/tpBlendmath.cpp
+    traj/tpSphericalArc.cpp
+    traj/tpTc.cpp
+    traj/tpTcq.cpp
+    traj/tpTp.cpp
+    motion/motion.cpp
+    motion/motionAxis.cpp
+    motion/motionCommand.cpp
+    motion/motionControl.cpp
+    motion/motionhalctrl.cpp
+    motion/motionhalctrl.h
+    motion/motionHoming.cpp
+    motion/motionPose.cpp
+    motion/motionSimpleTp.cpp
+    subsys/emcChannel.cpp
+    subsys/emcChannel.h
+    subsys/emcLog.cpp
+    subsys/emcLog.h
+    subsys/emcMsgQueue.h
+    subsys/emcParas.cpp
+    subsys/emcParas.h
+    task/cmdtask.cpp
+    task/cmdtask.h
+    task/emcTask.cpp
+    task/emcTask.h
+    task/milltask.cpp
+    task/milltask.h
+    task/motionTask.cpp
+    task/motionTask.h
+    task/mottask.cpp
+    task/mottask.h
+    interface/mill_task_interface.cpp
+    interface/mill_task_interface.h
     ${LINUX_CNC_SRC}/emc/motion/emcmotglb.c
     ${LINUX_CNC_SRC}/emc/task/emctask.cc
     ${LINUX_CNC_SRC}/emc/task/emccanon.cc
@@ -68,6 +104,10 @@ target_link_libraries(milltask PRIVATE
 target_include_directories(milltask PUBLIC
     ${VERSION_HEADER_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
+    motion
+    subsys
+    interface
+    task
     ${LINUX_CNC_INC}
     ${LINUX_CNC_INC}/linuxcnc
     ${LINUX_CNC_SRC}

@@ -17,7 +17,7 @@ extern int rtapi_app_main_kines(void);
 extern int rtapi_app_main_motion(void);
 void MotionTask::InitMotion()
 {
-    rtapi_app_main_kines();
+//    rtapi_app_main_kines();
     rtapi_app_main_motion();
 }
 

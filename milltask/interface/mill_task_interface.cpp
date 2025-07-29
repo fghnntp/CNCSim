@@ -119,6 +119,14 @@ public:
     }
 
 
+    int getKineType(void) override {
+        return 0;
+    }
+
+    void setKineType(int type) override {
+
+    }
+
 private:
     MillTask *millTask_;
     MotTask *motTask_;

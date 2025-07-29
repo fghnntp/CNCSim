@@ -22,6 +22,14 @@ public:
 
     }
 
+    static int get_kine_type(void) {
+        return *emcmot_hal_data->switchkins_type;
+    }
+
+    static void set_kine_type(int type) {
+        *emcmot_hal_data->switchkins_type = type;
+    }
+
     static void emcmot_hal_update(void) {
         *emcmot_hal_data->jog_inhibit = 0;
     }

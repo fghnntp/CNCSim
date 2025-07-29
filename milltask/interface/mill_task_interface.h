@@ -16,6 +16,14 @@ public:
         double u, v, w;
     };
 
+    enum KineSwitchableType {
+        kKineTypeNone,
+        kKineTypeIDENTITY,
+        kKineTypeXYZABTRT,
+        kKineTypeXYZACTRT,
+        kKineTypeNum,
+    };
+
     virtual ~IMillTaskInterface() = default;
 
     //Call to start start 3 thread
@@ -53,6 +61,10 @@ public:
     virtual void getStateTag(state_tag_t &state_tag) = 0;
     virtual void runInfo(double &curVel, double &reqVel) = 0;
     virtual int isJoggingActive() = 0;
+
+    //kinematicssetting
+    virtual int getKineType(void) = 0;
+    virtual void setKineType(int type) = 0;
 
     // Factory function
     static IMillTaskInterface* create(const char* emcfile = nullptr);

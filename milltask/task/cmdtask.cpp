@@ -206,8 +206,29 @@ std::string getModesDetialStr(struct state_tag_t &tag)
     return ss.str();
 }
 
+#include "motionhalctrl.h"
+
 void CmdTask::init()
 {
+
+    RegisterCommand("KIN", [this](const std::vector<std::string>& args) -> std::string {
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(6);
+        if (args.size() == 0) {
+            ss << "KineType = "<< MotHalCtrl::get_kine_type();
+        }
+        else if (args.size() == 1) {
+            int type = std::stoi(args[0]);
+            MotHalCtrl::set_kine_type(type);
+            ss << "Set KineType";
+        }
+        else {
+            ss << "Wrong KIN";
+        }
+
+        return ss.str();
+
+        });
 
     RegisterCommand("JINC", [this](const std::vector<std::string>& args) -> std::string {
         int joint = 0, axis = -1;

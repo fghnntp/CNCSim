@@ -85,6 +85,17 @@ set(PROJECT_SOURCES
         LogDisplayWidget.h
         KeyInfoDisplayWidget.cpp
         KeyInfoDisplayWidget.h
+#        paras_config/BaseParamsWidget.h
+#        paras_config/ParamsWidgetFactory.h
+#        paras_config/TrajParamsWidget.h
+#        paras_config/KinematicParamsWidget.h
+#        paras_config/AxisParamsWidget.h
+#        paras_config/CNCParamsWidgetFactory.h
+#        paras_config/ParameterConfigDialog.h
+#        paras_config/BaseParamsWidget.cpp
+#        paras_config/TrajParamsWidget.cpp
+#        paras_config/CNCParamsWidgetFactory.cpp
+#        paras_config/ParameterConfigDialog.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
