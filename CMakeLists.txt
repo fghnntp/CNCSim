@@ -67,24 +67,24 @@ add_subdirectory(tool)
 add_subdirectory(milltask)
 
 set(PROJECT_SOURCES
-        main.cpp
-        mainwindow.cpp
-        mainwindow.h
-        GCodeEdit.h
-        GCodeEdit.cpp
-        ToolTableDialog.h
-        ToolTableDialog.cpp
-        cnc_config.h
-        live_plotter.cpp
-        live_plotter.h
-        live_plotter_motion.cpp
-        live_plotter.h
-        CmdTextEdit.cpp
-        CmdTextEdit.h
-        LogDisplayWidget.cpp
-        LogDisplayWidget.h
-        KeyInfoDisplayWidget.cpp
-        KeyInfoDisplayWidget.h
+        wins/main.cpp
+        wins/mainwindow.cpp
+        wins/mainwindow.h
+        wins/GCodeEdit.h
+        wins/GCodeEdit.cpp
+        wins/ToolTableDialog.h
+        wins/ToolTableDialog.cpp
+        wins/cnc_config.h
+        wins/live_plotter.cpp
+        wins/live_plotter.h
+        wins/live_plotter_motion.cpp
+        wins/live_plotter.h
+        wins/CmdTextEdit.cpp
+        wins/CmdTextEdit.h
+        wins/LogDisplayWidget.cpp
+        wins/LogDisplayWidget.h
+        wins/KeyInfoDisplayWidget.cpp
+        wins/KeyInfoDisplayWidget.h
 #        paras_config/BaseParamsWidget.h
 #        paras_config/ParamsWidgetFactory.h
 #        paras_config/TrajParamsWidget.h
