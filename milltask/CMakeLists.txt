@@ -66,17 +66,20 @@ add_library(milltask SHARED
     task/mottask.h
     interface/mill_task_interface.cpp
     interface/mill_task_interface.h
-    ${LINUX_CNC_SRC}/emc/motion/emcmotglb.c
-    ${LINUX_CNC_SRC}/emc/task/emctask.cc
-    ${LINUX_CNC_SRC}/emc/task/emccanon.cc
-    ${LINUX_CNC_SRC}/emc/task/emctaskmain.cc
-    ${LINUX_CNC_SRC}/emc/motion/usrmotintf.cc
-    ${LINUX_CNC_SRC}/emc/motion/emcmotutil.c
-    ${LINUX_CNC_SRC}/emc/task/taskintf.cc
-    ${LINUX_CNC_SRC}/emc/motion/dbuf.c
-    ${LINUX_CNC_SRC}/emc/motion/stashf.c
-    ${LINUX_CNC_SRC}/emc/task/taskclass.cc
-    ${LINUX_CNC_SRC}/emc/task/backtrace.cc
+    subsys/emcmotglb.c
+#    ${LINUX_CNC_SRC}/emc/motion/emcmotglb.c
+    subsys/emccanon.cc
+#    ${LINUX_CNC_SRC}/emc/task/emccanon.cc
+    subsys/usrmotintf.cc
+#    ${LINUX_CNC_SRC}/emc/motion/usrmotintf.cc
+    subsys/emcmotutil.c
+#    ${LINUX_CNC_SRC}/emc/motion/emcmotutil.c
+    subsys/taskintf.cc
+#    ${LINUX_CNC_SRC}/emc/task/taskintf.cc
+    subsys/dbuf.c
+#    ${LINUX_CNC_SRC}/emc/motion/dbuf.c
+    subsys/stashf.c
+#    ${LINUX_CNC_SRC}/emc/motion/stashf.c
 )
 
 # 设置库的输出名称（可选）
@@ -139,18 +142,6 @@ install(TARGETS milltask
 
 file(GLOB LINUXCNC_LIBS "${LINUX_CNC_LIB}/*.so*")  # Matches .so, .so.1, .so.1.0, etc.
 install(FILES ${LINUXCNC_LIBS} DESTINATION lib)
-
-# install(FILES
-#     ${LINUX_CNC_LIB}/librs274.so
-#     ${LINUX_CNC_LIB}/liblinuxcnc.a
-#     ${LINUX_CNC_LIB}/libnml.so
-#     ${LINUX_CNC_LIB}/liblinuxcncini.so
-#     ${LINUX_CNC_LIB}/libposemath.so
-#     ${LINUX_CNC_LIB}/libpyplugin.so
-#     ${LINUX_CNC_LIB}/liblinuxcnchal.so
-#     ${LINUX_CNC_LIB}/libtooldata.so
-#     DESTINATION lib
-# )
 
 set(MILL_FILE_IF "${CMAKE_CURRENT_SOURCE_DIR}/mill_task_interface.h")
 # 安装头文件

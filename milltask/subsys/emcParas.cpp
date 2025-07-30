@@ -105,6 +105,25 @@ void EMCParas::InitTaskinft(void)
 
 }
 
+// global EMC status
+EMC_STAT *emcStatus = 0;
+int _task = 0;
+
+extern "C" PyObject* PyInit_interpreter(void);
+extern "C" PyObject* PyInit_emccanon(void);
+struct _inittab builtin_modules[] = {
+    { "interpreter", PyInit_interpreter },
+    { "emccanon", PyInit_emccanon },
+    // any others...
+    { NULL, NULL }
+};
+
+
+int emcCoolantMistOn() { return 0; }
+int emcCoolantMistOff() { return 0; }
+int emcCoolantFloodOn() { return 0; }
+int emcCoolantFloodOff() { return 0; }
+
 void EMCParas::init_emc_paras()
 {
     emcStatus->motion.traj.axis_mask=~0;
