@@ -43,6 +43,9 @@ Kines::KinematicsForward(const double *joint, EmcPose *pos,
     case kKineTypeXYZABTRT:
         ForwardXYZABTRT(joint, pos, fflags, iflags);
         break;
+    case kKineTypeXYZACTRT:
+        ForwardXYZACTRT(joint, pos, fflags, iflags);
+        break;
     defualt:
         ForwardIdentity(joint, pos, fflags, iflags);
         break;
@@ -61,6 +64,8 @@ Kines::KinematicsInverse(const EmcPose *pos, double *joint,
     case kKineTypeXYZABTRT:
         InverseXYZABTRT(pos, joint, iflags, fflags);
         break;
+    case kKineTypeXYZACTRT:
+        InverseXYZACTRT(pos, joint, iflags, fflags);
     defualt:
         InverseIDentity(pos, joint, iflags, fflags);
         break;
@@ -203,6 +208,99 @@ Kines::InverseXYZABTRT(const EmcPose * pos,
     j[4] = pos->b;
 
     return 0;
+}
+
+int Kines::ForwardXYZACTRT(const double *j, EmcPose *pos, const KINEMATICS_FORWARD_FLAGS *fflags, KINEMATICS_INVERSE_FLAGS *iflags)
+{
+    (void)fflags;
+    (void)iflags;
+    double x_rot_point = x_rot_point_;
+    double y_rot_point = y_rot_point_;
+    double z_rot_point = z_rot_point;
+    double          dt = tool_offset_;
+    double          dy = y_offset_;
+    double          dz = z_offset_;
+    double       a_rad = j[3]*TO_RAD;
+    double       c_rad = j[5]*TO_RAD;
+
+    dz = dz + dt;
+
+    pos->tran.x = + cos(c_rad)              * (j[0]      - x_rot_point)
+                 + sin(c_rad) * cos(a_rad) * (j[1] - dy - y_rot_point)
+                 + sin(c_rad) * sin(a_rad) * (j[2] - dz - z_rot_point)
+                 + sin(c_rad) * dy
+                 + x_rot_point;
+
+    pos->tran.y = - sin(c_rad)              * (j[0]      - x_rot_point)
+                 + cos(c_rad) * cos(a_rad) * (j[1] - dy - y_rot_point)
+                 + cos(c_rad) * sin(a_rad) * (j[2] - dz - z_rot_point)
+                 + cos(c_rad) * dy
+                 + y_rot_point;
+
+    pos->tran.z = + 0
+                 - sin(a_rad) * (j[1] - dy - y_rot_point)
+                 + cos(a_rad) * (j[2] - dz - z_rot_point)
+                 + dz
+                 + z_rot_point;
+
+    pos->a = j[3];
+    pos->c = j[5];
+
+    // optional letters (specify with coordinates module parameter)
+    pos->b =  j[4];
+    pos->u =  j[6];
+    pos->v =  j[7];
+    pos->w =  j[8];
+
+    return 0;
+}
+
+int Kines::InverseXYZACTRT(const EmcPose *pos, double *j, const KINEMATICS_INVERSE_FLAGS *iflags, KINEMATICS_FORWARD_FLAGS *fflags)
+{
+    (void)iflags;
+    (void)fflags;
+    double x_rot_point = x_rot_point_;
+    double y_rot_point = y_rot_point_;
+    double z_rot_point = z_rot_point_;
+    double         dy  = y_offset_;
+    double         dz  = z_offset_;
+    double         dt  = tool_offset_;
+    double      a_rad  = pos->a*TO_RAD;
+    double      c_rad  = pos->c*TO_RAD;
+
+    EmcPose P; // computed position
+
+    dz = dz + dt;
+
+    P.tran.x   = + cos(c_rad)              * (pos->tran.x - x_rot_point)
+                - sin(c_rad)              * (pos->tran.y - y_rot_point)
+                + x_rot_point;
+
+    P.tran.y   = + sin(c_rad) * cos(a_rad) * (pos->tran.x - x_rot_point)
+                + cos(c_rad) * cos(a_rad) * (pos->tran.y - y_rot_point)
+                -              sin(a_rad) * (pos->tran.z - z_rot_point)
+                -              cos(a_rad) * dy
+                +              sin(a_rad) * dz
+                + dy
+                + y_rot_point;
+
+    P.tran.z   = + sin(c_rad) * sin(a_rad) * (pos->tran.x - x_rot_point)
+                + cos(c_rad) * sin(a_rad) * (pos->tran.y - y_rot_point)
+                +              cos(a_rad) * (pos->tran.z - z_rot_point)
+                -              sin(a_rad) * dy
+                -              cos(a_rad) * dz
+                + dz
+                + z_rot_point;
+
+
+    P.a        = pos->a;
+    P.c        = pos->c;
+
+    // optional letters (specify with coordinates module parameter)
+    P.b = pos->b;
+    P.u = pos->u;
+    P.v = pos->v;
+    P.w = pos->w;
 }
 
 int kinematicsForward(const double *joint,
