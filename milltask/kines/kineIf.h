@@ -19,8 +19,8 @@ public:
     static Kines& GetInstance();
     void SetKineType(int type);
     int GetKineType(void);
-    bool init(void);
-    bool reset(void);
+    void init(void);
+    void reset(void);
 
     int KinematicsForward(const double *joint,
                           EmcPose * pos,

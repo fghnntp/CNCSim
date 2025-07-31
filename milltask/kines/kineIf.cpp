@@ -21,12 +21,12 @@ int Kines::GetKineType()
     return kinType_;
 }
 
-bool Kines::init()
+void Kines::init()
 {
     reset();
 }
 
-bool Kines::reset()
+void Kines::reset()
 {
     kinType_ = kKineTypeIDENTITY;
 }
@@ -50,6 +50,7 @@ Kines::KinematicsForward(const double *joint, EmcPose *pos,
         ForwardIdentity(joint, pos, fflags, iflags);
         break;
     }
+    return 0;
 }
 
 int
@@ -70,6 +71,7 @@ Kines::KinematicsInverse(const EmcPose *pos, double *joint,
         InverseIDentity(pos, joint, iflags, fflags);
         break;
     }
+    return 0;
 }
 
 int
@@ -108,6 +110,8 @@ Kines::InverseIDentity(const EmcPose *pos, double *j,
     j[2] = pos->tran.z;
     j[3] = pos->a;
     j[4] = pos->b;
+
+    return 0;
 }
 
 
@@ -301,6 +305,8 @@ int Kines::InverseXYZACTRT(const EmcPose *pos, double *j, const KINEMATICS_INVER
     P.u = pos->u;
     P.v = pos->v;
     P.w = pos->w;
+
+    return 0;
 }
 
 int kinematicsForward(const double *joint,
