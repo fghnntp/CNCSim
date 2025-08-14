@@ -91,7 +91,6 @@ Kines::KinematicsForward(const double *joint, EmcPose *pos,
         ForwardIdentity(joint, pos, fflags, iflags);
         break;
     }
-
     return 0;
 }
 
@@ -116,7 +115,6 @@ Kines::KinematicsInverse(const EmcPose *pos, double *joint,
         InverseIDentity(pos, joint, iflags, fflags);
         break;
     }
-
     return 0;
 }
 
