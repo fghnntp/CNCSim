@@ -179,12 +179,12 @@ void MotTask::process() {
     case kStartGather:
         needWait_ = false;
         ss << std::fixed << std::setprecision(6);
-        ss << "X " << emcmotStatus->carte_pos_cmd.tran.x << " " << emcmotStatus->carte_pos_cmd.tran.x <<
-              " Y " << emcmotStatus->carte_pos_cmd.tran.y << " " << emcmotStatus->carte_pos_cmd.tran.y <<
-              " Z " << emcmotStatus->carte_pos_cmd.tran.z << " " << emcmotStatus->carte_pos_cmd.tran.z <<
-              " A " << emcmotStatus->carte_pos_cmd.a << " " << emcmotStatus->carte_pos_cmd.a <<
-              " B " << emcmotStatus->carte_pos_cmd.b << " " << emcmotStatus->carte_pos_cmd.b <<
-              " C " << emcmotStatus->carte_pos_cmd.c << " " << emcmotStatus->carte_pos_cmd.c << std::endl;
+        ss << "X " << emcmotStatus->carte_pos_cmd.tran.x << " " << emcmotStatus->joint_status[0].pos_cmd <<
+              " Y " << emcmotStatus->carte_pos_cmd.tran.y << " " << emcmotStatus->joint_status[1].pos_cmd <<
+              " Z " << emcmotStatus->carte_pos_cmd.tran.z << " " << emcmotStatus->joint_status[2].pos_cmd <<
+              " A " << emcmotStatus->carte_pos_cmd.a << " " << emcmotStatus->joint_status[3].pos_cmd <<
+              " B " << emcmotStatus->carte_pos_cmd.b << " " << emcmotStatus->joint_status[4].pos_cmd <<
+              " C " << emcmotStatus->carte_pos_cmd.c << " " << emcmotStatus->joint_status[5].pos_cmd << std::endl;
 
         ofs_ << ss.str();
         if (emcmotStatus->tcqlen == 0)
