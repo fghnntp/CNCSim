@@ -786,6 +786,7 @@ void MainWindow::setKeyInfoDock()
         infoTimer = new QTimer(this);
         keyInfoDisplayDock = new QDockWidget(tr("信息"), this);
         keyInfoDisplayWidget = new KeyInfoDisplayWidget(keyInfoDisplayDock);
+        keyInfoDisplayWidget->showHideInfo(KeyInfoDisplayWidget::kMotMode ,false);
         keyInfoDisplayDock->setWidget(keyInfoDisplayWidget);
         addDockWidget(Qt::LeftDockWidgetArea, keyInfoDisplayDock);
         QScreen *screen = QGuiApplication::primaryScreen();

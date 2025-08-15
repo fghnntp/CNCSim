@@ -3,7 +3,7 @@
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QFontDatabase>
-#include <QGroupBox>
+
 
 KeyInfoDisplayWidget::KeyInfoDisplayWidget(QWidget *parent)
     : QWidget(parent) {
@@ -58,6 +58,7 @@ void KeyInfoDisplayWidget::setupUI() {
 
     posGroup->setLayout(posLayout);
     mainLayout->addWidget(posGroup);
+    infoGroups.append(posGroup);
 
     //解析器G组
     QGroupBox *interGroupG = new QGroupBox("G组");
@@ -97,6 +98,7 @@ void KeyInfoDisplayWidget::setupUI() {
 
     interGroupG->setLayout(interLayoutG);
     mainLayout->addWidget(interGroupG);
+    infoGroups.append(interGroupG);
 
     //解析器M组
     QGroupBox *interGroupM = new QGroupBox("M组");
@@ -129,6 +131,7 @@ void KeyInfoDisplayWidget::setupUI() {
 
     interGroupM->setLayout(interLayoutM);
     mainLayout->addWidget(interGroupM);
+    infoGroups.append(interGroupM);
 
     //解析器S组
     QGroupBox *interGroupS = new QGroupBox("S组");
@@ -156,6 +159,7 @@ void KeyInfoDisplayWidget::setupUI() {
 
     interGroupS->setLayout(interLayoutS);
     mainLayout->addWidget(interGroupS);
+    infoGroups.append(interGroupS);
 
     //Mot信息组
     QGroupBox *motInfoGroup = new QGroupBox("Mot信息");
@@ -186,6 +190,7 @@ void KeyInfoDisplayWidget::setupUI() {
 
     motInfoGroup->setLayout(motInfoLayout);
     mainLayout->addWidget(motInfoGroup);
+    infoGroups.append(motInfoGroup);
 
     //Mot模态
     QGroupBox *motModeGroup = new QGroupBox("Mot模态");
@@ -208,6 +213,7 @@ void KeyInfoDisplayWidget::setupUI() {
 
     motModeGroup->setLayout(motModeLayout);
     mainLayout->addWidget(motModeGroup);
+    infoGroups.append(motModeGroup);
 
     mainLayout->addStretch();
 }
@@ -524,6 +530,19 @@ void KeyInfoDisplayWidget::updateTag(state_tag_t &tag)
     value += QString::fromStdString(getModesStr(tag));
     value += QString::fromStdString(getModesDetialStr(tag));
     infoItems[MOT_TAG].value->setText(value);
+}
+
+int KeyInfoDisplayWidget::showHideInfo(InfoGroup index, bool show)
+{
+    if (index < 0 || index > kInfoGroupNum)
+        return 1;
+
+    if (show)
+        infoGroups[index]->show();
+    else
+        infoGroups[index]->hide();
+
+    return 0;
 }
 
 void KeyInfoDisplayWidget::resetAll() {

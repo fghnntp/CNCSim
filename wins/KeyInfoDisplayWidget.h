@@ -6,12 +6,17 @@
 #include <QLabel>
 #include <QTimer>
 #include <QVector>
+#include <QGroupBox>
 #include "state_tag.h"
 
 class KeyInfoDisplayWidget : public QWidget {
     Q_OBJECT
 
 public:
+    enum InfoGroup {
+        kPosGroup, kGGroup, kMGroup, kSGroup, kMotInfo, kMotMode,
+        kInfoGroupNum,
+    };
     explicit KeyInfoDisplayWidget(QWidget *parent = nullptr);
 
     // 更新关键信息
@@ -28,6 +33,8 @@ public:
     void updateState(int state);
     void updateMotionFlag(int flag);
     void updateTag(state_tag_t &tag);
+
+    int showHideInfo(enum InfoGroup index, bool show);
 
     // 重置所有信息
     void resetAll();
@@ -55,6 +62,7 @@ private:
     };
 
     QVector<InfoItem> infoItems;
+    QVector<QGroupBox*> infoGroups;
     QTimer *updateTimer;
 };
 
