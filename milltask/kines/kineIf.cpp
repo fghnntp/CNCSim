@@ -4,6 +4,44 @@
 #include <iostream>
 #include <math.h>
 
+using namespace fiveaxis;
+Kines::Kines()
+{
+    // 1) 配置（示例：一台混合型 AC，主轴摆头）
+    cfg_.mtype = MachineType::TABLE_SPINDLE_TILTING;
+    cfg_.axis1 = RotaryAxis::A;            // 第一轴 A
+    cfg_.axis2 = RotaryAxis::B;            // 第二轴 C
+    cfg_.sign_axis1 = +1;                  // 控制角与物理角同号
+    cfg_.sign_axis2 = +1;
+    cfg_.axis1_dir_world = {1,0,0};        // A 沿 X
+    cfg_.axis2_dir_world = {0,0,1};        // C 沿 Z
+    cfg_.primary_center_world = {455,0,650};
+    cfg_.secondary_offset_world = {-455,250,-850};
+    cfg_.spindle_swing_world   = {0,-250,200}; // 摆头偏置（头架）
+    cfg_.tool_dir = 'Z';
+    cfg_.tool_axis_sign = +1;
+    cfg_.tool_length = 0.0;
+
+    solver_.configure(cfg_);
+
+    // 2) 正解
+    JointValues q;
+    q.X = 100; q.Y = -50; q.Z = 300;
+    q.angle1_deg = 20; q.angle2_deg = -35;
+
+    fiveaxis::Vec3 pos, dir;
+    solver_.forwardKinematics(q, pos, dir);
+    std::printf("FK: P=(%.3f, %.3f, %.3f), n=(%.6f, %.6f, %.6f)\n",
+                pos.x,pos.y,pos.z, dir.x,dir.y,dir.z);
+
+    // 3) 线性逆解（角度已知）
+    fiveaxis::Angles ang{q.angle1_deg, q.angle2_deg};
+    fiveaxis::Vec3 xyz;
+    solver_.inverseLinearOnly(pos, ang, xyz);
+    std::printf("IK-linear: (X,Y,Z)=(%.3f, %.3f, %.3f)\n", xyz.x,xyz.y,xyz.z);
+
+}
+
 Kines &Kines::GetInstance()
 {
     static Kines _instance;
@@ -40,6 +78,9 @@ Kines::KinematicsForward(const double *joint, EmcPose *pos,
     case kKineTypeIDENTITY:
         ForwardIdentity(joint, pos, fflags, iflags);
         break;
+    case kKineTypeFiveAxis:
+        ForwardFiveAxis(joint, pos, fflags, iflags);
+        break;
     case kKineTypeXYZABTRT:
         ForwardXYZABTRT(joint, pos, fflags, iflags);
         break;
@@ -61,6 +102,9 @@ Kines::KinematicsInverse(const EmcPose *pos, double *joint,
     switch (kinType_) {
     case kKineTypeIDENTITY:
         InverseIDentity(pos, joint, iflags, fflags);
+        break;
+    case kKineTypeFiveAxis:
+        InverseFiveAxis(pos, joint, iflags, fflags);
         break;
     case kKineTypeXYZABTRT:
         InverseXYZABTRT(pos, joint, iflags, fflags);
@@ -309,6 +353,64 @@ int Kines::InverseXYZACTRT(const EmcPose *pos, double *j, const KINEMATICS_INVER
     return 0;
 }
 
+int Kines::ForwardFiveAxis(const double *j, EmcPose *pos, const KINEMATICS_FORWARD_FLAGS *fflags, KINEMATICS_INVERSE_FLAGS *iflags)
+{
+    (void)iflags;
+    (void)fflags;
+
+    JointValues q;
+    q.X = j[0];
+    q.Y = j[1];
+    q.Z = j[2];
+    q.angle1_deg = j[3];
+    q.angle2_deg = j[4];
+
+    fiveaxis::Vec3 toolPos, dir;
+
+    solver_.forwardKinematics(q, toolPos, dir);
+
+    pos->tran.x = q.X;
+    pos->tran.y = q.Y;
+    pos->tran.z = q.Z;
+    pos->a = j[3];
+    pos->b = j[4];
+    pos->c = j[5];
+    pos->u = j[6];
+    pos->v = j[7];
+    pos->w = j[8];
+
+    return 0;
+}
+
+int Kines::InverseFiveAxis(const EmcPose *pos, double *j, const KINEMATICS_INVERSE_FLAGS *iflags, KINEMATICS_FORWARD_FLAGS *fflags)
+{
+    (void)iflags;
+    (void)fflags;
+    JointValues q;
+    fiveaxis::Vec3 toolPos, dir;
+
+    toolPos.x = pos->tran.x;
+    toolPos.y = pos->tran.y;
+    toolPos.z = pos->tran.z;
+
+
+    fiveaxis::Angles ang{pos->a, pos->b};
+    fiveaxis::Vec3 xyz;
+    solver_.inverseLinearOnly(toolPos, ang, xyz);
+
+    j[0] = xyz.x;
+    j[1] = xyz.y;
+    j[2] = xyz.z;
+    j[3] = pos->a;
+    j[4] = pos->b;
+    j[5] = pos->c;
+    j[6] = pos->u;
+    j[7] = pos->v;
+    j[8] = pos->w;
+
+    return 0;
+}
+
 int kinematicsForward(const double *joint,
                       EmcPose * pos,
                       const KINEMATICS_FORWARD_FLAGS * fflags,
@@ -345,6 +447,9 @@ int kinematicsSwitch(int new_switchkins_type)
     switch (new_switchkins_type) {
     case Kines::kKineTypeIDENTITY:
         Kines::GetInstance().SetKineType(Kines::kKineTypeIDENTITY);
+        break;
+    case Kines::kKineTypeFiveAxis:
+        Kines::GetInstance().SetKineType(Kines::kKineTypeFiveAxis);
         break;
     case Kines::kKineTypeXYZABTRT:
         Kines::GetInstance().SetKineType(Kines::kKineTypeXYZABTRT);

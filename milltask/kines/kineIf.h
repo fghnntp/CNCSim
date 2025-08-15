@@ -1,6 +1,7 @@
 #pragma once
 
 #include "kinematics.h"
+#include "fiveaxis_kinematics.h"
 #include <string>
 
 class Kines {
@@ -8,11 +9,13 @@ public:
     enum KineSwitchableType {
         kKineTypeNone,
         kKineTypeIDENTITY,
+        kKineTypeFiveAxis,
         kKineTypeXYZABTRT,
         kKineTypeXYZACTRT,
         kKineTypeNum,
     };
 
+    Kines();
     Kines(const Kines&) = delete;
     Kines& operator=(const Kines&) = delete;
 
@@ -62,11 +65,25 @@ public:
                         const KINEMATICS_INVERSE_FLAGS * iflags,
                         KINEMATICS_FORWARD_FLAGS * fflags);
 
+    int ForwardFiveAxis(const double *j,
+                        EmcPose * pos,
+                        const KINEMATICS_FORWARD_FLAGS * fflags,
+                        KINEMATICS_INVERSE_FLAGS * iflags);
+
+    int InverseFiveAxis(const EmcPose * pos,
+                        double *j,
+                        const KINEMATICS_INVERSE_FLAGS * iflags,
+                        KINEMATICS_FORWARD_FLAGS * fflags);
+
+
 
 
 
 private:
-    Kines() = default;
+
+
+    fiveaxis::Config cfg_;
+    fiveaxis::Solver solver_;
 
     int kinType_ = kKineTypeIDENTITY;
     double tool_offset_z_ = 10.0;

@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
-set(LINUX_CNC /home/user/srcCode/linuxcnc-master)
+set(LINUX_CNC /home/liuly/srccode/linuxcnc)
 set(LINUX_CNC_INC ${LINUX_CNC}/include)
 set(LINUX_CNC_LIB ${LINUX_CNC}/lib)
 set(LINUX_CNC_SRC ${LINUX_CNC}/src)
@@ -33,6 +33,7 @@ add_library(milltask SHARED
     kines/kineCubic.cpp
     kines/kineIf.cpp
     kines/kineIf.h
+    kines/fiveaxis_kinematics.h
     traj/tpBlendmath.cpp
     traj/tpSphericalArc.cpp
     traj/tpTc.cpp
@@ -116,7 +117,7 @@ target_include_directories(milltask PUBLIC
     ${LINUX_CNC_SRC}
     ${LINUX_CNC_SRC}/hal
     ${LINUX_CNC_SRC}/emc/pythonplugin
-    /usr/include/python3.11
+    /usr/include/python3.13
     ${LINUX_CNC_SRC}/emc/rs274ngc
     ${LINUX_CNC_SRC}/emc/motion
     ${LINUX_CNC_SRC}/emc/tp
