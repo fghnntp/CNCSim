@@ -2,31 +2,11 @@
 #define GCODEEDIT_H
 
 #include <QPlainTextEdit>
-#include <QSyntaxHighlighter>
 #include <QTextDocument>
-#include <QRegularExpression>
 #include <QTextCharFormat>
 #include <QVector>
+#include "GCodeHighlighter.h"
 
-// G代码语法高亮器
-class GCodeHighlighter : public QSyntaxHighlighter
-{
-    Q_OBJECT
-
-public:
-    explicit GCodeHighlighter(QTextDocument *parent = nullptr);
-
-protected:
-    void highlightBlock(const QString &text) override;
-
-private:
-    struct HighlightingRule
-    {
-        QRegularExpression pattern;
-        QTextCharFormat format;
-    };
-    QVector<HighlightingRule> highlightingRules;
-};
 
 // G代码编辑器
 class GCodeEdit : public QPlainTextEdit
@@ -98,6 +78,24 @@ private:
     QList<QTextEdit::ExtraSelection> searchSelections;
     QList<QTextEdit::ExtraSelection> otherSelections; // For non-search highlights
     void updateExtraSelections();
+
+
+public:
+    // 1-based 行号
+    void highlightLineOne(long long line);
+    void highlightLine(int line, const QColor& color = QColor(255,255,0,80),
+                       bool centerView = true);
+
+    void highlightLines(int fromLine, int toLine,
+                        const QColor& color = QColor(255,255,0,80),
+                        bool centerView = true);
+    void clearLineHighlight(int line);    // 取消某一行的高亮
+    void clearAllLineHighlights();        // 取消全部高亮
+    void flashHighlightLine(int line, int msec = 800,
+                            const QColor& color = QColor(255,255,0,110));
+
+private:
+    QList<QTextEdit::ExtraSelection> lineHighlights;
 };
 
 // 行号显示区域
@@ -119,6 +117,8 @@ protected:
 
 private:
     GCodeEdit *codeEditor;
+
+
 };
 
 #endif // GCODEEDIT_H

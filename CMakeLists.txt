@@ -72,19 +72,31 @@ set(PROJECT_SOURCES
         wins/mainwindow.h
         wins/GCodeEdit.h
         wins/GCodeEdit.cpp
+        wins/GCodeHighlighter.cpp
+        wins/GCodeHighlighter.h
         wins/ToolTableDialog.h
         wins/ToolTableDialog.cpp
         wins/cnc_config.h
-        wins/live_plotter.cpp
-        wins/live_plotter.h
-        wins/live_plotter_motion.cpp
-        wins/live_plotter.h
+#        wins/live_plotter.cpp
+#        wins/live_plotter.h
+#        wins/live_plotter_motion.cpp
+#        wins/live_plotter_motion.h
         wins/CmdTextEdit.cpp
         wins/CmdTextEdit.h
         wins/LogDisplayWidget.cpp
         wins/LogDisplayWidget.h
         wins/KeyInfoDisplayWidget.cpp
         wins/KeyInfoDisplayWidget.h
+        wins/NCPlotter.cpp
+        wins/NCPlotter.h
+        wins/DashedLineRenderer.cpp
+        wins/DashedLineRenderer.h
+        wins/NCPlotter.cpp
+        wins/NCPlotter.h
+        wins/NCPaser.cpp
+        wins/NCPaser.h
+
+        wins/shaders/shaders.qrc
 #        paras_config/BaseParamsWidget.h
 #        paras_config/ParamsWidgetFactory.h
 #        paras_config/TrajParamsWidget.h

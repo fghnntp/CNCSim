@@ -11,14 +11,15 @@
 #include <QActionGroup>
 #include "GCodeEdit.h"
 #include "tool_manager.h"
-#include "live_plotter.h"
-#include "live_plotter_motion.h"
+//#include "live_plotter.h"
+//#include "live_plotter_motion.h"
 #include <QDockWidget>
 #include "mill_task_interface.h"
 #include <QLineEdit>
 #include "CmdTextEdit.h"
 #include "LogDisplayWidget.h"
 #include "KeyInfoDisplayWidget.h"
+#include "NCPlotter.h"
 
 class MainWindow : public QMainWindow
 {
@@ -103,17 +104,19 @@ private:
 
     QAction *cncCmdAct;
 
-    QAction *motionPlotAct;
+//    QAction *motionPlotAct;
+
+    QAction *pathModeAct;
     
     QActionGroup *windowActionGroup;
 
     ToolManager *toolManager = nullptr;
 
     QDockWidget *livePlotterDock = nullptr;
-    LivePlotter *livePlotter = nullptr;
+    NCPlotter *livePlotter = nullptr;
 
     QDockWidget *livePlotterMotionDock = nullptr;
-    LivePlotterMotion *livePlotterMotion = nullptr;
+//    LivePlotterMotion *livePlotterMotion = nullptr;
 private slots:
     void find();
     void findNext();
@@ -145,6 +148,8 @@ private:
     KeyInfoDisplayWidget *keyInfoDisplayWidget = nullptr;
     QTimer *infoTimer = nullptr;
     void setKeyInfoDock();
+
+    bool ncPathOnly = true;
 };
 
 #endif // MAINWINDOW_H

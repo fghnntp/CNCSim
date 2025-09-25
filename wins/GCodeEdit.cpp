@@ -1,4 +1,5 @@
 #include "GCodeEdit.h"
+#include "qdebug.h"
 #include <QTextStream>
 #include <QFile>
 #include <QFont>
@@ -6,79 +7,9 @@
 #include <QTextBlock>
 #include <QScrollBar>
 #include <QMessageBox>
+#include <QTimer>
 
-// GCodeHighlighter 实现
-GCodeHighlighter::GCodeHighlighter(QTextDocument *parent)
-    : QSyntaxHighlighter(parent)
-{
-    HighlightingRule rule;
 
-    // G代码指令 (G00, G01等)
-    QTextCharFormat gCodeFormat;
-    gCodeFormat.setForeground(QColor(0, 100, 200));
-    gCodeFormat.setFontWeight(QFont::Bold);
-    rule.pattern = QRegularExpression("\\bG\\d+");
-    rule.format = gCodeFormat;
-    highlightingRules.append(rule);
-
-    // M代码指令 (M03, M05等)
-    QTextCharFormat mCodeFormat;
-    mCodeFormat.setForeground(QColor(200, 0, 100));
-    mCodeFormat.setFontWeight(QFont::Bold);
-    rule.pattern = QRegularExpression("\\bM\\d+");
-    rule.format = mCodeFormat;
-    highlightingRules.append(rule);
-
-    // T代码指令 (工具)
-    QTextCharFormat tCodeFormat;
-    tCodeFormat.setForeground(QColor(150, 0, 150));
-    tCodeFormat.setFontWeight(QFont::Bold);
-    rule.pattern = QRegularExpression("\\bT\\d+");
-    rule.format = tCodeFormat;
-    highlightingRules.append(rule);
-
-    // 坐标轴 (X, Y, Z等)
-    QTextCharFormat axisFormat;
-    axisFormat.setForeground(QColor(0, 150, 0));
-    axisFormat.setFontWeight(QFont::Bold);
-    rule.pattern = QRegularExpression("\\b[XYZIJKFSR][-+]?\\d*\\.?\\d+");
-    rule.format = axisFormat;
-    highlightingRules.append(rule);
-
-    // 数字
-    QTextCharFormat numberFormat;
-    numberFormat.setForeground(QColor(200, 100, 0));
-    rule.pattern = QRegularExpression("\\b\\d+\\.?\\d*");
-    rule.format = numberFormat;
-    highlightingRules.append(rule);
-
-    // 注释 - 括号注释
-    QTextCharFormat commentFormat;
-    commentFormat.setForeground(QColor(128, 128, 128));
-    commentFormat.setFontItalic(true);
-    rule.pattern = QRegularExpression("\\([^)]*\\)");
-    rule.format = commentFormat;
-    highlightingRules.append(rule);
-
-    // 注释 - 分号注释
-    QTextCharFormat semicolonCommentFormat;
-    semicolonCommentFormat.setForeground(QColor(128, 128, 128));
-    semicolonCommentFormat.setFontItalic(true);
-    rule.pattern = QRegularExpression(";.*$");
-    rule.format = semicolonCommentFormat;
-    highlightingRules.append(rule);
-}
-
-void GCodeHighlighter::highlightBlock(const QString &text)
-{
-    foreach (const HighlightingRule &rule, highlightingRules) {
-        QRegularExpressionMatchIterator matchIterator = rule.pattern.globalMatch(text);
-        while (matchIterator.hasNext()) {
-            QRegularExpressionMatch match = matchIterator.next();
-            setFormat(match.capturedStart(), match.capturedLength(), rule.format);
-        }
-    }
-}
 
 // GCodeEdit 实现
 GCodeEdit::GCodeEdit(QWidget *parent)
@@ -140,14 +71,6 @@ bool GCodeEdit::loadFromFile(const QString &fileName)
 
 bool GCodeEdit::saveToFile(const QString &fileName)
 {
-    // QFile file(fileName);
-    // if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-    //     return false;
-    // }
-
-    // QTextStream out(&file);
-    // out << toPlainText();
-    // return true;
      QString saveFileName = fileName;
     if (saveFileName.isEmpty()) {
         saveFileName = currentFilePath;
@@ -258,6 +181,9 @@ void GCodeEdit::highlightCurrentLine()
         otherSelections.append(selection);
         updateExtraSelections();
     }
+
+    int line = textCursor().blockNumber() + 1;
+    int col  = textCursor().positionInBlock() + 1;
 }
 
 void GCodeEdit::lineNumberAreaPaintEvent(QPaintEvent *event)
@@ -353,8 +279,9 @@ void GCodeEdit::clearSearchHighlight()
 void GCodeEdit::updateExtraSelections()
 {
     QList<QTextEdit::ExtraSelection> allSelections;
-    allSelections.append(otherSelections);
-    allSelections.append(searchSelections);
+    allSelections.append(otherSelections);   // 当前行
+    allSelections.append(searchSelections);  // 搜索结果
+    allSelections.append(lineHighlights);    // 指定行
     setExtraSelections(allSelections);
 }
 
@@ -418,3 +345,102 @@ void GCodeEdit::replaceAll(const QString &searchText, const QString &replaceText
                                tr("No occurrences found"));
     }
 }
+
+
+
+
+
+
+static inline QTextBlock blockByOneBasedLine(const QPlainTextEdit* edit, int line1)
+{
+    int idx0 = qBound(1, line1, edit->blockCount()) - 1; // 安全到 0-based
+    return edit->document()->findBlockByNumber(idx0);
+}
+
+
+void GCodeEdit::highlightLineOne(long long line)
+{
+    // 1-based -> clamp
+    const int total = blockCount();
+    if (total <= 0) return;
+
+    clearAllLineHighlights();
+
+    const long long clamped = std::max(1LL, std::min(line, static_cast<long long>(total)));
+    const int oneBased = static_cast<int>(clamped);
+
+    highlightLine(oneBased, QColor(255,255,0,80), true); // 调用三参版本
+}
+
+
+void GCodeEdit::highlightLine(int line, const QColor& color, bool centerView)
+{
+    QTextBlock block = blockByOneBasedLine(this, line);
+    if (!block.isValid()) return;
+
+    // 生成一条“整行高亮”的 selection
+    QTextEdit::ExtraSelection sel;
+    sel.format.setBackground(color);
+    sel.format.setProperty(QTextFormat::FullWidthSelection, true);
+    sel.cursor = QTextCursor(block);  // 光标指向该 block（不需要选择）
+
+    // 若已存在同一行的高亮，先移除，避免重复
+    for (int i = lineHighlights.size()-1; i >= 0; --i) {
+        if (lineHighlights[i].cursor.blockNumber() == block.blockNumber())
+            lineHighlights.removeAt(i);
+    }
+    lineHighlights.append(sel);
+
+
+
+    if (centerView) {
+        const QTextCursor old = textCursor();
+        QTextCursor tmp(block);
+        setTextCursor(tmp);
+        centerCursor();               // 或 ensureCursorVisible();
+        // setTextCursor(old);
+    }
+
+     updateExtraSelections();
+
+}
+
+void GCodeEdit::highlightLines(int fromLine, int toLine,
+                               const QColor& color, bool centerView)
+{
+    if (fromLine > toLine) std::swap(fromLine, toLine);
+    bool first = true;
+    for (int ln = fromLine; ln <= toLine; ++ln) {
+        highlightLine(ln, color, centerView && first);
+        first = false;
+    }
+}
+
+void GCodeEdit::clearLineHighlight(int line)
+{
+    QTextBlock block = blockByOneBasedLine(this, line);
+    if (!block.isValid()) return;
+
+    for (int i = lineHighlights.size()-1; i >= 0; --i) {
+        if (lineHighlights[i].cursor.blockNumber() == block.blockNumber())
+            lineHighlights.removeAt(i);
+    }
+    updateExtraSelections();
+}
+
+void GCodeEdit::clearAllLineHighlights()
+{
+    lineHighlights.clear();
+    updateExtraSelections();
+}
+
+void GCodeEdit::flashHighlightLine(int line, int msec, const QColor& color)
+{
+    highlightLine(line, color, /*centerView=*/true);
+    // 定时取消
+    QTimer::singleShot(msec, this, [this, line]{
+        clearLineHighlight(line);
+    });
+}
+
+

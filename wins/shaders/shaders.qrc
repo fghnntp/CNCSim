@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/shaders">
+        <file>dashed_lines.frag</file>
+        <file>dashed_lines.vert</file>
+    </qresource>
+</RCC>

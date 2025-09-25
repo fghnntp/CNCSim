@@ -40,6 +40,8 @@ MainWindow::MainWindow(QWidget *parent)
     
     setWindowTitle(tr("CNC G-Code Editor"));
     setUnifiedTitleAndToolBarOnMac(true);
+
+    setPathDock();
 }
 
 MainWindow::~MainWindow()
@@ -327,7 +329,7 @@ void MainWindow::createActions()
     separatorAct->setSeparator(true);
     
     aboutQtAct = new QAction(tr("关于 Qt"), this);
-    aboutQtAct->setStatusTip(tr("显示Qt库的About对话框"));
+//    aboutQtAct->setStatusTip(tr("显示Qt库的About对话框"));
     connect(aboutQtAct, &QAction::triggered, this, &MainWindow::aboutQt);
 
     toolTableAct = new QAction(tr("刀具"), this);
@@ -350,34 +352,51 @@ void MainWindow::createActions()
     loadPlotFileAct = new QAction(tr("载入"), this);
     loadPlotFileAct->setStatusTip(tr("装载当前激活的NC"));
     connect(loadPlotFileAct, &QAction::triggered, this, [this]() {
-        GCodeEdit *child = activeGCodeEdit();
-        if (!child)
-            return;
+        if (ncPathOnly) {
+            GCodeEdit *child = activeGCodeEdit();
+           if (!child)
+               return;
 
-        if (!livePlotterDock)
-            return;
-        std::vector<IMillTaskInterface::ToolPath> toolPath;
+           if (!livePlotterDock)
+               return;
 
-        QString qFileName = child->getActiveFilePath();
-        std::string filename(qFileName.toStdString());
-        std::string err;
+           NC::Parser parser;
+           QVector<NC::Move> moves = parser.parse(child->toPlainText());
 
-        if (millIf_->loadfile(filename.c_str(), toolPath, err) == 0) {
-            QVector<QVector3D> initialPath;
-            auto firstPoint = toolPath.back();
-            for (auto &point : toolPath) {
-                initialPath.append(QVector3D(
-                    point.x - firstPoint.x,
-                    point.y - firstPoint.y,
-                    point.z - firstPoint.z
-                ));
-
-            }
-            livePlotter->setPath(initialPath);
-            statusBar()->showMessage(tr("装载结束"), 2000);
+           livePlotter->setMoves(moves);
+           connect(livePlotter, &NCPlotter::updateNCLine, child, &GCodeEdit::highlightLineOne);
+           statusBar()->showMessage(tr("装载结束"), 2000);
         }
         else {
-            statusBar()->showMessage(tr(err.c_str()), 10000);
+            GCodeEdit *child = activeGCodeEdit();
+            if (!child)
+                return;
+
+            if (!livePlotterDock)
+                return;
+            std::vector<IMillTaskInterface::ToolPath> toolPath;
+
+            QString qFileName = child->getActiveFilePath();
+            std::string filename(qFileName.toStdString());
+            std::string err;
+
+            if (millIf_->loadfile(filename.c_str(), toolPath, err) == 0) {
+                QVector<QVector3D> initialPath;
+                auto firstPoint = toolPath.back();
+                for (auto &point : toolPath) {
+                    initialPath.append(QVector3D(
+                        point.x - firstPoint.x,
+                        point.y - firstPoint.y,
+                        point.z - firstPoint.z
+                    ));
+
+                }
+                livePlotter->setPath(initialPath);
+                statusBar()->showMessage(tr("装载结束"), 2000);
+            }
+            else {
+                statusBar()->showMessage(tr(err.c_str()), 10000);
+            }
         }
     });
 
@@ -387,11 +406,20 @@ void MainWindow::createActions()
         setCmdLogDock();
     });
 
-    motionPlotAct = new QAction(tr("速度"), this);
-    motionPlotAct->setStatusTip(tr("打开速度规划运动曲线查看器"));
-    connect(motionPlotAct, &QAction::triggered, this, [this]() {
-        setMotionProfileDock();
+    pathModeAct = new QAction(tr("仅刀路"), this);
+    pathModeAct->setStatusTip(tr("启动仅进行刀路分析"));
+    pathModeAct->setCheckable(true);
+    connect(pathModeAct, &QAction::toggled, this, [this](bool on) {
+        ncPathOnly = on;
     });
+    pathModeAct->setChecked(true);
+
+
+//    motionPlotAct = new QAction(tr("速度"), this);
+//    motionPlotAct->setStatusTip(tr("打开速度规划运动曲线查看器"));
+//    connect(motionPlotAct, &QAction::triggered, this, [this]() {
+//        setMotionProfileDock();
+//    });
 
     // Add search actions
     createSearchActions();
@@ -454,7 +482,8 @@ void MainWindow::createMenus()
     toolMenu->addAction(pathPlotAct);
     toolMenu->addAction(loadPlotFileAct);
     toolMenu->addAction(cncCmdAct);
-    toolMenu->addAction(motionPlotAct);
+    toolMenu->addAction(pathModeAct);
+//    toolMenu->addAction(motionPlotAct);
     
     // Add search menu
     searchMenu = menuBar()->addMenu(tr("&Search"));
@@ -591,7 +620,8 @@ void MainWindow::createToolBars()
     viewToolBar->addAction(pathPlotAct);
     viewToolBar->addAction(loadPlotFileAct);
     viewToolBar->addAction(cncCmdAct);
-    viewToolBar->addAction(motionPlotAct);
+    viewToolBar->addAction(pathModeAct);
+//    viewToolBar->addAction(motionPlotAct);
 }
 
 void MainWindow::createStatusBar()
@@ -623,9 +653,10 @@ void MainWindow::setPathDock()
 {
     if (!livePlotterDock) {
         livePlotterDock = new QDockWidget(tr("3D刀路"), this);
-        livePlotter = new LivePlotter(livePlotterDock);
+        livePlotter = new NCPlotter(livePlotterDock);
         livePlotterDock->setWidget(livePlotter);
         addDockWidget(Qt::LeftDockWidgetArea, livePlotterDock);
+        livePlotterDock->setFeatures(QDockWidget::NoDockWidgetFeatures);  // 不能移动/关闭/浮动
         QScreen *screen = QGuiApplication::primaryScreen();
         QRect screenGeometry = screen->availableGeometry();
         int oneThirdWidth = screenGeometry.width() / 3;
@@ -661,50 +692,50 @@ void MainWindow::setPathDock()
 
 void MainWindow::setMotionProfileDock()
 {
-    if (!livePlotterMotionDock) {
-        livePlotterMotionDock = new QDockWidget(tr("速度规划"), this);
-        livePlotterMotion = new LivePlotterMotion(livePlotterMotionDock);
-        livePlotterMotionDock->setWidget(livePlotterMotion);
-        addDockWidget(Qt::LeftDockWidgetArea, livePlotterMotionDock);
+//    if (!livePlotterMotionDock) {
+//        livePlotterMotionDock = new QDockWidget(tr("速度规划"), this);
+//        livePlotterMotion = new LivePlotterMotion(livePlotterMotionDock);
+//        livePlotterMotionDock->setWidget(livePlotterMotion);
+//        addDockWidget(Qt::LeftDockWidgetArea, livePlotterMotionDock);
 
-        // Calculate 1/3 of screen width
-        QScreen *screen = QGuiApplication::primaryScreen();
-        QRect screenGeometry = screen->availableGeometry();
-        int oneThirdWidth = screenGeometry.width() / 3;
+//        // Calculate 1/3 of screen width
+//        QScreen *screen = QGuiApplication::primaryScreen();
+//        QRect screenGeometry = screen->availableGeometry();
+//        int oneThirdWidth = screenGeometry.width() / 3;
 
-        // Resize the dock widget
-        livePlotterMotionDock->setMinimumWidth(oneThirdWidth);
+//        // Resize the dock widget
+//        livePlotterMotionDock->setMinimumWidth(oneThirdWidth);
 
-        // Start with some sample data
-        QVector<QVector<float>> initialPath;
-        QVector<float> tVec;
-        QVector<float> xVec;
-        QVector<float> yVec;
-        QVector<float> zVec;
-        for (float t = 0; t < 6.28f; t += 0.1f) {
-            float r = 0.5f + 0.1f * t;
-            tVec.append(t);
-            xVec.append(r * cos(t));
-            yVec.append(r * sin(t));
-            zVec.append(t / 10.0f);
-        }
-        initialPath.append(tVec);
-        initialPath.append(xVec);
-        initialPath.append(yVec);
-        initialPath.append(zVec);
+//        // Start with some sample data
+//        QVector<QVector<float>> initialPath;
+//        QVector<float> tVec;
+//        QVector<float> xVec;
+//        QVector<float> yVec;
+//        QVector<float> zVec;
+//        for (float t = 0; t < 6.28f; t += 0.1f) {
+//            float r = 0.5f + 0.1f * t;
+//            tVec.append(t);
+//            xVec.append(r * cos(t));
+//            yVec.append(r * sin(t));
+//            zVec.append(t / 10.0f);
+//        }
+//        initialPath.append(tVec);
+//        initialPath.append(xVec);
+//        initialPath.append(yVec);
+//        initialPath.append(zVec);
 
-        livePlotterMotion->setPath(initialPath);
-    }
-    else {
-        if (livePlotterMotionDock->isHidden()) {
-            //Reset the dock for the clear postion when reshow
-            removeDockWidget(livePlotterMotionDock);
-            addDockWidget(Qt::LeftDockWidgetArea, livePlotterMotionDock);
-            if (livePlotterMotionDock->isFloating())
-                livePlotterMotionDock->setFloating(false);
-            livePlotterMotionDock->show();
-        }
-    }
+//        livePlotterMotion->setPath(initialPath);
+//    }
+//    else {
+//        if (livePlotterMotionDock->isHidden()) {
+//            //Reset the dock for the clear postion when reshow
+//            removeDockWidget(livePlotterMotionDock);
+//            addDockWidget(Qt::LeftDockWidgetArea, livePlotterMotionDock);
+//            if (livePlotterMotionDock->isFloating())
+//                livePlotterMotionDock->setFloating(false);
+//            livePlotterMotionDock->show();
+//        }
+//    }
 }
 
 void MainWindow::setCmdLogDock()
