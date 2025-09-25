@@ -6,6 +6,8 @@
 #include <rtapi_string.h>
 #include "emcLog.h"
 #include "usrmotintf.h"
+#include <array>
+#include "kines/kineIf.h"
 
 MotTask::MotTask() : running(false) {
     emcFile_ = emc_inifile;
@@ -136,6 +138,8 @@ void MotTask::process() {
     }
 
     std::stringstream ss;
+    std::array<double, 3> tad{0.0, 0.0, 0.0};
+
 
     switch (motTaskSts_) {
     case kIdle:
@@ -178,13 +182,21 @@ void MotTask::process() {
         break;
     case kStartGather:
         needWait_ = false;
+        tad = Kines::GetInstance().GetTad();
         ss << std::fixed << std::setprecision(6);
-        ss << "X " << emcmotStatus->carte_pos_cmd.tran.x << " " << emcmotStatus->joint_status[0].pos_cmd <<
-              " Y " << emcmotStatus->carte_pos_cmd.tran.y << " " << emcmotStatus->joint_status[1].pos_cmd <<
-              " Z " << emcmotStatus->carte_pos_cmd.tran.z << " " << emcmotStatus->joint_status[2].pos_cmd <<
-              " A " << emcmotStatus->carte_pos_cmd.a << " " << emcmotStatus->joint_status[3].pos_cmd <<
-              " B " << emcmotStatus->carte_pos_cmd.b << " " << emcmotStatus->joint_status[4].pos_cmd <<
-              " C " << emcmotStatus->carte_pos_cmd.c << " " << emcmotStatus->joint_status[5].pos_cmd << std::endl;
+        ss << "X " <<  emcmotStatus->joint_status[0].pos_cmd <<
+              " Y " << emcmotStatus->joint_status[1].pos_cmd <<
+              " Z " << " " << emcmotStatus->joint_status[2].pos_cmd <<
+              " A " << emcmotStatus->joint_status[3].pos_cmd <<
+              " B " << emcmotStatus->joint_status[4].pos_cmd <<
+              " C " << emcmotStatus->joint_status[5].pos_cmd <<
+              " TCP " << emcmotStatus->carte_pos_cmd.tran.x << " " <<
+                    emcmotStatus->carte_pos_cmd.tran.y << " " <<
+                    emcmotStatus->carte_pos_cmd.tran.z << " " <<
+              " TAD " << tad[0] << " " << tad[1] << " " << tad[2] <<
+              " N " << emcmotStatus->tag.fields[GM_FIELD_LINE_NUMBER] <<
+              " M " << emcmotStatus->tag.fields[GM_FIELD_MOTION_MODE] / 10 <<
+              " S " << emcmotStatus->tag.fields_float[GM_FIELD_FLOAT_SPEED] << std::endl;
 
         ofs_ << ss.str();
         if (emcmotStatus->tcqlen == 0)

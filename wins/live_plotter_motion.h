@@ -13,7 +13,7 @@
 #include <QValueAxis>
 #include <QString>
 
-// QT_CHARTS_USE_NAMESPACE
+ QT_CHARTS_USE_NAMESPACE
 
 class LivePlotterMotion : public QWidget
 {

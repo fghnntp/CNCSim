@@ -55,7 +55,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find Qt version (Qt6)
-find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets Charts)
+find_package(QT NAMES Qt5 QtREQUIRED COMPONENTS Widgets Charts)
 
 # Find Qt modules with the proper variable
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED Charts)

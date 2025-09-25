@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
-set(LINUX_CNC /home/liuly/srccode/linuxcnc)
+set(LINUX_CNC /home/user/srcCode/cnc-org/linuxcnc-master)
 set(LINUX_CNC_INC ${LINUX_CNC}/include)
 set(LINUX_CNC_LIB ${LINUX_CNC}/lib)
 set(LINUX_CNC_SRC ${LINUX_CNC}/src)
@@ -117,7 +117,7 @@ target_include_directories(milltask PUBLIC
     ${LINUX_CNC_SRC}
     ${LINUX_CNC_SRC}/hal
     ${LINUX_CNC_SRC}/emc/pythonplugin
-    /usr/include/python3.13
+    /usr/include/python3.11
     ${LINUX_CNC_SRC}/emc/rs274ngc
     ${LINUX_CNC_SRC}/emc/motion
     ${LINUX_CNC_SRC}/emc/tp

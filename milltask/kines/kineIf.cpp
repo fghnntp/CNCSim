@@ -166,12 +166,16 @@ Kines::ForwardXYZABTRT(const double *j, EmcPose *pos,
 {
     (void)fflags;
     (void)iflags;
-    double x_rot_point = x_rot_point_;
-    double y_rot_point = y_rot_point_;
-    double z_rot_point = z_rot_point_;
+    double t_x = x_rot_point_;
+    double t_y = y_rot_point_;
+    double t_z = z_rot_point_;
 
-    double dz = z_offset_;
-    double dt = tool_offset_z_;
+    double t_x1 = x_offset_;
+    double t_y1 = y_offset_;
+    double t_z1 = z_offset_;
+    double tool_length = tool_offset_z_;
+
+    double det_x = 0.0, det_y = 0.0, det_z = 0.0;
 
     // substitutions as used in mathematical documentation
     // including degree -> radians angle conversion
@@ -180,27 +184,60 @@ Kines::ForwardXYZABTRT(const double *j, EmcPose *pos,
     double       sb = sin(j[4]*TO_RAD);
     double       cb = cos(j[4]*TO_RAD);
 
-    // used to be consistent with math in the documentation
-    double       px = 0;
-    double       py = 0;
-    double       pz = 0;
+   // 从 T_POS * [0,0,0,1] 开始
+   double x = j[0];
+   double y = j[1];
+   double z = j[2];
 
-    px          = j[0] - x_rot_point;
-    py          = j[1] - y_rot_point;
-    pz          = j[2] - z_rot_point - dt;
+   // T_TS2Tool(0,0,-L)
+   z -= tool_length;
 
-    pos->tran.x =   cb*px + sb*pz
-                  + x_rot_point;
+   // T_B2RB(-t_x,-t_y,-t_z) : 等价 x-=t_x, y-=t_y, z-=t_z
+   x -= t_x;
+   y -= t_y;
+   z -= t_z;
 
-    pos->tran.y =   sa*sb*px + ca*py - cb*sa*pz + sa*dz
-                  + y_rot_point;
+    // R_B (绕Y： [cb*x + sb*z, y, -sb*x + cb*z])
+    {
+        const double x2 =  cb*x + sb*z;
+        const double y2 =  y;
+        const double z2 = -sb*x + cb*z;
+        x = x2; y = y2; z = z2;
+    }
 
-    pos->tran.z = - ca*sb*px + sa*py + ca*cb*pz - ca*dz
-                  + z_rot_point + dz + dt;
+    // T_RB2RA(-t_x1,-t_y1,-t_z1)
+    x -= t_x1;
+    y -= t_y1;
+    z -= t_z1;
+
+    // R_A (绕X： [x, ca*y - sa*z, sa*y + ca*z])
+    {
+       const double x2 = x;
+       const double y2 = ca*y - sa*z;
+       const double z2 = sa*y + ca*z;
+       x = x2; y = y2; z = z2;
+    }
+
+    // W_OFFSET (det_x, det_y, det_z)
+    x += det_x;
+    y += det_y;
+    z += det_z;
+
+    pos->tran.x = x;
+    pos->tran.y = y;
+    pos->tran.z = z;
 
     pos->a      = j[3];
     pos->b      = j[4];
     pos->c      = j[5];
+
+    //uinit vector_z
+    tad_[0] = sb*1.0;
+
+    tad_[1] = - sa*cb*1.0;
+
+    tad_[2] = ca*cb*1.0;
+
 
     // unused coordinates:
     pos->c = 0;
@@ -219,13 +256,16 @@ Kines::InverseXYZABTRT(const EmcPose * pos,
 {
     (void)iflags;
     (void)fflags;
-    double x_rot_point = x_rot_point_;
-    double y_rot_point = y_rot_point_;
-    double z_rot_point = z_rot_point_;
+    double t_x = x_rot_point_;
+    double t_y = y_rot_point_;
+    double t_z = z_rot_point_;
 
-    double dx = x_offset_;
-    double dz = z_offset_;
-    double dt = tool_offset_z_;
+    double t_x1 = x_offset_;
+    double t_y1 = y_offset_;
+    double t_z1 = z_offset_;
+    double tool_length = tool_offset_z_;
+
+    double det_x = 0.0, det_y = 0.0, det_z = 0.0;
 
     // substitutions as used in mathematical documentation
     // including degree -> radians angle conversion
@@ -234,23 +274,45 @@ Kines::InverseXYZABTRT(const EmcPose * pos,
     double       sb = sin(pos->b*TO_RAD);
     double       cb = cos(pos->b*TO_RAD);
 
-    // used to be consistent with math in the documentation
-    double       qx = 0;
-    double       qy = 0;
-    double       qz = 0;
+    // 从 [Q]-det 开始（W_OFFSET^{-1}）
+    double x = pos->tran.x - det_x;
+    double y = pos->tran.y - det_y;
+    double z = pos->tran.z - det_z;
 
-    qx   = pos->tran.x - x_rot_point - dx;
-    qy   = pos->tran.y - y_rot_point;
-    qz   = pos->tran.z - z_rot_point - dz - dt;
+    // R_A^{-1} (绕X -a)：[x, ca*y + sa*z, -sa*y + ca*z]
+    {
+        const double x1 = x;
+        const double y1 =  ca*y + sa*z;
+        const double z1 = -sa*y + ca*z;
+        x = x1; y = y1; z = z1;
+    }
 
-    j[0] =   cb*qx + sa*sb*qy - ca*sb*qz + cb*dx - sb*dz
-           + x_rot_point;
+    // T_RB2RA^{-1} (+t1)
+    x += t_x1;
+    y += t_y1;
+    z += t_z1;
 
-    j[1] =   ca*qy + sa*qz
-           + y_rot_point;
+    // R_B^{-1} (绕Y -b)：[cb*x - sb*z, y, sb*x + cb*z]
+    {
+        const double x1 =  cb*x - sb*z;
+        const double y1 =  y;
+        const double z1 =  sb*x + cb*z;
+        x = x1; y = y1; z = z1;
+    }
 
-    j[2] =   sb*qx - sa*cb*qy + ca*cb*qz + sb*dx + cb*dz
-           + z_rot_point + dt;
+    // T_B2RB^{-1} (+t)
+    x += t_x;
+    y += t_y;
+    z += t_z;
+
+    // T_TS2Tool^{-1} (0,0,+L)
+    z += tool_length;
+
+
+    // + (t_x, t_y, t_z) , + (0,0,tool_length), -pos
+    j[0] = x;
+    j[1] = y;
+    j[2] = z;
 
     j[3] = pos->a;
     j[4] = pos->b;
@@ -409,6 +471,11 @@ int Kines::InverseFiveAxis(const EmcPose *pos, double *j, const KINEMATICS_INVER
     j[8] = pos->w;
 
     return 0;
+}
+
+std::array<double, 3> Kines::GetTad()
+{
+    return tad_;
 }
 
 int kinematicsForward(const double *joint,

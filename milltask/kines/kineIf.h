@@ -3,6 +3,7 @@
 #include "kinematics.h"
 #include "fiveaxis_kinematics.h"
 #include <string>
+#include <array>
 
 class Kines {
 public:
@@ -76,6 +77,7 @@ public:
                         KINEMATICS_FORWARD_FLAGS * fflags);
 
 
+    std::array<double, 3> GetTad();
 
 
 
@@ -86,13 +88,20 @@ private:
     fiveaxis::Solver solver_;
 
     int kinType_ = kKineTypeIDENTITY;
-    double tool_offset_z_ = 10.0;
-    double tool_offset_ = 10.0;
-    double x_offset_ = 10.0;
-    double y_offset_ = 10.0;
-    double z_offset_ = 20.0;
-    double x_rot_point_ = 15.0;
-    double y_rot_point_ = 20.0;
-    double z_rot_point_ = 25.0;
+    double tool_offset_z_ = 255.0;
+    double tool_offset_ = 255.0;
+    double x_offset_ = 150.0;
+    double y_offset_ = 0.0;
+    double z_offset_ = 0.0;
+    double x_rot_point_ = -150.0;
+    double y_rot_point_ = 0.0;
+    double z_rot_point_ = -150.0;
+
+//    double tool_length_ = 100.0;
+//    double tx_ = 0.0, ty_ = 0.0, tz_ = -50.0;
+//    double tx1_ = 150.0, ty1_ = 0.0, tz1_ = 0.0;
+
+
+    std::array<double ,3> tad_{0, 0, 1};
 
 };
